@@ -1,0 +1,30 @@
+{
+  "name": "mossland-promptfolio",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Prompt-driven MOC paper trading league: build agent personas, compete in seasons, replay every decision.",
+  "scripts": {
+    "dev": "next dev -p 3300",
+    "build": "next build",
+    "start": "next start -p 3300",
+    "lint": "next lint",
+    "db:init": "tsx scripts/db-init.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "next": "^14.2.25",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.13.4",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.25",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
