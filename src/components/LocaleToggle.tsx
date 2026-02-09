@@ -21,26 +21,22 @@ export default function LocaleToggle({ locale }: { locale: 'en' | 'ko' }) {
 
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      <span style={{ opacity: 0.65, fontSize: 12 }}>Lang</span>
-      <button onClick={() => setLocale('en')} disabled={pending || locale === 'en'} style={btn(locale === 'en')}>
+      <span className="pf-pill">Lang</span>
+      <button onClick={() => setLocale('en')} disabled={pending || locale === 'en'} className="pf-btn" style={small(locale === 'en')}>
         EN
       </button>
-      <button onClick={() => setLocale('ko')} disabled={pending || locale === 'ko'} style={btn(locale === 'ko')}>
+      <button onClick={() => setLocale('ko')} disabled={pending || locale === 'ko'} className="pf-btn" style={small(locale === 'ko')}>
         KO
       </button>
     </div>
   );
 }
 
-function btn(active: boolean): React.CSSProperties {
+function small(active: boolean): React.CSSProperties {
   return {
-    padding: '6px 8px',
-    borderRadius: 10,
-    border: '1px solid #253042',
-    background: active ? '#132033' : '#0f1720',
-    color: '#e6edf3',
-    fontWeight: 800,
-    cursor: 'pointer',
-    opacity: active ? 1 : 0.8,
+    padding: '6px 10px',
+    borderRadius: 999,
+    borderColor: active ? 'rgba(126,231,135,.55)' : 'rgba(27,42,61,.95)',
+    opacity: active ? 1 : 0.85,
   };
 }

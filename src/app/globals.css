@@ -1,0 +1,159 @@
+:root{
+  --bg:#070b10;
+  --panel:#0c121b;
+  --panel2:#0a1018;
+  --border:#1b2a3d;
+  --text:#d7e2f0;
+  --muted:rgba(215,226,240,.72);
+  --dim:rgba(215,226,240,.52);
+  --green:#7ee787;
+  --amber:#ffd38a;
+  --red:#ff7b72;
+  --shadow:0 0 0 1px rgba(126,231,135,.08), 0 10px 30px rgba(0,0,0,.45);
+  --radius:14px;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 900px at 20% 10%, rgba(126,231,135,.07), transparent 55%),
+    radial-gradient(1100px 800px at 90% 20%, rgba(255,211,138,.06), transparent 50%),
+    radial-gradient(900px 600px at 60% 120%, rgba(126,231,135,.05), transparent 50%),
+    linear-gradient(180deg, var(--bg), #05070b 70%);
+  color:var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  letter-spacing:.1px;
+}
+
+/* scanlines + subtle noise */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,.028),
+      rgba(255,255,255,.028) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  mix-blend-mode:overlay;
+  opacity:.12;
+}
+body::after{
+  content:"";
+  position:fixed;
+  inset:-40px;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+  opacity:.05;
+}
+
+.pf-wrap{ max-width:980px; margin:0 auto; padding:18px; }
+
+.pf-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+}
+
+.pf-brand{
+  font-weight:900;
+  letter-spacing:.3px;
+  text-transform:lowercase;
+}
+
+.pf-tag{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--dim);
+}
+
+.pf-nav{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+a{ color:var(--green); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+
+hr{ border:0; border-top:1px solid rgba(27,42,61,.9); margin:16px 0; }
+
+.pf-card{
+  border:1px solid rgba(27,42,61,.95);
+  background:linear-gradient(180deg, rgba(12,18,27,.92), rgba(10,16,24,.88));
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+
+.pf-h1{ margin:0; font-size:32px; line-height:1.1; letter-spacing:.2px; }
+.pf-h2{ margin:0; font-size:20px; letter-spacing:.2px; }
+
+.pf-sub{ margin:0; color:var(--muted); line-height:1.5; }
+.pf-dim{ color:var(--dim); }
+
+.pf-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(27,42,61,.95);
+  background:linear-gradient(180deg, rgba(19,32,51,.95), rgba(10,16,24,.92));
+  color:var(--text);
+  font-weight:800;
+  cursor:pointer;
+}
+.pf-btn:hover{ border-color:rgba(126,231,135,.45); box-shadow:0 0 0 1px rgba(126,231,135,.12); }
+.pf-btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+.pf-input, .pf-textarea{
+  width:100%;
+  padding:10px 10px;
+  border-radius:12px;
+  border:1px solid rgba(27,42,61,.95);
+  background:rgba(7,11,16,.7);
+  color:var(--text);
+  outline:none;
+}
+.pf-input:focus, .pf-textarea:focus{ border-color:rgba(126,231,135,.55); box-shadow:0 0 0 2px rgba(126,231,135,.08); }
+
+.pf-label{ font-size:12px; color:var(--dim); margin-bottom:6px; }
+
+.pf-pre{
+  white-space:pre-wrap;
+  margin:10px 0 0;
+  color:rgba(215,226,240,.88);
+  font-size:13px;
+  line-height:1.45;
+}
+
+.pf-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(27,42,61,.95);
+  background:rgba(10,16,24,.85);
+  color:var(--muted);
+  font-size:12px;
+}
+
+.pf-kbd{
+  border:1px solid rgba(27,42,61,.95);
+  background:rgba(10,16,24,.9);
+  border-bottom-color:rgba(126,231,135,.35);
+  padding:2px 6px;
+  border-radius:8px;
+  color:rgba(215,226,240,.9);
+}
