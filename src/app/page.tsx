@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { db } from '../lib/db';
+import { ensureWeeklySeason } from '../lib/weekly';
 import { getLocale, t } from '../lib/i18n';
 import TerminalLog, { type TerminalRow } from '../components/TerminalLog';
 import ZineStamp from '../components/ZineStamp';
@@ -10,10 +11,9 @@ export default async function Page() {
   const locale = getLocale();
   const d = db();
 
-  const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
-  const lastTick = season
-    ? (d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 1`).get(season.id) as any)
-    : null;
+  // Auto-create weekly season so the product always feels "alive".
+  const season = ensureWeeklySeason();
+  const lastTick = d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 1`).get(season.id) as any;
 
   const mocUsd = lastTick?.moc_usd ?? null;
 

@@ -1,4 +1,5 @@
 import { db } from '../../lib/db';
+import { ensureWeeklySeason } from '../../lib/weekly';
 import { getLocale, t } from '../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -6,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export default async function SeasonPage() {
   const locale = getLocale();
   const d = db();
-  const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
+  const season = ensureWeeklySeason();
   const ticks = season
     ? (d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 20`).all(season.id) as any[])
     : [];
