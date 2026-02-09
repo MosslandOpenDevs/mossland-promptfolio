@@ -1,15 +1,17 @@
 import { db } from '../../lib/db';
+import { getLocale, t } from '../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LeaderboardPage() {
+  const locale = getLocale();
   const d = db();
   const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
   if (!season) {
     return (
       <main>
-        <h2>Leaderboard</h2>
-        <div style={{ opacity: 0.7 }}>Create a season first.</div>
+        <h2>{t(locale, 'leaderboard')}</h2>
+        <div style={{ opacity: 0.7 }}>{t(locale, 'createSeasonFirst')}</div>
       </main>
     );
   }
@@ -34,7 +36,7 @@ export default async function LeaderboardPage() {
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
-      <h2 style={{ margin: 0 }}>Leaderboard</h2>
+      <h2 style={{ margin: 0 }}>{t(locale, 'leaderboard')}</h2>
       <div style={card}>
         <div><span style={dim}>season</span> {season.name}</div>
         <div><span style={dim}>moc_usd</span> {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : 'run a tick'}</div>

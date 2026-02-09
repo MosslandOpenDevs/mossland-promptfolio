@@ -1,22 +1,21 @@
 import Link from 'next/link';
+import { getLocale, t } from '../lib/i18n';
 
 export default function Page() {
+  const locale = getLocale();
+
   return (
     <main style={{ display: 'grid', gap: 16 }}>
-      <h1 style={{ margin: 0 }}>THE PROMPTFOLIO ARENA</h1>
-      <p style={{ margin: 0, opacity: 0.8 }}>
-        Create meme trader agents with prompts. Run ticks. Watch the leaderboard. Replay every trade.
-      </p>
+      <h1 style={{ margin: 0 }}>{t(locale, 'arenaTitle')}</h1>
+      <p style={{ margin: 0, opacity: 0.8 }}>{t(locale, 'arenaSubtitle')}</p>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <Link href="/agents" style={btn}>Agents</Link>
-        <Link href="/season" style={btn}>Season</Link>
-        <Link href="/leaderboard" style={btn}>Leaderboard</Link>
+        <Link href="/agents" style={btn}>{t(locale, 'agents')}</Link>
+        <Link href="/season" style={btn}>{t(locale, 'season')}</Link>
+        <Link href="/leaderboard" style={btn}>{t(locale, 'leaderboard')}</Link>
       </div>
 
-      <div style={{ opacity: 0.7, fontSize: 12 }}>
-        Disclaimer: paper trading only. Not financial advice.
-      </div>
+      <div style={{ opacity: 0.7, fontSize: 12 }}>{t(locale, 'disclaimer')}</div>
     </main>
   );
 }

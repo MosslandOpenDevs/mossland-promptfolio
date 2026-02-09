@@ -1,8 +1,10 @@
 import { db } from '../../lib/db';
+import { getLocale, t } from '../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SeasonPage() {
+  const locale = getLocale();
   const d = db();
   const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
   const ticks = season
@@ -11,10 +13,10 @@ export default async function SeasonPage() {
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
-      <h2 style={{ margin: 0 }}>Season</h2>
+      <h2 style={{ margin: 0 }}>{t(locale, 'seasonTitle')}</h2>
 
       <div style={card}>
-        <div style={{ fontWeight: 700 }}>Current season</div>
+        <div style={{ fontWeight: 700 }}>{t(locale, 'currentSeason')}</div>
         {season ? (
           <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
             <div><span style={dim}>name</span> {season.name}</div>
@@ -22,34 +24,34 @@ export default async function SeasonPage() {
             <div><span style={dim}>id</span> {season.id}</div>
           </div>
         ) : (
-          <div style={{ opacity: 0.7, marginTop: 8 }}>No season yet. Create one.</div>
+          <div style={{ opacity: 0.7, marginTop: 8 }}>{t(locale, 'noSeason')}</div>
         )}
       </div>
 
       <form action="/api/season" method="post" style={card}>
         <div style={{ display: 'grid', gap: 8 }}>
           <label>
-            <div style={label}>Season name</div>
+            <div style={label}>{t(locale, 'seasonName')}</div>
             <input name="name" required defaultValue={`Season ${new Date().toISOString().slice(0, 10)}`} style={input} />
           </label>
           <label>
-            <div style={label}>Starting cash (USD)</div>
+            <div style={label}>{t(locale, 'startingCash')}</div>
             <input name="starting_cash_usd" required defaultValue="1000" style={input} />
           </label>
-          <button style={button} type="submit">Start new season</button>
+          <button style={button} type="submit">{t(locale, 'startNewSeason')}</button>
         </div>
       </form>
 
       <form action="/api/tick" method="post" style={card}>
         <button style={button} type="submit" disabled={!season}>
-          Run tick (fetch MOC price + rebalance all agents)
+          {t(locale, 'runTick')}
         </button>
-        {!season && <div style={{ opacity: 0.7, fontSize: 12, marginTop: 8 }}>Create a season first.</div>}
+        {!season && <div style={{ opacity: 0.7, fontSize: 12, marginTop: 8 }}>{t(locale, 'createSeasonFirst')}</div>}
       </form>
 
       {season && (
         <div style={card}>
-          <div style={{ fontWeight: 700 }}>Recent ticks</div>
+          <div style={{ fontWeight: 700 }}>{t(locale, 'recentTicks')}</div>
           <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
             {ticks.map((t) => (
               <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
@@ -57,7 +59,7 @@ export default async function SeasonPage() {
                 <div style={{ fontVariantNumeric: 'tabular-nums' }}>${Number(t.moc_usd).toFixed(6)}</div>
               </div>
             ))}
-            {ticks.length === 0 && <div style={{ opacity: 0.7 }}>No ticks yet.</div>}
+            {ticks.length === 0 && <div style={{ opacity: 0.7 }}>{t(locale, 'noTicks')}</div>}
           </div>
         </div>
       )}

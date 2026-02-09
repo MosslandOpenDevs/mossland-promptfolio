@@ -1,9 +1,11 @@
 import { db } from '../../../lib/db';
 import { notFound } from 'next/navigation';
+import { getLocale, t } from '../../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AgentDetailPage({ params }: { params: { id: string } }) {
+  const locale = getLocale();
   const d = db();
   const agent = d.prepare(`SELECT * FROM agents WHERE id=?`).get(params.id) as any;
   if (!agent) return notFound();
@@ -22,7 +24,7 @@ export default async function AgentDetailPage({ params }: { params: { id: string
       </h2>
 
       <div style={card}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>Current prompt</div>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>{t(locale, 'currentPrompt')}</div>
         <pre style={pre}>{agent.prompt}</pre>
       </div>
 
@@ -30,22 +32,20 @@ export default async function AgentDetailPage({ params }: { params: { id: string
         <form action={`/api/agents/${params.id}/update-prompt`} method="post" style={card}>
           <div style={{ display: 'grid', gap: 8 }}>
             <label>
-              <div style={label}>Update prompt (1x per day)</div>
+              <div style={label}>{t(locale, 'updatePromptLimit')}</div>
               <textarea name="prompt" required defaultValue={agent.prompt} style={{ ...input, minHeight: 100 }} />
             </label>
             <button style={button} type="submit">
-              Update prompt
+              {t(locale, 'updatePrompt')}
             </button>
           </div>
         </form>
       ) : (
-        <div style={{ ...card, opacity: 0.7 }}>
-          Prompt already updated today. Come back tomorrow.
-        </div>
+        <div style={{ ...card, opacity: 0.7 }}>{t(locale, 'promptLocked')}</div>
       )}
 
       <div style={card}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>Prompt change history</div>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>{t(locale, 'promptHistory')}</div>
         {history.length > 0 ? (
           <div style={{ display: 'grid', gap: 8 }}>
             {history.map((h) => (
@@ -56,7 +56,7 @@ export default async function AgentDetailPage({ params }: { params: { id: string
             ))}
           </div>
         ) : (
-          <div style={{ opacity: 0.7 }}>No changes yet.</div>
+          <div style={{ opacity: 0.7 }}>{t(locale, 'noChanges')}</div>
         )}
       </div>
     </main>

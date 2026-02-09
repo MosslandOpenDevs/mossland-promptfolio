@@ -1,30 +1,32 @@
 import { db } from '../../lib/db';
+import { getLocale, t } from '../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AgentsPage() {
+  const locale = getLocale();
   const d = db();
   const agents = d.prepare(`SELECT id, name, avatar_emoji, prompt, created_at FROM agents ORDER BY created_at DESC`).all() as any[];
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
-      <h2 style={{ margin: 0 }}>Agents</h2>
+      <h2 style={{ margin: 0 }}>{t(locale, 'agentsTitle')}</h2>
 
       <form action="/api/agents" method="post" style={card}>
         <div style={{ display: 'grid', gap: 8 }}>
           <label>
-            <div style={label}>Name</div>
+            <div style={label}>{t(locale, 'name')}</div>
             <input name="name" required placeholder="Degen Monk" style={input} />
           </label>
           <label>
-            <div style={label}>Avatar emoji</div>
+            <div style={label}>{t(locale, 'avatarEmoji')}</div>
             <input name="avatar" required defaultValue="🫠" style={input} />
           </label>
           <label>
-            <div style={label}>Prompt persona</div>
+            <div style={label}>{t(locale, 'promptPersona')}</div>
             <textarea name="prompt" required placeholder="You are a legendary degen trader..." style={{ ...input, minHeight: 120 }} />
           </label>
-          <button style={button} type="submit">Summon agent</button>
+          <button style={button} type="submit">{t(locale, 'summonAgent')}</button>
         </div>
       </form>
 
@@ -39,7 +41,7 @@ export default async function AgentsPage() {
             <pre style={pre}>{a.prompt}</pre>
           </a>
         ))}
-        {agents.length === 0 && <div style={{ opacity: 0.7 }}>No agents yet. Summon the first meme trader.</div>}
+        {agents.length === 0 && <div style={{ opacity: 0.7 }}>{t(locale, 'noAgents')}</div>}
       </div>
     </main>
   );
