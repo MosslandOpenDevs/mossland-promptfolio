@@ -4,6 +4,7 @@ import { ensureWeeklySeason } from '../lib/weekly';
 import { getLocale, t } from '../lib/i18n';
 import TerminalLog, { type TerminalRow } from '../components/TerminalLog';
 import ZineStamp from '../components/ZineStamp';
+import ExecuteTickButton from '../components/ExecuteTickButton';
 import { memeLine } from '../lib/meme';
 
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,7 @@ export default async function Page() {
     lines: [
       `> season: ${season.name}`,
       `> agents: ${agentsCount} | ticks: ${ticksCount}`,
+      `> spinner: "${(await import('../lib/spinner')).pickSpinnerVerb(season.id + ':' + String(ticksCount))}"`,
     ],
     highlight: 'tape',
   });
@@ -154,12 +156,7 @@ export default async function Page() {
               <ZineStamp text="LIVE" />
             </div>
 
-            <form action="/api/tick" method="post">
-              <button className="pf-btn pf-btn--primary" style={{ width: '100%', padding: '14px 12px', fontSize: 16 }} type="submit" disabled={!season}>
-                EXECUTE TICK
-              </button>
-              {!season && <div className="pf-dim" style={{ fontSize: 11, marginTop: 8 }}>{t(locale, 'createSeasonFirst')}</div>}
-            </form>
+            <ExecuteTickButton disabled={!season} />
 
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <Link href="/agents" className="pf-btn" style={{ flex: 1 }}>AGENT LAB</Link>

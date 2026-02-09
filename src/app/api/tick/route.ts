@@ -11,5 +11,10 @@ export async function POST(req: Request) {
   const mocUsd = await fetchMocUsd();
   runTick(season.id, mocUsd);
 
+  // If called via client fetch, return JSON so we can show witty spinners.
+  if (req.headers.get('x-pf-ajax') === '1') {
+    return NextResponse.json({ success: true, seasonId: season.id, mocUsd });
+  }
+
   return NextResponse.redirect(new URL('/leaderboard', req.url));
 }
