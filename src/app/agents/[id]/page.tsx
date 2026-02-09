@@ -24,7 +24,10 @@ export default async function AgentDetailPage({ params }: { params: { id: string
       </h2>
 
       <div style={card}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>{t(locale, 'currentPrompt')}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <div style={{ fontWeight: 700 }}>{t(locale, 'currentPrompt')}</div>
+          <a href={`/agents/${agent.id}/replay`} style={{ color: '#7ee787', textDecoration: 'none' }}>Replay →</a>
+        </div>
         <pre style={pre}>{agent.prompt}</pre>
       </div>
 
