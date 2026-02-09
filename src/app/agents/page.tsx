@@ -30,14 +30,14 @@ export default async function AgentsPage() {
 
       <div style={{ display: 'grid', gap: 12 }}>
         {agents.map((a) => (
-          <div key={a.id} style={card}>
+          <a key={a.id} href={`/agents/${a.id}`} style={{ ...card, textDecoration: 'none', color: 'inherit' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ fontSize: 24 }}>{a.avatar_emoji}</div>
               <div style={{ fontWeight: 700 }}>{a.name}</div>
               <div style={{ opacity: 0.6, fontSize: 12 }}>{a.id}</div>
             </div>
             <pre style={pre}>{a.prompt}</pre>
-          </div>
+          </a>
         ))}
         {agents.length === 0 && <div style={{ opacity: 0.7 }}>No agents yet. Summon the first meme trader.</div>}
       </div>

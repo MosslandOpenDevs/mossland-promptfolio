@@ -54,6 +54,15 @@ CREATE TABLE IF NOT EXISTS trades (
   reason TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS prompt_history (
+  id TEXT PRIMARY KEY,
+  agent_id TEXT NOT NULL,
+  prompt TEXT NOT NULL,
+  changed_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_prompt_history_agent ON prompt_history(agent_id, changed_at DESC);
 `);
 
 console.log('DB initialized at', dbPath);
