@@ -17,25 +17,69 @@ export default async function Page() {
 
   const mocUsd = lastTick?.moc_usd ?? null;
 
-  const trades = season
-    ? (d.prepare(
-        `SELECT tr.*, tk.ts as tick_ts, a.name as agent_name
-         FROM trades tr
-         JOIN ticks tk ON tk.id = tr.tick_id
-         JOIN agents a ON a.id = tr.agent_id
-         WHERE tr.season_id=?
-         ORDER BY tk.ts DESC, tr.created_at DESC
-         LIMIT 8`
-      ).all(season.id) as any[])
-    : [];
+  const ticksCountRow = d.prepare(`SELECT count(*) as c FROM ticks WHERE season_id=?`).get(season.id) as any;
+  const ticksCount = Number(ticksCountRow?.c ?? 0);
 
-  const rows: TerminalRow[] = trades.map((tr: any) => ({
-    ts: String(tr.tick_ts).slice(11, 19),
-    kind: tr.side,
-    title: `${tr.agent_name}`,
-    lines: [`> ${tr.side} ${Number(tr.moc_units).toFixed(2)} MOC @ $${Number(tr.price_usd).toFixed(6)}`, `"${tr.reason}"`],
-    highlight: tr.side === 'BUY' ? 'primary' : tr.side === 'SELL' ? 'tape' : undefined,
-  }));
+  const agentsCountRow = d.prepare(`SELECT count(*) as c FROM agents`).get() as any;
+  const agentsCount = Number(agentsCountRow?.c ?? 0);
+
+  const trades = d.prepare(
+    `SELECT tr.*, tk.ts as tick_ts, a.name as agent_name
+     FROM trades tr
+     JOIN ticks tk ON tk.id = tr.tick_id
+     JOIN agents a ON a.id = tr.agent_id
+     WHERE tr.season_id=?
+     ORDER BY tk.ts DESC, tr.created_at DESC
+     LIMIT 10`
+  ).all(season.id) as any[];
+
+  // Build a "zine terminal" feed: sys boot + price update + most recent trades.
+  const rows: TerminalRow[] = [];
+
+  rows.push({
+    ts: new Date().toISOString().slice(11, 19),
+    kind: 'SYS',
+    title: 'COMMAND_DECK',
+    lines: [
+      `> season: ${season.name}`,
+      `> agents: ${agentsCount} | ticks: ${ticksCount}`,
+    ],
+    highlight: 'tape',
+  });
+
+  if (!mocUsd) {
+    rows.push({
+      ts: new Date().toISOString().slice(11, 19),
+      kind: 'WARN',
+      title: 'PRICE_FEED',
+      lines: ['> MOC price unknown', '> hit EXECUTE TICK to fetch CoinGecko'],
+      highlight: 'alert',
+    });
+  } else {
+    rows.push({
+      ts: String(lastTick?.ts ?? new Date().toISOString()).slice(11, 19),
+      kind: 'SYS',
+      title: 'PRICE_UPDATE',
+      lines: [`> MOC_USD = $${Number(mocUsd).toFixed(6)}`, `> tick_id: ${String(lastTick?.id ?? '—')}`],
+      highlight: 'primary',
+    });
+  }
+
+  for (const tr of trades) {
+    const units = Number(tr.moc_units);
+    const usd = Number(tr.price_usd);
+    const big = units * usd > 50; // arbitrary highlight threshold
+    rows.push({
+      ts: String(tr.tick_ts).slice(11, 19),
+      kind: tr.side,
+      title: `${tr.agent_name}`,
+      lines: [
+        `> ${tr.side} ${units.toFixed(2)} MOC @ $${usd.toFixed(6)}`,
+        `"${tr.reason}"`,
+      ],
+      highlight: tr.side === 'BUY' ? (big ? 'primary' : undefined) : tr.side === 'SELL' ? (big ? 'tape' : undefined) : undefined,
+    });
+  }
 
   const top = season
     ? (d.prepare(
@@ -90,7 +134,8 @@ export default async function Page() {
             </div>
             <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <span className="pf-pill">moc_usd: {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : '—'}</span>
-              <span className="pf-pill">ticks: {season ? d.prepare(`SELECT count(*) as c FROM ticks WHERE season_id=?`).get(season.id).c : 0}</span>
+              <span className="pf-pill">ticks: {ticksCount}</span>
+              <span className="pf-pill">agents: {agentsCount}</span>
             </div>
           </div>
 

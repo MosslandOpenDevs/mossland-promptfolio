@@ -17,11 +17,17 @@ export default function TerminalLog({ title, rows }: { title: string; rows: Term
       </div>
       <div className="pf-terminal__log">
         {rows.length === 0 ? (
-          <div style={{ opacity: 0.6 }}>No logs yet.</div>
+          <div style={{ opacity: 0.65 }}>
+            <div style={{ fontWeight: 900 }}>[BOOT] terminal ready.</div>
+            <div style={{ paddingLeft: 10, opacity: 0.85 }}>&gt; create agents + execute tick</div>
+          </div>
         ) : (
           rows.map((r, i) => (
             <div key={i} className="pf-terminal__row" style={rowStyle(r.highlight)}>
-              <div style={{ fontSize: 10, opacity: 0.75 }}>[{r.ts}]</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ fontSize: 10, opacity: 0.75 }}>[{r.ts}]</div>
+                <div style={{ fontSize: 10, opacity: 0.65 }}>{badge(r.kind)}</div>
+              </div>
               <div style={{ fontWeight: 900 }}>{r.kind} — {r.title}</div>
               {r.lines.map((ln, idx) => (
                 <div key={idx} style={{ paddingLeft: 10, opacity: 0.9 }}>{ln}</div>
@@ -32,6 +38,14 @@ export default function TerminalLog({ title, rows }: { title: string; rows: Term
       </div>
     </div>
   );
+}
+
+function badge(kind: TerminalRow['kind']): string {
+  if (kind === 'BUY') return '▲ buy';
+  if (kind === 'SELL') return '▼ sell';
+  if (kind === 'WARN') return '! warn';
+  if (kind === 'SYS') return '# sys';
+  return '· hold';
 }
 
 function rowStyle(h?: TerminalRow['highlight']): React.CSSProperties {
