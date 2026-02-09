@@ -4,6 +4,7 @@ import { ensureWeeklySeason } from '../lib/weekly';
 import { getLocale, t } from '../lib/i18n';
 import TerminalLog, { type TerminalRow } from '../components/TerminalLog';
 import ZineStamp from '../components/ZineStamp';
+import { memeLine } from '../lib/meme';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export default async function Page() {
   const agentsCount = Number(agentsCountRow?.c ?? 0);
 
   const trades = d.prepare(
-    `SELECT tr.*, tk.ts as tick_ts, a.name as agent_name
+    `SELECT tr.*, tk.ts as tick_ts, a.name as agent_name, a.prompt as agent_prompt
      FROM trades tr
      JOIN ticks tk ON tk.id = tr.tick_id
      JOIN agents a ON a.id = tr.agent_id
@@ -69,6 +70,9 @@ export default async function Page() {
     const units = Number(tr.moc_units);
     const usd = Number(tr.price_usd);
     const big = units * usd > 50; // arbitrary highlight threshold
+    const seed = String(tr.id ?? '') + String(tr.tick_id ?? '');
+    const joke = memeLine({ prompt: String(tr.agent_prompt ?? ''), side: tr.side, seed });
+
     rows.push({
       ts: String(tr.tick_ts).slice(11, 19),
       kind: tr.side,
@@ -76,6 +80,7 @@ export default async function Page() {
       lines: [
         `> ${tr.side} ${units.toFixed(2)} MOC @ $${usd.toFixed(6)}`,
         `"${tr.reason}"`,
+        `say: ${joke}`,
       ],
       highlight: tr.side === 'BUY' ? (big ? 'primary' : undefined) : tr.side === 'SELL' ? (big ? 'tape' : undefined) : undefined,
     });
