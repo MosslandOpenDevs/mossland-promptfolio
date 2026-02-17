@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "description": "Prompt-driven MOC paper trading league: build agent personas, compete in seasons, replay every decision.",
   "scripts": {
-    "dev": "next dev -p 3300",
+    "dev": "next dev -p 6200",
     "build": "next build",
-    "start": "next start -p 3300",
+    "start": "next start -p 6200",
     "lint": "next lint",
     "db:init": "tsx scripts/db-init.ts"
   },

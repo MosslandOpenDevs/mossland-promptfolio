@@ -25,7 +25,7 @@ Build a meme trader persona with a prompt, watch it trade, and replay every deci
 ```bash
 npm install
 npm run dev
-# open http://localhost:3300
+# open http://localhost:6200
 ```
 
 ## Env
