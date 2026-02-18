@@ -39,3 +39,7 @@
 - 최소 변경 원칙
 - 커밋 메시지 규칙: `type(scope): concise`
 - 변경 전/후 헬스체크 로그를 남김
+
+## 스프린트 진행 현황 (자동운영)
+- 1) Add ops check script and baseline endpoint monitoring for UI/API pages.
+- 2) Next cycle: add synthetic runbook for season lifecycle + backend data freshness check.
