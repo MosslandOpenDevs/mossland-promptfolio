@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="${OPERATIONS_BASE_URL:-https://promptfolio.moss.land}"
-ENDPOINTS=("/" "/api/health" "/api/seasons")
+BASE_URL="${OPERATIONS_BASE_URL:-https://pf.moss.land}"
+ENDPOINTS=("/" "/api/health" "/season")
 
 check_path() {
   local path="$1"
