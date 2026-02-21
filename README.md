@@ -1,35 +1,85 @@
 # mossland-promptfolio
 
-Prompt-driven **paper trading** league for **MOC (Moss Coin)**.
+> **Prompt-persona paper trading league for experimentation, replayability, and explainable strategy behavior.**
 
-Build a meme trader persona with a prompt, watch it trade, and replay every decision.
+![Status](https://img.shields.io/badge/Status-Active_Development-0ea5e9)
+![Domain](https://img.shields.io/badge/Domain-Simulation_Trading-black)
+![License](https://img.shields.io/badge/License-MIT-black)
 
-## What this is
-- **Game / entertainment** product (no real money, no investment advice)
-- Agents trade a simulated portfolio based on your **prompt persona**
-- Seasons, leaderboards, and shareable replays
+## ◼ Background
 
-## MVP features (v0)
-- Create an **Agent** (name + avatar + prompt)
-- Start a **Season** (time range + starting cash)
-- Run ticks (manual button / cron later)
-- Leaderboard (PnL + max drawdown)
-- Replay: every trade has a short **"because"** reason
+Many "AI trading" projects over-index on prediction claims and under-invest in explainability.  
+Promptfolio was designed as an explicit simulation-first sandbox:
 
-## Tech
-- Next.js (App Router)
-- SQLite (local file)
-- CoinGecko price feed for MOC (USD)
+- no real-money execution,
+- no hidden custody mechanics,
+- no pseudo-guarantee framing.
 
-## Dev
-```bash
-npm install
-npm run dev
-# open http://localhost:6200
+It is a system for strategy behavior experimentation, not financial promises.
+
+## ◼ Mission
+
+Enable teams to prototype, compare, and replay prompt-driven trading personas in a safe and fully simulated environment.
+
+## ◼ Vision
+
+Build a robust "agent strategy lab" where behavior quality can be evaluated over seasons, not single snapshots.
+
+## ◼ Product Philosophy
+
+- **Entertainment + experimentation first**
+- **Replayability over hype metrics**
+- **Explain decisions, don’t just score outcomes**
+
+## ◼ Core Features
+
+| Feature | Description |
+|---|---|
+| Persona setup | Agent identity built from prompt, name, avatar |
+| Season loop | Time-bounded competitive progression |
+| Replay trail | Reason-attached trade history |
+| Leaderboard | Outcome metrics (PnL, drawdown, consistency) |
+| Ops checks | Deployment-aligned runtime verification |
+
+## ◼ Architecture Snapshot
+
+```mermaid
+flowchart LR
+  Persona[Prompt Persona] --> Agent[Trading Agent]
+  Agent --> Sim[Simulation Engine]
+  Market[Price Feed] --> Sim
+  Sim --> Store[(SQLite)]
+  Store --> UI[Leaderboard + Replay]
 ```
 
-## Env
-Copy `.env.example` → `.env.local`.
+## ◼ Tech Stack
 
-## Disclaimer
-This is a **paper trading game** for fun. Nothing here is financial advice.
+- Next.js (App Router)
+- Node.js runtime
+- SQLite local persistence
+- CoinGecko feed integration (simulation context)
+
+## ◼ Quick Start
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:6200`
+
+## ◼ Operations
+
+```bash
+bash scripts/ops-check.sh
+```
+
+## ◼ Disclaimer
+
+This project is a **paper trading game** and strategy sandbox.  
+Nothing here is financial advice.
+
+## ◼ License
+
+MIT (or project-defined license)
