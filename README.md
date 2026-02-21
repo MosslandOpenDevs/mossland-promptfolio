@@ -1,51 +1,56 @@
 # mossland-promptfolio
 
 <p align="center">
-  <strong>Prompt-driven paper trading league for MOC</strong><br/>
-  Build personas, run seasons, and replay decision traces.
+  <img src="./docs/assets/readme/hero.svg" alt="mossland-promptfolio cover" width="100%" />
 </p>
 
 <p align="center">
-  <img alt="nextjs" src="https://img.shields.io/badge/Next.js-App%20Router-black?logo=next.js"/>
-  <img alt="sqlite" src="https://img.shields.io/badge/SQLite-local-003B57?logo=sqlite&logoColor=white"/>
-  <img alt="status" src="https://img.shields.io/badge/mode-paper%20trading-blue"/>
+  <strong>Prompt-Driven Paper Trading League</strong><br/>
+  Persona-based simulation trading experience for MOC with replayable decisions.
 </p>
+
+<p align="center">
+  <img alt="maintained" src="https://img.shields.io/badge/maintained-yes-16a34a"/>
+  <img alt="docs" src="https://img.shields.io/badge/docs-updated-0ea5e9"/>
+</p>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Why This Project](#why-this-project)
+- [Core Capabilities](#core-capabilities)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Operations](#operations)
+- [Roadmap](#roadmap)
+- [Security & Privacy](#security--privacy)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
 ## Overview
 
-`mossland-promptfolio` is an entertainment-focused **paper trading game**.
-Agents trade simulated portfolios based on prompt personas.
+Persona-based simulation trading experience for MOC with replayable decisions.
 
-### Not financial advice
-- No real-money execution
-- No brokerage integration
-- Simulation only
+Entertainment-first simulation. No real-money execution.
 
----
+## Why This Project
 
-## Features
+This repository exists to provide a practical, production-oriented foundation with clear operational visibility and repeatable workflows.
 
-- Agent persona creation (name/avatar/prompt)
-- Season-based league progression
-- Replayable decision logs ("because" reasoning)
-- Leaderboards (PnL, drawdown)
+## Core Capabilities
 
----
+- Structured runtime behavior with deterministic checks
+- Ops-oriented scripts for health verification and reporting
+- Clean handoff between development, validation, and reporting
+- Incremental enhancements designed for continuous operation loops
 
-## Architecture
+## Tech Stack
 
-```mermaid
-flowchart LR
-  A[Prompt Persona] --> B[Trading Agent]
-  B --> C[Tick Engine]
-  C --> D[(SQLite)]
-  E[Market Price Feed] --> C
-  D --> F[Leaderboard + Replay UI]
-```
-
----
+`Next.js, SQLite, Node.js`
 
 ## Quick Start
 
@@ -55,35 +60,27 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open: `http://localhost:6200`
-
----
-
 ## Operations
 
 ```bash
 bash scripts/ops-check.sh
 ```
 
-Use report envs when needed (example):
-- `PROMPTFOLIO_OPS_REPORT_FILE`
-- `PROMPTFOLIO_OPS_HISTORY_FILE`
+## Roadmap
 
----
+- Improve monitoring depth and trend-based diagnostics
+- Expand automation and report schema consistency
+- Strengthen failure-mode handling and recovery behavior
 
-## API Notes
+## Security & Privacy
 
-The canonical route set should remain aligned with the running app behavior  
-(e.g., season endpoint naming consistency in ops checks).
+- Do not commit secrets, tokens, or private infrastructure details.
+- Keep screenshots sanitized (no personal identifiers, no credential surfaces).
+- Generated README images in this repo are synthetic and privacy-safe.
 
----
+## Contributing
 
-## Security & Data Hygiene
-
-- Keep API keys and tokens out of repository files.
-- Use synthetic/test data for demos and screenshots.
-
----
+Issues and PRs are welcome. Please keep changes focused, tested, and operationally verifiable.
 
 ## License
 
