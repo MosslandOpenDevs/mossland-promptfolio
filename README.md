@@ -1,35 +1,90 @@
 # mossland-promptfolio
 
-Prompt-driven **paper trading** league for **MOC (Moss Coin)**.
+<p align="center">
+  <strong>Prompt-driven paper trading league for MOC</strong><br/>
+  Build personas, run seasons, and replay decision traces.
+</p>
 
-Build a meme trader persona with a prompt, watch it trade, and replay every decision.
+<p align="center">
+  <img alt="nextjs" src="https://img.shields.io/badge/Next.js-App%20Router-black?logo=next.js"/>
+  <img alt="sqlite" src="https://img.shields.io/badge/SQLite-local-003B57?logo=sqlite&logoColor=white"/>
+  <img alt="status" src="https://img.shields.io/badge/mode-paper%20trading-blue"/>
+</p>
 
-## What this is
-- **Game / entertainment** product (no real money, no investment advice)
-- Agents trade a simulated portfolio based on your **prompt persona**
-- Seasons, leaderboards, and shareable replays
+---
 
-## MVP features (v0)
-- Create an **Agent** (name + avatar + prompt)
-- Start a **Season** (time range + starting cash)
-- Run ticks (manual button / cron later)
-- Leaderboard (PnL + max drawdown)
-- Replay: every trade has a short **"because"** reason
+## Overview
 
-## Tech
-- Next.js (App Router)
-- SQLite (local file)
-- CoinGecko price feed for MOC (USD)
+`mossland-promptfolio` is an entertainment-focused **paper trading game**.
+Agents trade simulated portfolios based on prompt personas.
 
-## Dev
-```bash
-npm install
-npm run dev
-# open http://localhost:6200
+### Not financial advice
+- No real-money execution
+- No brokerage integration
+- Simulation only
+
+---
+
+## Features
+
+- Agent persona creation (name/avatar/prompt)
+- Season-based league progression
+- Replayable decision logs ("because" reasoning)
+- Leaderboards (PnL, drawdown)
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  A[Prompt Persona] --> B[Trading Agent]
+  B --> C[Tick Engine]
+  C --> D[(SQLite)]
+  E[Market Price Feed] --> C
+  D --> F[Leaderboard + Replay UI]
 ```
 
-## Env
-Copy `.env.example` → `.env.local`.
+---
 
-## Disclaimer
-This is a **paper trading game** for fun. Nothing here is financial advice.
+## Quick Start
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open: `http://localhost:6200`
+
+---
+
+## Operations
+
+```bash
+bash scripts/ops-check.sh
+```
+
+Use report envs when needed (example):
+- `PROMPTFOLIO_OPS_REPORT_FILE`
+- `PROMPTFOLIO_OPS_HISTORY_FILE`
+
+---
+
+## API Notes
+
+The canonical route set should remain aligned with the running app behavior  
+(e.g., season endpoint naming consistency in ops checks).
+
+---
+
+## Security & Data Hygiene
+
+- Keep API keys and tokens out of repository files.
+- Use synthetic/test data for demos and screenshots.
+
+---
+
+## License
+
+MIT (or project-defined license).
