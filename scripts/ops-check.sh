@@ -5,7 +5,10 @@ BASE_URL="${OPERATIONS_BASE_URL:-https://pf.moss.land}"
 ENDPOINTS=("/" "/api/health" "/season")
 RETRIES="${OPERATIONS_RETRIES:-2}"
 RETRY_DELAY_SECS="${OPERATIONS_RETRY_DELAY_SECS:-1}"
+STALE_HOURS_THRESHOLD="${PROMPTFOLIO_STALE_HOURS:-168}"
+STRICT_STALE_FAIL="${PROMPTFOLIO_STRICT_STALE_FAIL:-0}"
 FAILURES=0
+STALE_ALERT=false
 
 check_path() {
   local path="$1"
@@ -53,10 +56,35 @@ check_path() {
   fi
 }
 
+check_repo_activity() {
+  local repo_root latest_commit_epoch latest_commit_iso now_epoch age_hours
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  latest_commit_epoch="$(git -C "$repo_root" log -1 --format=%ct 2>/dev/null || echo 0)"
+  latest_commit_iso="$(git -C "$repo_root" log -1 --format=%cI 2>/dev/null || echo unknown)"
+  now_epoch="$(date +%s)"
+
+  if [[ "$latest_commit_epoch" =~ ^[0-9]+$ ]] && (( latest_commit_epoch > 0 )); then
+    age_hours=$(( (now_epoch - latest_commit_epoch) / 3600 ))
+  else
+    age_hours=999999
+  fi
+
+  if (( age_hours >= STALE_HOURS_THRESHOLD )); then
+    STALE_ALERT=true
+    echo "[mossland-promptfolio] repo activity: stale (${age_hours}h >= ${STALE_HOURS_THRESHOLD}h, latest=${latest_commit_iso})"
+    if [[ "$STRICT_STALE_FAIL" == "1" ]]; then
+      FAILURES=$((FAILURES + 1))
+    fi
+  else
+    echo "[mossland-promptfolio] repo activity: fresh (${age_hours}h < ${STALE_HOURS_THRESHOLD}h, latest=${latest_commit_iso})"
+  fi
+}
+
 printf "[mossland-promptfolio] checking %s\n" "$BASE_URL"
 for path in "${ENDPOINTS[@]}"; do
   check_path "$path"
 done
+check_repo_activity
 
 if [[ "$FAILURES" -gt 0 ]]; then
   echo "[mossland-promptfolio] FAILED checks: $FAILURES"
