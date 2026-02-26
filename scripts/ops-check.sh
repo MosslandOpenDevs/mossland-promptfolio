@@ -9,6 +9,8 @@ STALE_HOURS_THRESHOLD="${PROMPTFOLIO_STALE_HOURS:-168}"
 STRICT_STALE_FAIL="${PROMPTFOLIO_STRICT_STALE_FAIL:-0}"
 FAILURES=0
 STALE_ALERT=false
+REPO_ACTIVITY_STATUS="fresh"
+REPO_ACTIVITY_REASON="within_threshold"
 
 check_path() {
   local path="$1"
@@ -71,11 +73,15 @@ check_repo_activity() {
 
   if (( age_hours >= STALE_HOURS_THRESHOLD )); then
     STALE_ALERT=true
+    REPO_ACTIVITY_STATUS="stale"
+    REPO_ACTIVITY_REASON="age_hours_threshold_reached"
     echo "[mossland-promptfolio] repo activity: stale (${age_hours}h >= ${STALE_HOURS_THRESHOLD}h, latest=${latest_commit_iso})"
     if [[ "$STRICT_STALE_FAIL" == "1" ]]; then
       FAILURES=$((FAILURES + 1))
     fi
   else
+    REPO_ACTIVITY_STATUS="fresh"
+    REPO_ACTIVITY_REASON="within_threshold"
     echo "[mossland-promptfolio] repo activity: fresh (${age_hours}h < ${STALE_HOURS_THRESHOLD}h, latest=${latest_commit_iso})"
   fi
 }
@@ -87,8 +93,16 @@ done
 check_repo_activity
 
 if [[ "$FAILURES" -gt 0 ]]; then
+  status="fail"
   echo "[mossland-promptfolio] FAILED checks: $FAILURES"
-  exit 1
+  code=1
+else
+  status="ok"
+  echo "[mossland-promptfolio] all checks passed"
+  code=0
 fi
 
-echo "[mossland-promptfolio] all checks passed"
+summary="{\"service\":\"mossland-promptfolio\",\"status\":\"${status}\",\"failures\":${FAILURES},\"staleHoursThreshold\":${STALE_HOURS_THRESHOLD},\"staleAlert\":${STALE_ALERT},\"repoActivityStatus\":\"${REPO_ACTIVITY_STATUS}\",\"repoActivityReason\":\"${REPO_ACTIVITY_REASON}\",\"strictStaleFail\":${STRICT_STALE_FAIL},\"ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+echo "$summary"
+
+exit "$code"
