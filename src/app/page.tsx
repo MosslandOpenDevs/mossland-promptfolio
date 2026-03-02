@@ -68,6 +68,16 @@ export default async function Page() {
     });
   }
 
+  const sideCounts = trades.reduce(
+    (acc, tr) => {
+      if (tr.side === 'BUY') acc.BUY += 1;
+      else if (tr.side === 'SELL') acc.SELL += 1;
+      else acc.HOLD += 1;
+      return acc;
+    },
+    { BUY: 0, SELL: 0, HOLD: 0 }
+  );
+
   for (const tr of trades) {
     const units = Number(tr.moc_units);
     const usd = Number(tr.price_usd);
@@ -143,6 +153,9 @@ export default async function Page() {
               <span className="pf-pill">moc_usd: {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : '—'}</span>
               <span className="pf-pill">ticks: {ticksCount}</span>
               <span className="pf-pill">agents: {agentsCount}</span>
+              <span className="pf-pill">BUY: {sideCounts.BUY}</span>
+              <span className="pf-pill">SELL: {sideCounts.SELL}</span>
+              <span className="pf-pill">HOLD: {sideCounts.HOLD}</span>
             </div>
           </div>
 
