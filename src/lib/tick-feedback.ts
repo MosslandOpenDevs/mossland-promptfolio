@@ -21,6 +21,10 @@ export function buildTickErrorMessage(params: {
     return 'Price service is temporarily unavailable. Please retry shortly.';
   }
 
+  if (status === 401 || status === 403) {
+    return 'Tick execution is currently unauthorized. Please refresh and try again.';
+  }
+
   const raw = bodyText.trim();
   if (!raw) {
     return `Tick failed (HTTP ${status}).`;

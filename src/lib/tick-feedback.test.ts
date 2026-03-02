@@ -30,6 +30,16 @@ test('buildTickErrorMessage maps gateway timeout class status', () => {
   assert.equal(message, 'Price service is temporarily unavailable. Please retry shortly.');
 });
 
+test('buildTickErrorMessage maps auth failures to refresh hint', () => {
+  const message = buildTickErrorMessage({
+    status: 403,
+    bodyText: '',
+    contentType: 'text/plain',
+  });
+
+  assert.equal(message, 'Tick execution is currently unauthorized. Please refresh and try again.');
+});
+
 test('buildTickErrorMessage extracts JSON error message', () => {
   const message = buildTickErrorMessage({
     status: 500,
