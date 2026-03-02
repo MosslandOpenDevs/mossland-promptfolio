@@ -20,6 +20,16 @@ test('buildTickErrorMessage maps 429 to rate-limit hint', () => {
   assert.equal(message, 'Rate limited by price feed. Retry in a few seconds.');
 });
 
+test('buildTickErrorMessage maps gateway timeout class status', () => {
+  const message = buildTickErrorMessage({
+    status: 503,
+    bodyText: '',
+    contentType: 'text/plain',
+  });
+
+  assert.equal(message, 'Price service is temporarily unavailable. Please retry shortly.');
+});
+
 test('buildTickErrorMessage extracts JSON error message', () => {
   const message = buildTickErrorMessage({
     status: 500,

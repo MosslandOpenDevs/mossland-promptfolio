@@ -17,6 +17,10 @@ export function buildTickErrorMessage(params: {
     return 'Rate limited by price feed. Retry in a few seconds.';
   }
 
+  if (status === 502 || status === 503 || status === 504) {
+    return 'Price service is temporarily unavailable. Please retry shortly.';
+  }
+
   const raw = bodyText.trim();
   if (!raw) {
     return `Tick failed (HTTP ${status}).`;
