@@ -3,16 +3,19 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Spinner from './Spinner';
+import { buildTickErrorMessage, buildTickSuccessMessage } from '../lib/tick-feedback';
 
 export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [seed, setSeed] = useState(() => String(Date.now()));
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   async function run() {
     if (disabled || busy) return;
     setBusy(true);
     setSeed(String(Date.now()));
+    setNotice(null);
     try {
       const res = await fetch('/api/tick', {
         method: 'POST',
@@ -20,10 +23,34 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
           'x-pf-ajax': '1',
         },
       });
-      if (!res.ok) throw new Error('tick failed');
+      const bodyText = await res.text();
+      if (!res.ok) {
+        setNotice({
+          type: 'error',
+          text: buildTickErrorMessage({
+            status: res.status,
+            bodyText,
+            contentType: res.headers.get('content-type'),
+          }),
+        });
+        return;
+      }
+      let mocUsd = Number.NaN;
+      try {
+        const parsed = JSON.parse(bodyText) as { mocUsd?: unknown };
+        if (typeof parsed.mocUsd === 'number') {
+          mocUsd = parsed.mocUsd;
+        }
+      } catch {
+        // Keep fallback success message if body is not JSON.
+      }
+      setNotice({ type: 'success', text: buildTickSuccessMessage(mocUsd) });
       router.refresh();
     } catch {
-      // let it fail silently for now; terminal feed will show stale state
+      setNotice({
+        type: 'error',
+        text: 'Network error while executing tick. Please retry.',
+      });
     } finally {
       setBusy(false);
     }
@@ -43,6 +70,17 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
       {busy && (
         <div className="pf-dim" style={{ fontSize: 10 }}>
           tip: this is paper trading. if it breaks, it’s lore.
+        </div>
+      )}
+      {notice && (
+        <div
+          className="pf-dim"
+          style={{
+            fontSize: 11,
+            color: notice.type === 'error' ? 'var(--alert)' : 'var(--primary)',
+          }}
+        >
+          {notice.text}
         </div>
       )}
     </div>
