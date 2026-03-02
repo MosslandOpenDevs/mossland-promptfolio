@@ -12,7 +12,7 @@ export default function TerminalLog({ title, rows }: { title: string; rows: Term
   return (
     <div className="pf-terminal">
       <div className="pf-terminal__bar">
-        <span>/// {title}</span>
+        <span>{`/// ${title}`}</span>
         <span style={{ opacity: 0.8 }}>code</span>
       </div>
       <div className="pf-terminal__log">

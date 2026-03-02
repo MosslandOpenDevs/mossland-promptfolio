@@ -23,11 +23,21 @@ test('buildTickErrorMessage maps 429 to rate-limit hint', () => {
 test('buildTickErrorMessage extracts JSON error message', () => {
   const message = buildTickErrorMessage({
     status: 500,
-    bodyText: JSON.stringify({ error: 'database is locked' }),
+    bodyText: JSON.stringify({ error: 'backend unavailable' }),
     contentType: 'application/json; charset=utf-8',
   });
 
-  assert.equal(message, 'database is locked');
+  assert.equal(message, 'backend unavailable');
+});
+
+test('buildTickErrorMessage maps database lock to retry hint', () => {
+  const message = buildTickErrorMessage({
+    status: 500,
+    bodyText: JSON.stringify({ error: 'Database is locked' }),
+    contentType: 'application/json',
+  });
+
+  assert.equal(message, 'Another tick is still being processed. Please retry in a few seconds.');
 });
 
 test('buildTickErrorMessage maps known price failure strings', () => {

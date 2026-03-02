@@ -34,6 +34,9 @@ export function buildTickErrorMessage(params: {
         if (text.includes('Malformed price response')) {
           return 'Price feed returned an invalid payload. Please retry.';
         }
+        if (text.toLowerCase().includes('database is locked')) {
+          return 'Another tick is still being processed. Please retry in a few seconds.';
+        }
         return text.trim();
       }
     } catch {
@@ -46,6 +49,9 @@ export function buildTickErrorMessage(params: {
   }
   if (raw.includes('Malformed price response')) {
     return 'Price feed returned an invalid payload. Please retry.';
+  }
+  if (raw.toLowerCase().includes('database is locked')) {
+    return 'Another tick is still being processed. Please retry in a few seconds.';
   }
 
   return `Tick failed (HTTP ${status}).`;
