@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTickErrorMessage, buildTickSuccessMessage, isTickErrorRetryable } from './tick-feedback.ts';
+import { buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, isTickErrorRetryable } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -106,4 +106,26 @@ test('isTickErrorRetryable returns true for known transient backend payloads', (
 
 test('isTickErrorRetryable returns false for non-transient auth errors', () => {
   assert.equal(isTickErrorRetryable({ status: 403, bodyText: '', contentType: 'text/plain' }), false);
+});
+
+test('buildTickRetryHint returns status-aware delay hints for retryable failures', () => {
+  assert.equal(
+    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }),
+    'Suggested retry delay: 3s'
+  );
+  assert.equal(
+    buildTickRetryHint({ status: 503, bodyText: '', contentType: 'text/plain' }),
+    'Suggested retry delay: 5s'
+  );
+  assert.equal(
+    buildTickRetryHint({ status: 500, bodyText: 'Database is locked', contentType: 'text/plain' }),
+    'Suggested retry delay: 2s'
+  );
+});
+
+test('buildTickRetryHint returns null for non-retryable failures', () => {
+  assert.equal(
+    buildTickRetryHint({ status: 403, bodyText: '', contentType: 'text/plain' }),
+    null
+  );
 });

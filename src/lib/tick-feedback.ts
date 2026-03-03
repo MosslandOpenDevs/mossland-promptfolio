@@ -41,6 +41,26 @@ export function isTickErrorRetryable(params: {
   return false;
 }
 
+export function buildTickRetryHint(params: {
+  status: number;
+  bodyText: string;
+  contentType?: string | null;
+}): string | null {
+  if (!isTickErrorRetryable(params)) {
+    return null;
+  }
+
+  if (params.status === 429) {
+    return 'Suggested retry delay: 3s';
+  }
+
+  if ([502, 503, 504].includes(params.status)) {
+    return 'Suggested retry delay: 5s';
+  }
+
+  return 'Suggested retry delay: 2s';
+}
+
 export function buildTickErrorMessage(params: {
   status: number;
   bodyText: string;
