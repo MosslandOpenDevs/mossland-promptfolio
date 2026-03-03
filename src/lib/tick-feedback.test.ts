@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTickErrorMessage, buildTickSuccessMessage } from './tick-feedback.ts';
+import { buildTickErrorMessage, buildTickSuccessMessage, isTickErrorRetryable } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -78,4 +78,32 @@ test('buildTickErrorMessage returns generic fallback for empty response', () => 
   });
 
   assert.equal(message, 'Tick failed (HTTP 500).');
+});
+
+test('isTickErrorRetryable returns true for transient status codes', () => {
+  assert.equal(isTickErrorRetryable({ status: 429, bodyText: '', contentType: 'text/plain' }), true);
+  assert.equal(isTickErrorRetryable({ status: 503, bodyText: '', contentType: 'text/plain' }), true);
+});
+
+test('isTickErrorRetryable returns true for known transient backend payloads', () => {
+  assert.equal(
+    isTickErrorRetryable({
+      status: 500,
+      bodyText: JSON.stringify({ error: 'Database is locked' }),
+      contentType: 'application/json',
+    }),
+    true
+  );
+  assert.equal(
+    isTickErrorRetryable({
+      status: 500,
+      bodyText: 'Price fetch failed: timeout',
+      contentType: 'text/plain',
+    }),
+    true
+  );
+});
+
+test('isTickErrorRetryable returns false for non-transient auth errors', () => {
+  assert.equal(isTickErrorRetryable({ status: 403, bodyText: '', contentType: 'text/plain' }), false);
 });

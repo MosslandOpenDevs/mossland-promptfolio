@@ -6,6 +6,41 @@ export function buildTickSuccessMessage(mocUsd: number): string {
   return `Tick executed. MOC: $${mocUsd.toFixed(6)}`;
 }
 
+export function isTickErrorRetryable(params: {
+  status: number;
+  bodyText: string;
+  contentType?: string | null;
+}): boolean {
+  const { status, bodyText, contentType } = params;
+
+  if ([429, 502, 503, 504].includes(status)) {
+    return true;
+  }
+
+  const raw = bodyText.trim().toLowerCase();
+  if (!raw) {
+    return false;
+  }
+
+  if (raw.includes('price fetch failed') || raw.includes('malformed price response') || raw.includes('database is locked')) {
+    return true;
+  }
+
+  const looksJson = (contentType ?? '').toLowerCase().includes('application/json');
+  if (looksJson) {
+    try {
+      const parsed = JSON.parse(bodyText.trim()) as { error?: unknown; message?: unknown };
+      const text = typeof parsed.error === 'string' ? parsed.error : typeof parsed.message === 'string' ? parsed.message : '';
+      const normalized = text.toLowerCase();
+      return normalized.includes('price fetch failed') || normalized.includes('malformed price response') || normalized.includes('database is locked');
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
 export function buildTickErrorMessage(params: {
   status: number;
   bodyText: string;
