@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, isTickErrorRetryable } from './tick-feedback.ts';
+import { buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, getTickRetryDelayMs, isTickErrorRetryable } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -128,4 +128,14 @@ test('buildTickRetryHint returns null for non-retryable failures', () => {
     buildTickRetryHint({ status: 403, bodyText: '', contentType: 'text/plain' }),
     null
   );
+});
+
+test('getTickRetryDelayMs returns numeric delay for retryable failures', () => {
+  assert.equal(getTickRetryDelayMs({ status: 429, bodyText: '', contentType: 'text/plain' }), 3000);
+  assert.equal(getTickRetryDelayMs({ status: 503, bodyText: '', contentType: 'text/plain' }), 5000);
+  assert.equal(getTickRetryDelayMs({ status: 500, bodyText: 'Database is locked', contentType: 'text/plain' }), 2000);
+});
+
+test('getTickRetryDelayMs returns null for non-retryable failures', () => {
+  assert.equal(getTickRetryDelayMs({ status: 401, bodyText: '', contentType: 'text/plain' }), null);
 });

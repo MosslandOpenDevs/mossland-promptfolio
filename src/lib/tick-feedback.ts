@@ -41,24 +41,37 @@ export function isTickErrorRetryable(params: {
   return false;
 }
 
-export function buildTickRetryHint(params: {
+export function getTickRetryDelayMs(params: {
   status: number;
   bodyText: string;
   contentType?: string | null;
-}): string | null {
+}): number | null {
   if (!isTickErrorRetryable(params)) {
     return null;
   }
 
   if (params.status === 429) {
-    return 'Suggested retry delay: 3s';
+    return 3000;
   }
 
   if ([502, 503, 504].includes(params.status)) {
-    return 'Suggested retry delay: 5s';
+    return 5000;
   }
 
-  return 'Suggested retry delay: 2s';
+  return 2000;
+}
+
+export function buildTickRetryHint(params: {
+  status: number;
+  bodyText: string;
+  contentType?: string | null;
+}): string | null {
+  const retryDelayMs = getTickRetryDelayMs(params);
+  if (retryDelayMs === null) {
+    return null;
+  }
+
+  return `Suggested retry delay: ${Math.round(retryDelayMs / 1000)}s`;
 }
 
 export function buildTickErrorMessage(params: {
