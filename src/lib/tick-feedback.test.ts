@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, getTickRetryDelayMs, isTickErrorRetryable } from './tick-feedback.ts';
+import { buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -138,4 +138,9 @@ test('getTickRetryDelayMs returns numeric delay for retryable failures', () => {
 
 test('getTickRetryDelayMs returns null for non-retryable failures', () => {
   assert.equal(getTickRetryDelayMs({ status: 401, bodyText: '', contentType: 'text/plain' }), null);
+});
+
+test('formatRetryDelayLabel formats milliseconds and seconds', () => {
+  assert.equal(formatRetryDelayLabel(250), '250ms');
+  assert.equal(formatRetryDelayLabel(3000), '3s');
 });

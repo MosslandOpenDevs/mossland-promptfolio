@@ -61,6 +61,14 @@ export function getTickRetryDelayMs(params: {
   return 2000;
 }
 
+export function formatRetryDelayLabel(delayMs: number): string {
+  if (delayMs >= 1000) {
+    return `${Math.round(delayMs / 1000)}s`;
+  }
+
+  return `${delayMs}ms`;
+}
+
 export function buildTickRetryHint(params: {
   status: number;
   bodyText: string;
@@ -71,7 +79,7 @@ export function buildTickRetryHint(params: {
     return null;
   }
 
-  return `Suggested retry delay: ${Math.round(retryDelayMs / 1000)}s`;
+  return `Suggested retry delay: ${formatRetryDelayLabel(retryDelayMs)}`;
 }
 
 export function buildTickErrorMessage(params: {
