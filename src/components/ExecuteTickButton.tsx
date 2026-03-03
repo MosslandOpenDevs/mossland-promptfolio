@@ -3,13 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Spinner from './Spinner';
-import { buildTickErrorMessage, buildTickSuccessMessage } from '../lib/tick-feedback';
+import { buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage } from '../lib/tick-feedback';
 
 export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [seed, setSeed] = useState(() => String(Date.now()));
-  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string; hint?: string | null } | null>(null);
 
   async function run() {
     if (disabled || busy) return;
@@ -28,6 +28,11 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
         setNotice({
           type: 'error',
           text: buildTickErrorMessage({
+            status: res.status,
+            bodyText,
+            contentType: res.headers.get('content-type'),
+          }),
+          hint: buildTickRetryHint({
             status: res.status,
             bodyText,
             contentType: res.headers.get('content-type'),
@@ -78,9 +83,12 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
           style={{
             fontSize: 11,
             color: notice.type === 'error' ? 'var(--alert)' : 'var(--primary)',
+            display: 'grid',
+            gap: 4,
           }}
         >
-          {notice.text}
+          <div>{notice.text}</div>
+          {notice.hint && <div style={{ opacity: 0.9 }}>{notice.hint}</div>}
         </div>
       )}
     </div>
