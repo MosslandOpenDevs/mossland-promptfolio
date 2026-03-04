@@ -69,17 +69,41 @@ export function formatRetryDelayLabel(delayMs: number): string {
   return `${delayMs}ms`;
 }
 
-export function buildTickRetryHint(params: {
-  status: number;
-  bodyText: string;
-  contentType?: string | null;
-}): string | null {
+export function buildTickRetryHint(
+  params: {
+    status: number;
+    bodyText: string;
+    contentType?: string | null;
+  },
+  retryAfterHeader?: string | null,
+): string | null {
   const retryDelayMs = getTickRetryDelayMs(params);
   if (retryDelayMs === null) {
     return null;
   }
 
-  return `Suggested retry delay: ${formatRetryDelayLabel(retryDelayMs)}`;
+  const retryAfterMs = parseRetryAfterMs(retryAfterHeader);
+  const effectiveDelayMs = retryAfterMs !== null ? Math.max(retryDelayMs, retryAfterMs) : retryDelayMs;
+
+  return `Suggested retry delay: ${formatRetryDelayLabel(effectiveDelayMs)}`;
+}
+
+export function parseRetryAfterMs(retryAfterHeader: string | null | undefined): number | null {
+  if (!retryAfterHeader) {
+    return null;
+  }
+
+  const normalized = retryAfterHeader.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const seconds = Number(normalized);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.round(seconds * 1000);
+  }
+
+  return null;
 }
 
 export function buildNetworkRetryHint(): string {

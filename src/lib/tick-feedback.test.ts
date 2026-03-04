@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable } from './tick-feedback.ts';
+import { buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable, parseRetryAfterMs } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -123,6 +123,13 @@ test('buildTickRetryHint returns status-aware delay hints for retryable failures
   );
 });
 
+test('buildTickRetryHint respects Retry-After header when larger than baseline', () => {
+  assert.equal(
+    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }, '7'),
+    'Suggested retry delay: 7s'
+  );
+});
+
 test('buildTickRetryHint returns null for non-retryable failures', () => {
   assert.equal(
     buildTickRetryHint({ status: 403, bodyText: '', contentType: 'text/plain' }),
@@ -147,4 +154,11 @@ test('formatRetryDelayLabel formats milliseconds and seconds', () => {
 
 test('buildNetworkRetryHint returns client retry guidance', () => {
   assert.equal(buildNetworkRetryHint(), 'Suggested retry delay: 2s');
+});
+
+test('parseRetryAfterMs parses numeric Retry-After seconds', () => {
+  assert.equal(parseRetryAfterMs('3'), 3000);
+  assert.equal(parseRetryAfterMs(' 1.5 '), 1500);
+  assert.equal(parseRetryAfterMs(''), null);
+  assert.equal(parseRetryAfterMs('abc'), null);
 });

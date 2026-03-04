@@ -32,11 +32,14 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
             bodyText,
             contentType: res.headers.get('content-type'),
           }),
-          hint: buildTickRetryHint({
-            status: res.status,
-            bodyText,
-            contentType: res.headers.get('content-type'),
-          }),
+          hint: buildTickRetryHint(
+            {
+              status: res.status,
+              bodyText,
+              contentType: res.headers.get('content-type'),
+            },
+            res.headers.get('retry-after')
+          ),
         });
         return;
       }
