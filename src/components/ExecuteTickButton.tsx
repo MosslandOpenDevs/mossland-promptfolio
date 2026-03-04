@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Spinner from './Spinner';
-import { buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage } from '../lib/tick-feedback';
+import { buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage } from '../lib/tick-feedback';
 
 export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) {
   const router = useRouter();
@@ -55,6 +55,7 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
       setNotice({
         type: 'error',
         text: 'Network error while executing tick. Please retry.',
+        hint: buildNetworkRetryHint(),
       });
     } finally {
       setBusy(false);

@@ -82,6 +82,10 @@ export function buildTickRetryHint(params: {
   return `Suggested retry delay: ${formatRetryDelayLabel(retryDelayMs)}`;
 }
 
+export function buildNetworkRetryHint(): string {
+  return `Suggested retry delay: ${formatRetryDelayLabel(2000)}`;
+}
+
 export function buildTickErrorMessage(params: {
   status: number;
   bodyText: string;
