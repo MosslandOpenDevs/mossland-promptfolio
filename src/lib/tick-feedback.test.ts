@@ -158,10 +158,11 @@ test('getTickRetryDelayMs returns null for non-retryable failures', () => {
   assert.equal(getTickRetryDelayMs({ status: 401, bodyText: '', contentType: 'text/plain' }), null);
 });
 
-test('formatRetryDelayLabel formats milliseconds, seconds, and minutes', () => {
+test('formatRetryDelayLabel formats milliseconds, seconds, minutes, and hours', () => {
   assert.equal(formatRetryDelayLabel(250), '250ms');
   assert.equal(formatRetryDelayLabel(3000), '3s');
   assert.equal(formatRetryDelayLabel(120000), '2m');
+  assert.equal(formatRetryDelayLabel(7200000), '2h');
 });
 
 test('buildNetworkRetryHint returns client retry guidance', () => {
