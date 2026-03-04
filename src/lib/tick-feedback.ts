@@ -62,6 +62,10 @@ export function getTickRetryDelayMs(params: {
 }
 
 export function formatRetryDelayLabel(delayMs: number): string {
+  if (delayMs >= 60000) {
+    return `${Math.round(delayMs / 60000)}m`;
+  }
+
   if (delayMs >= 1000) {
     return `${Math.round(delayMs / 1000)}s`;
   }
