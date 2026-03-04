@@ -162,3 +162,14 @@ test('parseRetryAfterMs parses numeric Retry-After seconds', () => {
   assert.equal(parseRetryAfterMs(''), null);
   assert.equal(parseRetryAfterMs('abc'), null);
 });
+
+test('parseRetryAfterMs parses HTTP-date Retry-After values', () => {
+  const originalNow = Date.now;
+  Date.now = () => Date.parse('Wed, 04 Mar 2026 05:00:00 GMT');
+  try {
+    assert.equal(parseRetryAfterMs('Wed, 04 Mar 2026 05:00:05 GMT'), 5000);
+    assert.equal(parseRetryAfterMs('Wed, 04 Mar 2026 04:59:59 GMT'), 0);
+  } finally {
+    Date.now = originalNow;
+  }
+});

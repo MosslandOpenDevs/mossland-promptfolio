@@ -103,6 +103,12 @@ export function parseRetryAfterMs(retryAfterHeader: string | null | undefined): 
     return Math.round(seconds * 1000);
   }
 
+  const retryAtMs = Date.parse(normalized);
+  if (Number.isFinite(retryAtMs)) {
+    const delayMs = retryAtMs - Date.now();
+    return delayMs > 0 ? delayMs : 0;
+  }
+
   return null;
 }
 
