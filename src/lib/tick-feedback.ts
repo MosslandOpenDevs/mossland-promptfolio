@@ -69,6 +69,25 @@ export function formatRetryDelayLabel(delayMs: number): string {
   return `${delayMs}ms`;
 }
 
+export function resolveRetryDelayMs(params: {
+  baselineDelayMs: number;
+  retryAfterHeader?: string | null;
+  strategy?: 'max' | 'header' | 'baseline';
+}): number {
+  const { baselineDelayMs, retryAfterHeader, strategy = 'max' } = params;
+  const retryAfterMs = parseRetryAfterMs(retryAfterHeader);
+
+  if (strategy === 'header') {
+    return retryAfterMs ?? baselineDelayMs;
+  }
+
+  if (strategy === 'baseline') {
+    return baselineDelayMs;
+  }
+
+  return retryAfterMs !== null ? Math.max(baselineDelayMs, retryAfterMs) : baselineDelayMs;
+}
+
 export function buildTickRetryHint(
   params: {
     status: number;
@@ -76,14 +95,18 @@ export function buildTickRetryHint(
     contentType?: string | null;
   },
   retryAfterHeader?: string | null,
+  strategy: 'max' | 'header' | 'baseline' = 'max',
 ): string | null {
   const retryDelayMs = getTickRetryDelayMs(params);
   if (retryDelayMs === null) {
     return null;
   }
 
-  const retryAfterMs = parseRetryAfterMs(retryAfterHeader);
-  const effectiveDelayMs = retryAfterMs !== null ? Math.max(retryDelayMs, retryAfterMs) : retryDelayMs;
+  const effectiveDelayMs = resolveRetryDelayMs({
+    baselineDelayMs: retryDelayMs,
+    retryAfterHeader,
+    strategy,
+  });
 
   return `Suggested retry delay: ${formatRetryDelayLabel(effectiveDelayMs)}`;
 }

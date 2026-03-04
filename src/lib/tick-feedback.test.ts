@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable, parseRetryAfterMs } from './tick-feedback.ts';
+import { buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable, parseRetryAfterMs, resolveRetryDelayMs } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -130,6 +130,17 @@ test('buildTickRetryHint respects Retry-After header when larger than baseline',
   );
 });
 
+test('buildTickRetryHint supports strategy overrides', () => {
+  assert.equal(
+    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }, '1', 'baseline'),
+    'Suggested retry delay: 3s'
+  );
+  assert.equal(
+    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }, '1', 'header'),
+    'Suggested retry delay: 1s'
+  );
+});
+
 test('buildTickRetryHint returns null for non-retryable failures', () => {
   assert.equal(
     buildTickRetryHint({ status: 403, bodyText: '', contentType: 'text/plain' }),
@@ -172,4 +183,11 @@ test('parseRetryAfterMs parses HTTP-date Retry-After values', () => {
   } finally {
     Date.now = originalNow;
   }
+});
+
+test('resolveRetryDelayMs applies configured merge strategies', () => {
+  assert.equal(resolveRetryDelayMs({ baselineDelayMs: 3000, retryAfterHeader: '1', strategy: 'max' }), 3000);
+  assert.equal(resolveRetryDelayMs({ baselineDelayMs: 3000, retryAfterHeader: '1', strategy: 'header' }), 1000);
+  assert.equal(resolveRetryDelayMs({ baselineDelayMs: 3000, retryAfterHeader: '9', strategy: 'header' }), 9000);
+  assert.equal(resolveRetryDelayMs({ baselineDelayMs: 3000, retryAfterHeader: '9', strategy: 'baseline' }), 3000);
 });
