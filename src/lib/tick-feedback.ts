@@ -149,7 +149,9 @@ export function buildTickRetryHint(
   return `Suggested retry delay: ${formatRetryDelayLabel(jitteredDelayMs)}`;
 }
 
-export function parseRetryAfterMs(retryAfterHeader: string | null | undefined): number | null {
+const MAX_RETRY_AFTER_MS = 10 * 60 * 1000;
+
+export function parseRetryAfterMs(retryAfterHeader: string | null | undefined, maxDelayMs = MAX_RETRY_AFTER_MS): number | null {
   if (!retryAfterHeader) {
     return null;
   }
@@ -159,15 +161,20 @@ export function parseRetryAfterMs(retryAfterHeader: string | null | undefined): 
     return null;
   }
 
+  const clampDelay = (value: number): number => {
+    const cappedMax = Number.isFinite(maxDelayMs) && maxDelayMs >= 0 ? maxDelayMs : MAX_RETRY_AFTER_MS;
+    return Math.min(Math.max(0, value), cappedMax);
+  };
+
   const seconds = Number(normalized);
   if (Number.isFinite(seconds) && seconds >= 0) {
-    return Math.round(seconds * 1000);
+    return clampDelay(Math.round(seconds * 1000));
   }
 
   const retryAtMs = Date.parse(normalized);
   if (Number.isFinite(retryAtMs)) {
     const delayMs = retryAtMs - Date.now();
-    return delayMs > 0 ? delayMs : 0;
+    return clampDelay(delayMs > 0 ? delayMs : 0);
   }
 
   return null;
