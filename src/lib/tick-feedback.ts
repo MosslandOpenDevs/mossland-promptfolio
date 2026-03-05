@@ -184,6 +184,41 @@ export function buildNetworkRetryHint(): string {
   return `Suggested retry delay: ${formatRetryDelayLabel(2000)}`;
 }
 
+export function buildTickErrorCode(params: {
+  status: number;
+  bodyText: string;
+  contentType?: string | null;
+}): string {
+  const { status, bodyText, contentType } = params;
+  const raw = bodyText.trim();
+
+  if (status === 429) return 'rate_limited';
+  if (status === 502 || status === 503 || status === 504) return 'service_unavailable';
+  if (status === 401 || status === 403) return 'unauthorized';
+  if (!raw) return 'http_error';
+
+  const looksJson = (contentType ?? '').toLowerCase().includes('application/json');
+  if (looksJson) {
+    try {
+      const parsed = JSON.parse(raw) as { error?: unknown; message?: unknown };
+      const text = typeof parsed.error === 'string' ? parsed.error : typeof parsed.message === 'string' ? parsed.message : '';
+      const normalized = text.toLowerCase();
+      if (normalized.includes('price fetch failed')) return 'price_fetch_failed';
+      if (normalized.includes('malformed price response')) return 'malformed_price_response';
+      if (normalized.includes('database is locked')) return 'database_locked';
+    } catch {
+      return 'http_error';
+    }
+  }
+
+  const lowered = raw.toLowerCase();
+  if (lowered.includes('price fetch failed')) return 'price_fetch_failed';
+  if (lowered.includes('malformed price response')) return 'malformed_price_response';
+  if (lowered.includes('database is locked')) return 'database_locked';
+
+  return 'http_error';
+}
+
 export function buildTickErrorMessage(params: {
   status: number;
   bodyText: string;

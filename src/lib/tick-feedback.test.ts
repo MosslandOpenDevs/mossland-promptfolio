@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyRetryJitterMs, buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable, parseRetryAfterMs, resolveRetryDelayMs } from './tick-feedback.ts';
+import { applyRetryJitterMs, buildNetworkRetryHint, buildTickErrorCode, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable, parseRetryAfterMs, resolveRetryDelayMs } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -208,4 +208,14 @@ test('resolveRetryDelayMs applies configured merge strategies', () => {
   assert.equal(resolveRetryDelayMs({ baselineDelayMs: 3000, retryAfterHeader: '1', strategy: 'header' }), 1000);
   assert.equal(resolveRetryDelayMs({ baselineDelayMs: 3000, retryAfterHeader: '9', strategy: 'header' }), 9000);
   assert.equal(resolveRetryDelayMs({ baselineDelayMs: 3000, retryAfterHeader: '9', strategy: 'baseline' }), 3000);
+});
+
+test('buildTickErrorCode maps retry and backend classes', () => {
+  assert.equal(buildTickErrorCode({ status: 429, bodyText: '', contentType: 'text/plain' }), 'rate_limited');
+  assert.equal(buildTickErrorCode({ status: 503, bodyText: '', contentType: 'text/plain' }), 'service_unavailable');
+  assert.equal(buildTickErrorCode({ status: 403, bodyText: '', contentType: 'text/plain' }), 'unauthorized');
+  assert.equal(
+    buildTickErrorCode({ status: 500, bodyText: JSON.stringify({ error: 'Database is locked' }), contentType: 'application/json' }),
+    'database_locked'
+  );
 });
