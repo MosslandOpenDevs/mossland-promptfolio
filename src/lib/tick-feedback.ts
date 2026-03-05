@@ -96,6 +96,29 @@ export function resolveRetryDelayMs(params: {
   return retryAfterMs !== null ? Math.max(baselineDelayMs, retryAfterMs) : baselineDelayMs;
 }
 
+export function applyRetryJitterMs(params: {
+  delayMs: number;
+  jitterRatio?: number;
+  seed?: number;
+}): number {
+  const { delayMs, jitterRatio = 0, seed = 0.5 } = params;
+
+  if (!Number.isFinite(delayMs) || delayMs <= 0) {
+    return 0;
+  }
+
+  const normalizedRatio = Math.min(Math.max(jitterRatio, 0), 0.5);
+  if (normalizedRatio === 0) {
+    return Math.round(delayMs);
+  }
+
+  const normalizedSeed = Number.isFinite(seed) ? Math.min(Math.max(seed, 0), 1) : 0.5;
+  const jitterRange = delayMs * normalizedRatio;
+  const jitterOffset = (normalizedSeed - 0.5) * 2 * jitterRange;
+
+  return Math.max(0, Math.round(delayMs + jitterOffset));
+}
+
 export function buildTickRetryHint(
   params: {
     status: number;
@@ -104,6 +127,7 @@ export function buildTickRetryHint(
   },
   retryAfterHeader?: string | null,
   strategy: 'max' | 'header' | 'baseline' = 'max',
+  jitterRatio = 0,
 ): string | null {
   const retryDelayMs = getTickRetryDelayMs(params);
   if (retryDelayMs === null) {
@@ -116,7 +140,13 @@ export function buildTickRetryHint(
     strategy,
   });
 
-  return `Suggested retry delay: ${formatRetryDelayLabel(effectiveDelayMs)}`;
+  const jitteredDelayMs = applyRetryJitterMs({
+    delayMs: effectiveDelayMs,
+    jitterRatio,
+    seed: params.status / 1000,
+  });
+
+  return `Suggested retry delay: ${formatRetryDelayLabel(jitteredDelayMs)}`;
 }
 
 export function parseRetryAfterMs(retryAfterHeader: string | null | undefined): number | null {

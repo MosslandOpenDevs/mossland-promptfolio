@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable, parseRetryAfterMs, resolveRetryDelayMs } from './tick-feedback.ts';
+import { applyRetryJitterMs, buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage, formatRetryDelayLabel, getTickRetryDelayMs, isTickErrorRetryable, parseRetryAfterMs, resolveRetryDelayMs } from './tick-feedback.ts';
 
 test('buildTickSuccessMessage formats positive price', () => {
   assert.equal(buildTickSuccessMessage(0.12345678), 'Tick executed. MOC: $0.123457');
@@ -132,13 +132,24 @@ test('buildTickRetryHint respects Retry-After header when larger than baseline',
 
 test('buildTickRetryHint supports strategy overrides', () => {
   assert.equal(
-    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }, '1', 'baseline'),
+    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }, '1', 'baseline', 0.1),
     'Suggested retry delay: 3s'
   );
   assert.equal(
-    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }, '1', 'header'),
+    buildTickRetryHint({ status: 429, bodyText: '', contentType: 'text/plain' }, '1', 'header', 0),
     'Suggested retry delay: 1s'
   );
+});
+
+test('applyRetryJitterMs returns deterministic bounded jitter', () => {
+  assert.equal(applyRetryJitterMs({ delayMs: 3000, jitterRatio: 0.1, seed: 0 }), 2700);
+  assert.equal(applyRetryJitterMs({ delayMs: 3000, jitterRatio: 0.1, seed: 1 }), 3300);
+  assert.equal(applyRetryJitterMs({ delayMs: 3000, jitterRatio: 0.1, seed: 0.5 }), 3000);
+});
+
+test('applyRetryJitterMs clamps ratio and handles invalid delays', () => {
+  assert.equal(applyRetryJitterMs({ delayMs: -1, jitterRatio: 0.1, seed: 0.5 }), 0);
+  assert.equal(applyRetryJitterMs({ delayMs: 2000, jitterRatio: 1, seed: 1 }), 3000);
 });
 
 test('buildTickRetryHint returns null for non-retryable failures', () => {
