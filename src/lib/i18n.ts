@@ -18,6 +18,7 @@ const dict = {
     agents: 'Agents',
     season: 'Season',
     leaderboard: 'Leaderboard',
+    replay: 'Replay',
     disclaimer: 'Disclaimer: paper trading only. Not financial advice.',
 
     agentsTitle: 'Agents',
@@ -58,6 +59,7 @@ const dict = {
     agents: '에이전트',
     season: '시즌',
     leaderboard: '랭킹',
+    replay: '리플레이',
     disclaimer: '면책: 모의투자 게임이야. 투자 조언 아님.',
 
     agentsTitle: '에이전트',

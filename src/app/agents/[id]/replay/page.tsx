@@ -1,6 +1,7 @@
 import { db } from '../../../../lib/db';
 import { notFound } from 'next/navigation';
 import { getLocale, t } from '../../../../lib/i18n';
+import { buildReplayTimeline } from '../../../../lib/replay';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,9 +35,20 @@ export default async function AgentReplayPage({ params }: { params: { id: string
      FROM trades tr
      JOIN ticks tk ON tk.id = tr.tick_id
      WHERE tr.season_id=? AND tr.agent_id=?
-     ORDER BY tk.ts DESC, tr.created_at DESC
+     ORDER BY tk.ts ASC, tr.created_at ASC
      LIMIT 200`
   ).all(season.id, agent.id) as any[];
+  const timeline = buildReplayTimeline(
+    trades.map((tr) => ({
+      id: String(tr.id),
+      tickTs: String(tr.tick_ts),
+      side: String(tr.side),
+      mocUnits: Number(tr.moc_units),
+      priceUsd: Number(tr.price_usd),
+      reason: String(tr.reason ?? ''),
+    })),
+    mocUsd || null
+  ).reverse();
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
@@ -57,25 +69,38 @@ export default async function AgentReplayPage({ params }: { params: { id: string
 
       <div style={card}>
         <div style={{ fontWeight: 800, marginBottom: 10 }}>Trade timeline</div>
-        {trades.length === 0 ? (
+        {timeline.length === 0 ? (
           <div style={{ opacity: 0.7 }}>No trades yet. Run a tick and let the meme gods decide.</div>
         ) : (
-          <div style={{ display: 'grid', gap: 10 }}>
-            {trades.map((tr) => (
-              <div key={tr.id} style={{ borderBottom: '1px solid #1f2a37', paddingBottom: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-                  <div style={{ fontWeight: 800 }}>{tr.side}</div>
-                  <div style={{ opacity: 0.75, fontSize: 12 }}>{tr.tick_ts}</div>
-                </div>
-                <div style={{ display: 'flex', gap: 12, marginTop: 6, opacity: 0.9, fontSize: 13, flexWrap: 'wrap' }}>
-                  <div><span style={dim}>units</span> {Number(tr.moc_units).toFixed(4)} MOC</div>
-                  <div><span style={dim}>price</span> ${Number(tr.price_usd).toFixed(6)}</div>
-                </div>
-                <div style={{ marginTop: 6, opacity: 0.85, fontSize: 13, lineHeight: 1.4 }}>
-                  <span style={dim}>because</span> {tr.reason}
-                </div>
-              </div>
-            ))}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={table}>
+              <thead>
+                <tr>
+                  <th style={th}>time</th>
+                  <th style={th}>date</th>
+                  <th style={th}>action</th>
+                  <th style={th}>price</th>
+                  <th style={th}>units</th>
+                  <th style={th}>realized PnL</th>
+                  <th style={th}>unrealized PnL</th>
+                  <th style={th}>reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {timeline.map((row) => (
+                  <tr key={row.id} style={trRow}>
+                    <td style={td}>{row.timestamp.slice(11, 19)}</td>
+                    <td style={td}>{row.date}</td>
+                    <td style={{ ...td, textTransform: 'uppercase', fontWeight: 800 }}>{row.action}</td>
+                    <td style={td}>${row.priceUsd.toFixed(6)}</td>
+                    <td style={td}>{row.mocUnits.toFixed(4)}</td>
+                    <td style={td}>{formatPnl(row.realizedPnlUsd)}</td>
+                    <td style={td}>{formatPnl(row.unrealizedPnlUsd)}</td>
+                    <td style={{ ...td, minWidth: 280 }}>{row.reason}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -95,3 +120,33 @@ const card: React.CSSProperties = {
 };
 
 const dim: React.CSSProperties = { opacity: 0.6, marginRight: 6 };
+
+const table: React.CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  fontSize: 12,
+};
+
+const th: React.CSSProperties = {
+  textAlign: 'left',
+  borderBottom: '1px solid #2a3648',
+  padding: '8px 6px',
+  opacity: 0.7,
+  whiteSpace: 'nowrap',
+};
+
+const td: React.CSSProperties = {
+  borderBottom: '1px solid #1f2a37',
+  padding: '8px 6px',
+  verticalAlign: 'top',
+};
+
+const trRow: React.CSSProperties = {
+  fontVariantNumeric: 'tabular-nums',
+};
+
+function formatPnl(value: number | null): string {
+  if (value == null) return '—';
+  const sign = value > 0 ? '+' : '';
+  return `${sign}$${value.toFixed(2)}`;
+}

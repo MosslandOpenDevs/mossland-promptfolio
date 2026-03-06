@@ -174,6 +174,7 @@ export default async function Page() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <Link href="/agents" className="pf-btn" style={{ flex: 1 }}>AGENT LAB</Link>
               <Link href="/leaderboard" className="pf-btn" style={{ flex: 1 }}>RANK</Link>
+              <Link href="/replay" className="pf-btn" style={{ flex: 1 }}>REPLAY</Link>
             </div>
 
             <div className="pf-dim" style={{ fontSize: 10, textAlign: 'center' }}>
