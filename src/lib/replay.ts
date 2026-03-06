@@ -29,6 +29,19 @@ function normalizeAction(side: string): ReplayAction {
   return 'hold';
 }
 
+function normalizeNumber(value: number, fallback = 0): number {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeNonNegative(value: number): number {
+  return Math.max(0, normalizeNumber(value));
+}
+
+function normalizeOptionalNumber(value: number | null | undefined): number | null {
+  if (value == null) return null;
+  return Number.isFinite(value) ? value : null;
+}
+
 export function buildReplayTimeline(
   tradesAsc: ReplayTradeInput[],
   latestPriceUsd?: number | null
@@ -39,18 +52,19 @@ export function buildReplayTimeline(
 
   return tradesAsc.map((trade) => {
     const action = normalizeAction(trade.side);
+    const priceUsd = normalizeNumber(trade.priceUsd);
+    const mocUnits = normalizeNonNegative(trade.mocUnits);
 
     if (action === 'buy') {
-      const purchaseUnits = Math.max(0, trade.mocUnits);
       const totalCostBefore = positionUnits * averageCostUsd;
-      const totalCostAfter = totalCostBefore + purchaseUnits * trade.priceUsd;
-      positionUnits += purchaseUnits;
+      const totalCostAfter = totalCostBefore + mocUnits * priceUsd;
+      positionUnits += mocUnits;
       averageCostUsd = positionUnits > 0 ? totalCostAfter / positionUnits : 0;
     }
 
     if (action === 'sell') {
-      const sellUnits = Math.max(0, Math.min(trade.mocUnits, positionUnits));
-      realizedPnlUsd += (trade.priceUsd - averageCostUsd) * sellUnits;
+      const sellUnits = Math.min(mocUnits, positionUnits);
+      realizedPnlUsd += (priceUsd - averageCostUsd) * sellUnits;
       positionUnits -= sellUnits;
       if (positionUnits <= 0) {
         positionUnits = 0;
@@ -58,16 +72,19 @@ export function buildReplayTimeline(
       }
     }
 
+    const normalizedLatestPriceUsd = normalizeOptionalNumber(latestPriceUsd);
     const unrealizedPnlUsd =
-      latestPriceUsd == null || positionUnits <= 0 ? null : (latestPriceUsd - averageCostUsd) * positionUnits;
+      normalizedLatestPriceUsd == null || positionUnits <= 0
+        ? null
+        : (normalizedLatestPriceUsd - averageCostUsd) * positionUnits;
 
     return {
       id: trade.id,
       timestamp: trade.tickTs,
       date: trade.tickTs.slice(0, 10),
       action,
-      priceUsd: trade.priceUsd,
-      mocUnits: trade.mocUnits,
+      priceUsd,
+      mocUnits,
       reason: trade.reason,
       realizedPnlUsd,
       unrealizedPnlUsd,

@@ -48,3 +48,21 @@ test('buildReplayTimeline keeps position unchanged on hold', () => {
   assert.equal(rows[1].positionUnits, 1);
   assert.equal(rows[1].unrealizedPnlUsd, null);
 });
+
+test('buildReplayTimeline normalizes invalid numeric values safely', () => {
+  const rows = buildReplayTimeline(
+    [
+      { id: 't1', tickTs: '2026-03-01T00:00:00.000Z', side: 'BUY', mocUnits: Number.NaN, priceUsd: Number.NaN, reason: 'bad-entry' },
+      { id: 't2', tickTs: '2026-03-02T00:00:00.000Z', side: 'SELL', mocUnits: -3, priceUsd: Number.POSITIVE_INFINITY, reason: 'bad-exit' },
+    ],
+    Number.NaN
+  );
+
+  assert.equal(rows[0].mocUnits, 0);
+  assert.equal(rows[0].priceUsd, 0);
+  assert.equal(rows[1].mocUnits, 0);
+  assert.equal(rows[1].priceUsd, 0);
+  assert.equal(rows[1].positionUnits, 0);
+  assert.equal(rows[1].realizedPnlUsd, 0);
+  assert.equal(rows[1].unrealizedPnlUsd, null);
+});
