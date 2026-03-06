@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Black_Ops_One, Courier_Prime, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import LocaleToggle from '../components/LocaleToggle';
 import { getLocale, t } from '../lib/i18n';
@@ -8,18 +9,30 @@ export const metadata = {
   description: 'Prompt-driven MOC paper trading league',
 };
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-space-grotesk',
+});
+
+const courierPrime = Courier_Prime({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-courier-prime',
+});
+
+const blackOpsOne = Black_Ops_One({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-black-ops-one',
+});
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   const locale = getLocale();
 
   return (
     <html lang={locale}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Black+Ops+One&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
-      </head>
-      <body>
+      <body className={`${spaceGrotesk.variable} ${courierPrime.variable} ${blackOpsOne.variable}`}>
         <div className="pf-wrap">
           <div className="pf-top">
             <div>

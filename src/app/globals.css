@@ -21,7 +21,7 @@ body{
   margin:0;
   background:var(--paper-bg);
   color:var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier Prime", "Courier New", monospace;
+  font-family: var(--font-courier-prime), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 /* paper texture */
@@ -53,7 +53,7 @@ body::after{
   font-weight:900;
   letter-spacing:.14em;
   text-transform:uppercase;
-  font-family:"Black Ops One", ui-monospace, monospace;
+  font-family:var(--font-black-ops-one), ui-monospace, monospace;
 }
 
 .pf-tag{ margin-top:4px; font-size:10px; color:rgba(74,74,74,.9); letter-spacing:.22em; text-transform:uppercase; }
@@ -73,7 +73,7 @@ hr{ border:0; border-top:2px solid var(--ink); opacity:.85; margin:16px 0; borde
   box-shadow:var(--shadow-paper);
 }
 
-.pf-h1{ margin:0; font-size:30px; line-height:1.1; letter-spacing:-.02em; font-family:"Space Grotesk", system-ui, sans-serif; }
+.pf-h1{ margin:0; font-size:30px; line-height:1.1; letter-spacing:-.02em; font-family:var(--font-space-grotesk), system-ui, sans-serif; }
 .pf-h2{ margin:0; font-size:16px; letter-spacing:.06em; text-transform:uppercase; color:rgba(74,74,74,.9); }
 
 .pf-sub{ margin:0; color:rgba(74,74,74,.9); line-height:1.55; }
@@ -127,7 +127,7 @@ hr{ border:0; border-top:2px solid var(--ink); opacity:.85; margin:16px 0; borde
   background:rgba(244,241,234,.65);
   color:var(--ink);
   outline:none;
-  font-family:"Courier Prime", ui-monospace, monospace;
+  font-family:var(--font-courier-prime), ui-monospace, monospace;
 }
 
 .pf-label{ font-size:10px; color:rgba(74,74,74,.8); margin-bottom:6px; letter-spacing:.22em; text-transform:uppercase; }
