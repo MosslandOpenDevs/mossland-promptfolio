@@ -21,7 +21,8 @@ export default async function ReplayIndexPage({
   const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
   const sort = sortParam === 'name' ? 'name' : 'equity';
   const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
-  const query = (qParam ?? '').trim().toLowerCase();
+  const query = (qParam ?? '').trim();
+  const queryLower = query.toLowerCase();
 
   const agents = d
     .prepare(
@@ -32,17 +33,18 @@ export default async function ReplayIndexPage({
     )
     .all(season?.id ?? '') as any[];
 
-  const rankedAgents = agents
-    .map((agent) => {
-      const cash = Number(agent.cash_usd ?? season?.starting_cash_usd ?? 0);
-      const units = Number(agent.moc_units ?? 0);
-      const equity = cash + units * mocUsd;
-      return { ...agent, cash, units, equity };
-    })
+  const computedAgents = agents.map((agent) => {
+    const cash = Number(agent.cash_usd ?? season?.starting_cash_usd ?? 0);
+    const units = Number(agent.moc_units ?? 0);
+    const equity = cash + units * mocUsd;
+    return { ...agent, cash, units, equity };
+  });
+
+  const rankedAgents = computedAgents
     .filter((agent) => {
-      if (!query) return true;
+      if (!queryLower) return true;
       const haystack = `${agent.name ?? ''} ${agent.id ?? ''}`.toLowerCase();
-      return haystack.includes(query);
+      return haystack.includes(queryLower);
     })
     .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.equity - a.equity));
 
@@ -63,6 +65,9 @@ export default async function ReplayIndexPage({
         <Link href={query ? `/replay?sort=name&q=${encodeURIComponent(query)}` : '/replay?sort=name'} style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}>
           name
         </Link>
+        <span style={{ opacity: 0.7 }}>
+          {rankedAgents.length}/{computedAgents.length} shown
+        </span>
       </div>
 
       <form method="get" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
