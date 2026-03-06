@@ -4,7 +4,11 @@ import { getLocale } from '../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ReplayIndexPage() {
+export default async function ReplayIndexPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   getLocale();
   const d = db();
 
@@ -13,6 +17,9 @@ export default async function ReplayIndexPage() {
     ? (d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 1`).get(season.id) as any)
     : null;
   const mocUsd = Number(lastTick?.moc_usd ?? 0);
+
+  const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
+  const sort = sortParam === 'name' ? 'name' : 'equity';
 
   const agents = d
     .prepare(
@@ -23,6 +30,15 @@ export default async function ReplayIndexPage() {
     )
     .all(season?.id ?? '') as any[];
 
+  const rankedAgents = agents
+    .map((agent) => {
+      const cash = Number(agent.cash_usd ?? season?.starting_cash_usd ?? 0);
+      const units = Number(agent.moc_units ?? 0);
+      const equity = cash + units * mocUsd;
+      return { ...agent, cash, units, equity };
+    })
+    .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.equity - a.equity));
+
   return (
     <main style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
@@ -32,34 +48,41 @@ export default async function ReplayIndexPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gap: 10 }}>
-        {agents.map((agent) => {
-          const cash = Number(agent.cash_usd ?? season?.starting_cash_usd ?? 0);
-          const units = Number(agent.moc_units ?? 0);
-          const equity = cash + units * mocUsd;
-
-          return (
-            <div key={agent.id} style={card}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 22 }}>{agent.avatar_emoji}</div>
-                  <div style={{ fontWeight: 800 }}>{agent.name}</div>
-                </div>
-                <Link href={`/agents/${agent.id}/replay`} style={{ color: '#7ee787' }}>
-                  open timeline →
-                </Link>
-              </div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 8, opacity: 0.8, fontSize: 13, flexWrap: 'wrap' }}>
-                <div>equity ${equity.toFixed(2)}</div>
-                <div>cash ${cash.toFixed(2)}</div>
-                <div>MOC {units.toFixed(2)}</div>
-              </div>
-            </div>
-          );
-        })}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, opacity: 0.85 }}>
+        <span>sort:</span>
+        <Link href="/replay?sort=equity" style={{ color: sort === 'equity' ? '#7ee787' : '#9ab' }}>
+          equity
+        </Link>
+        <Link href="/replay?sort=name" style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}>
+          name
+        </Link>
       </div>
 
-      {agents.length === 0 && <div style={{ opacity: 0.7 }}>No agents yet.</div>}
+      <div style={{ display: 'grid', gap: 10 }}>
+        {rankedAgents.map((agent, index) => (
+          <div key={agent.id} style={card}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ fontSize: 22 }}>{agent.avatar_emoji}</div>
+                <div style={{ fontWeight: 800 }}>{agent.name}</div>
+                {sort === 'equity' && (
+                  <div style={{ fontSize: 12, opacity: 0.7 }}>#{index + 1}</div>
+                )}
+              </div>
+              <Link href={`/agents/${agent.id}/replay`} style={{ color: '#7ee787' }}>
+                open timeline →
+              </Link>
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8, opacity: 0.8, fontSize: 13, flexWrap: 'wrap' }}>
+              <div>equity ${agent.equity.toFixed(2)}</div>
+              <div>cash ${agent.cash.toFixed(2)}</div>
+              <div>MOC {agent.units.toFixed(2)}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {rankedAgents.length === 0 && <div style={{ opacity: 0.7 }}>No agents yet.</div>}
     </main>
   );
 }
