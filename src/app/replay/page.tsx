@@ -20,6 +20,8 @@ export default async function ReplayIndexPage({
 
   const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
   const sort = sortParam === 'name' ? 'name' : 'equity';
+  const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
+  const query = (qParam ?? '').trim().toLowerCase();
 
   const agents = d
     .prepare(
@@ -37,6 +39,11 @@ export default async function ReplayIndexPage({
       const equity = cash + units * mocUsd;
       return { ...agent, cash, units, equity };
     })
+    .filter((agent) => {
+      if (!query) return true;
+      const haystack = `${agent.name ?? ''} ${agent.id ?? ''}`.toLowerCase();
+      return haystack.includes(query);
+    })
     .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.equity - a.equity));
 
   return (
@@ -50,13 +57,36 @@ export default async function ReplayIndexPage({
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, opacity: 0.85 }}>
         <span>sort:</span>
-        <Link href="/replay?sort=equity" style={{ color: sort === 'equity' ? '#7ee787' : '#9ab' }}>
+        <Link href={query ? `/replay?sort=equity&q=${encodeURIComponent(query)}` : '/replay?sort=equity'} style={{ color: sort === 'equity' ? '#7ee787' : '#9ab' }}>
           equity
         </Link>
-        <Link href="/replay?sort=name" style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}>
+        <Link href={query ? `/replay?sort=name&q=${encodeURIComponent(query)}` : '/replay?sort=name'} style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}>
           name
         </Link>
       </div>
+
+      <form method="get" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input type="hidden" name="sort" value={sort} />
+        <input
+          name="q"
+          defaultValue={query}
+          placeholder="filter by agent name or id"
+          style={{
+            background: '#0b0f14',
+            border: '1px solid #253042',
+            color: '#e6edf3',
+            borderRadius: 8,
+            padding: '8px 10px',
+            minWidth: 220,
+          }}
+        />
+        <button type="submit" style={filterButton}>apply</button>
+        {query && (
+          <Link href={sort === 'name' ? '/replay?sort=name' : '/replay?sort=equity'} style={{ color: '#9ab', fontSize: 12 }}>
+            clear
+          </Link>
+        )}
+      </form>
 
       <div style={{ display: 'grid', gap: 10 }}>
         {rankedAgents.map((agent, index) => (
@@ -82,7 +112,9 @@ export default async function ReplayIndexPage({
         ))}
       </div>
 
-      {rankedAgents.length === 0 && <div style={{ opacity: 0.7 }}>No agents yet.</div>}
+      {rankedAgents.length === 0 && (
+        <div style={{ opacity: 0.7 }}>{query ? `No agents matched "${query}".` : 'No agents yet.'}</div>
+      )}
     </main>
   );
 }
@@ -92,4 +124,14 @@ const card: React.CSSProperties = {
   borderRadius: 12,
   padding: 12,
   background: '#0f1720',
+};
+
+const filterButton: React.CSSProperties = {
+  border: '1px solid #2a6b3f',
+  borderRadius: 8,
+  padding: '8px 12px',
+  background: '#10311d',
+  color: '#7ee787',
+  fontWeight: 700,
+  cursor: 'pointer',
 };
