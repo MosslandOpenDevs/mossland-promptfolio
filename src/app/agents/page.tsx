@@ -3,10 +3,22 @@ import { getLocale, t } from '../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AgentsPage() {
+export default async function AgentsPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   const locale = getLocale();
   const d = db();
   const agents = d.prepare(`SELECT id, name, avatar_emoji, prompt, created_at FROM agents ORDER BY created_at DESC`).all() as any[];
+  const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
+  const q = (qParam ?? '').trim();
+  const qLower = q.toLocaleLowerCase(locale);
+  const filteredAgents = agents.filter((agent) => {
+    if (!qLower) return true;
+    const haystack = `${agent.name ?? ''} ${agent.id ?? ''} ${agent.prompt ?? ''}`.toLocaleLowerCase(locale);
+    return haystack.includes(qLower);
+  });
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
@@ -30,8 +42,33 @@ export default async function AgentsPage() {
         </div>
       </form>
 
+      <form method="get" style={{ ...card, display: 'grid', gap: 8 }}>
+        <label>
+          <div style={label}>{t(locale, 'agentsFilterLabel')}</div>
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder={t(locale, 'agentsFilterPlaceholder')}
+            style={input}
+          />
+        </label>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ opacity: 0.75, fontSize: 12 }}>
+            {t(locale, 'agentsFilterShowing')} {filteredAgents.length} {t(locale, 'agentsFilterOf')} {agents.length}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button style={button} type="submit">{t(locale, 'agentsFilterApply')}</button>
+            {q && (
+              <a href="/agents" style={{ color: '#9ab', fontSize: 12 }}>
+                {t(locale, 'agentsFilterClear')}
+              </a>
+            )}
+          </div>
+        </div>
+      </form>
+
       <div style={{ display: 'grid', gap: 12 }}>
-        {agents.map((a) => (
+        {filteredAgents.map((a) => (
           <a key={a.id} href={`/agents/${a.id}`} style={{ ...card, textDecoration: 'none', color: 'inherit' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ fontSize: 24 }}>{a.avatar_emoji}</div>
@@ -42,6 +79,7 @@ export default async function AgentsPage() {
           </a>
         ))}
         {agents.length === 0 && <div style={{ opacity: 0.7 }}>{t(locale, 'noAgents')}</div>}
+        {agents.length > 0 && filteredAgents.length === 0 && <div style={{ opacity: 0.7 }}>{t(locale, 'noAgentsMatch')}</div>}
       </div>
     </main>
   );
