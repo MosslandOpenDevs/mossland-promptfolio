@@ -66,6 +66,7 @@ export default async function ReplayIndexPage({
   };
 
   const minEqPresets = [100, 500, 1_000, 5_000];
+  const maxEqPresets = [100, 500, 1_000, 5_000];
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
@@ -151,7 +152,7 @@ export default async function ReplayIndexPage({
           return (
             <Link
               key={preset}
-              href={buildReplayHref(sort, preset)}
+              href={buildReplayHref(sort, preset, maxEq)}
               style={{
                 border: `1px solid ${active ? '#2a6b3f' : '#253042'}`,
                 background: active ? '#10311d' : '#0b0f14',
@@ -162,6 +163,29 @@ export default async function ReplayIndexPage({
               }}
             >
               ≥ ${preset.toLocaleString()}
+            </Link>
+          );
+        })}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, opacity: 0.9 }}>
+        <span style={{ opacity: 0.75 }}>quick max equity:</span>
+        {maxEqPresets.map((preset) => {
+          const active = maxEq === preset;
+          return (
+            <Link
+              key={preset}
+              href={buildReplayHref(sort, minEq, preset)}
+              style={{
+                border: `1px solid ${active ? '#6b4f2a' : '#253042'}`,
+                background: active ? '#2f2413' : '#0b0f14',
+                color: active ? '#ffd38f' : '#9ab',
+                borderRadius: 999,
+                padding: '4px 10px',
+                fontWeight: 700,
+              }}
+            >
+              ≤ ${preset.toLocaleString()}
             </Link>
           );
         })}
