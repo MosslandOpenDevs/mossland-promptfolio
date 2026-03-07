@@ -87,6 +87,11 @@ export default async function ReplayIndexPage({
       : equityValues.length % 2 === 1
         ? equityValues[Math.floor(equityValues.length / 2)]
         : (equityValues[equityValues.length / 2 - 1] + equityValues[equityValues.length / 2]) / 2;
+  const averageEquity =
+    equityValues.length === 0 ? null : equityValues.reduce((sum, value) => sum + value, 0) / equityValues.length;
+  const equitySpread = topEquity !== null && bottomEquity !== null ? topEquity - bottomEquity : null;
+  const equitySpreadRatio =
+    equitySpread !== null && medianEquity !== null && medianEquity > 0 ? (equitySpread / medianEquity) * 100 : null;
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
@@ -233,7 +238,10 @@ export default async function ReplayIndexPage({
         >
           <span style={summaryBadge}>top ${topEquity!.toFixed(2)}</span>
           <span style={summaryBadge}>median ${medianEquity!.toFixed(2)}</span>
+          <span style={summaryBadge}>avg ${averageEquity!.toFixed(2)}</span>
           <span style={summaryBadge}>bottom ${bottomEquity!.toFixed(2)}</span>
+          {equitySpread !== null && <span style={summaryBadge}>spread ${equitySpread.toFixed(2)}</span>}
+          {equitySpreadRatio !== null && <span style={summaryBadge}>spread {equitySpreadRatio.toFixed(1)}%</span>}
         </div>
       )}
 
