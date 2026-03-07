@@ -152,7 +152,7 @@ export default async function ReplayIndexPage({
           return (
             <Link
               key={preset}
-              href={buildReplayHref(sort, preset, maxEq)}
+              href={buildReplayHref(sort, active ? 0 : preset, maxEq)}
               style={{
                 border: `1px solid ${active ? '#2a6b3f' : '#253042'}`,
                 background: active ? '#10311d' : '#0b0f14',
@@ -161,6 +161,8 @@ export default async function ReplayIndexPage({
                 padding: '4px 10px',
                 fontWeight: 700,
               }}
+              aria-current={active ? 'true' : undefined}
+              title={active ? 'disable min equity filter' : 'apply min equity filter'}
             >
               ≥ ${preset.toLocaleString()}
             </Link>
@@ -175,7 +177,7 @@ export default async function ReplayIndexPage({
           return (
             <Link
               key={preset}
-              href={buildReplayHref(sort, minEq, preset)}
+              href={buildReplayHref(sort, minEq, active ? 0 : preset)}
               style={{
                 border: `1px solid ${active ? '#6b4f2a' : '#253042'}`,
                 background: active ? '#2f2413' : '#0b0f14',
@@ -184,6 +186,8 @@ export default async function ReplayIndexPage({
                 padding: '4px 10px',
                 fontWeight: 700,
               }}
+              aria-current={active ? 'true' : undefined}
+              title={active ? 'disable max equity filter' : 'apply max equity filter'}
             >
               ≤ ${preset.toLocaleString()}
             </Link>
