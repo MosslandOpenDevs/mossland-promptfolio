@@ -29,6 +29,10 @@ export default async function ReplayIndexPage({
   const maxEqParam = Array.isArray(searchParams?.maxEq) ? searchParams?.maxEq[0] : searchParams?.maxEq;
   const parsedMaxEq = Number(maxEqParam ?? '');
   const maxEq = Number.isFinite(parsedMaxEq) && parsedMaxEq > 0 ? parsedMaxEq : 0;
+  const isEqRangeAutoCorrected = minEq > 0 && maxEq > 0 && minEq > maxEq;
+  const [effectiveMinEq, effectiveMaxEq] = isEqRangeAutoCorrected
+    ? [maxEq, minEq]
+    : [minEq, maxEq];
 
   const agents = d
     .prepare(
@@ -52,11 +56,15 @@ export default async function ReplayIndexPage({
       const haystack = `${agent.name ?? ''} ${agent.id ?? ''}`.toLowerCase();
       return haystack.includes(queryLower);
     })
-    .filter((agent) => agent.equity >= minEq)
-    .filter((agent) => (maxEq > 0 ? agent.equity <= maxEq : true))
+    .filter((agent) => agent.equity >= effectiveMinEq)
+    .filter((agent) => (effectiveMaxEq > 0 ? agent.equity <= effectiveMaxEq : true))
     .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.equity - a.equity));
 
-  const buildReplayHref = (nextSort: 'name' | 'equity', nextMinEq: number = minEq, nextMaxEq: number = maxEq) => {
+  const buildReplayHref = (
+    nextSort: 'name' | 'equity',
+    nextMinEq: number = effectiveMinEq,
+    nextMaxEq: number = effectiveMaxEq
+  ) => {
     const params = new URLSearchParams();
     params.set('sort', nextSort);
     if (query) params.set('q', query);
@@ -110,7 +118,7 @@ export default async function ReplayIndexPage({
           type="number"
           min={0}
           step="10"
-          defaultValue={minEq > 0 ? minEq : ''}
+          defaultValue={effectiveMinEq > 0 ? effectiveMinEq : ''}
           placeholder="min equity"
           style={{
             background: '#0b0f14',
@@ -126,7 +134,7 @@ export default async function ReplayIndexPage({
           type="number"
           min={0}
           step="10"
-          defaultValue={maxEq > 0 ? maxEq : ''}
+          defaultValue={effectiveMaxEq > 0 ? effectiveMaxEq : ''}
           placeholder="max equity"
           style={{
             background: '#0b0f14',
@@ -138,21 +146,27 @@ export default async function ReplayIndexPage({
           }}
         />
         <button type="submit" style={filterButton}>apply</button>
-        {(query || minEq > 0 || maxEq > 0) && (
+        {(query || effectiveMinEq > 0 || effectiveMaxEq > 0) && (
           <Link href={buildReplayHref(sort, 0, 0)} style={{ color: '#9ab', fontSize: 12 }}>
             clear
           </Link>
         )}
       </form>
 
+      {isEqRangeAutoCorrected && (
+        <div style={{ fontSize: 12, opacity: 0.75, color: '#ffd38f' }}>
+          min/max equity values were reversed, so the range was auto-corrected.
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, opacity: 0.9 }}>
         <span style={{ opacity: 0.75 }}>quick min equity:</span>
         {minEqPresets.map((preset) => {
-          const active = minEq === preset;
+          const active = effectiveMinEq === preset;
           return (
             <Link
               key={preset}
-              href={buildReplayHref(sort, active ? 0 : preset, maxEq)}
+              href={buildReplayHref(sort, active ? 0 : preset, effectiveMaxEq)}
               style={{
                 border: `1px solid ${active ? '#2a6b3f' : '#253042'}`,
                 background: active ? '#10311d' : '#0b0f14',
@@ -173,11 +187,11 @@ export default async function ReplayIndexPage({
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, opacity: 0.9 }}>
         <span style={{ opacity: 0.75 }}>quick max equity:</span>
         {maxEqPresets.map((preset) => {
-          const active = maxEq === preset;
+          const active = effectiveMaxEq === preset;
           return (
             <Link
               key={preset}
-              href={buildReplayHref(sort, minEq, active ? 0 : preset)}
+              href={buildReplayHref(sort, effectiveMinEq, active ? 0 : preset)}
               style={{
                 border: `1px solid ${active ? '#6b4f2a' : '#253042'}`,
                 background: active ? '#2f2413' : '#0b0f14',
@@ -221,7 +235,7 @@ export default async function ReplayIndexPage({
 
       {rankedAgents.length === 0 && (
         <div style={{ opacity: 0.7 }}>
-          {query || minEq > 0 || maxEq > 0 ? `No agents matched current filters.` : 'No agents yet.'}
+          {query || effectiveMinEq > 0 || effectiveMaxEq > 0 ? `No agents matched current filters.` : 'No agents yet.'}
         </div>
       )}
     </main>
