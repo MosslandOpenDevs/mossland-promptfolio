@@ -26,6 +26,9 @@ export default async function ReplayIndexPage({
   const minEqParam = Array.isArray(searchParams?.minEq) ? searchParams?.minEq[0] : searchParams?.minEq;
   const parsedMinEq = Number(minEqParam ?? '');
   const minEq = Number.isFinite(parsedMinEq) && parsedMinEq > 0 ? parsedMinEq : 0;
+  const maxEqParam = Array.isArray(searchParams?.maxEq) ? searchParams?.maxEq[0] : searchParams?.maxEq;
+  const parsedMaxEq = Number(maxEqParam ?? '');
+  const maxEq = Number.isFinite(parsedMaxEq) && parsedMaxEq > 0 ? parsedMaxEq : 0;
 
   const agents = d
     .prepare(
@@ -50,13 +53,15 @@ export default async function ReplayIndexPage({
       return haystack.includes(queryLower);
     })
     .filter((agent) => agent.equity >= minEq)
+    .filter((agent) => (maxEq > 0 ? agent.equity <= maxEq : true))
     .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.equity - a.equity));
 
-  const buildReplayHref = (nextSort: 'name' | 'equity', nextMinEq: number = minEq) => {
+  const buildReplayHref = (nextSort: 'name' | 'equity', nextMinEq: number = minEq, nextMaxEq: number = maxEq) => {
     const params = new URLSearchParams();
     params.set('sort', nextSort);
     if (query) params.set('q', query);
     if (nextMinEq > 0) params.set('minEq', String(nextMinEq));
+    if (nextMaxEq > 0) params.set('maxEq', String(nextMaxEq));
     return `/replay?${params.toString()}`;
   };
 
@@ -115,9 +120,25 @@ export default async function ReplayIndexPage({
             width: 130,
           }}
         />
+        <input
+          name="maxEq"
+          type="number"
+          min={0}
+          step="10"
+          defaultValue={maxEq > 0 ? maxEq : ''}
+          placeholder="max equity"
+          style={{
+            background: '#0b0f14',
+            border: '1px solid #253042',
+            color: '#e6edf3',
+            borderRadius: 8,
+            padding: '8px 10px',
+            width: 130,
+          }}
+        />
         <button type="submit" style={filterButton}>apply</button>
-        {(query || minEq > 0) && (
-          <Link href={buildReplayHref(sort, 0)} style={{ color: '#9ab', fontSize: 12 }}>
+        {(query || minEq > 0 || maxEq > 0) && (
+          <Link href={buildReplayHref(sort, 0, 0)} style={{ color: '#9ab', fontSize: 12 }}>
             clear
           </Link>
         )}
@@ -172,7 +193,7 @@ export default async function ReplayIndexPage({
 
       {rankedAgents.length === 0 && (
         <div style={{ opacity: 0.7 }}>
-          {query || minEq > 0 ? `No agents matched current filters.` : 'No agents yet.'}
+          {query || minEq > 0 || maxEq > 0 ? `No agents matched current filters.` : 'No agents yet.'}
         </div>
       )}
     </main>
