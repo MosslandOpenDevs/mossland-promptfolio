@@ -76,6 +76,18 @@ export default async function ReplayIndexPage({
   const minEqPresets = [100, 500, 1_000, 5_000];
   const maxEqPresets = [100, 500, 1_000, 5_000];
 
+  const equityValues = rankedAgents
+    .map((agent) => agent.equity)
+    .sort((a, b) => b - a);
+  const topEquity = equityValues[0] ?? null;
+  const bottomEquity = equityValues.length > 0 ? equityValues[equityValues.length - 1] : null;
+  const medianEquity =
+    equityValues.length === 0
+      ? null
+      : equityValues.length % 2 === 1
+        ? equityValues[Math.floor(equityValues.length / 2)]
+        : (equityValues[equityValues.length / 2 - 1] + equityValues[equityValues.length / 2]) / 2;
+
   return (
     <main style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
@@ -209,6 +221,22 @@ export default async function ReplayIndexPage({
         })}
       </div>
 
+      {rankedAgents.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            flexWrap: 'wrap',
+            fontSize: 12,
+            opacity: 0.9,
+          }}
+        >
+          <span style={summaryBadge}>top ${topEquity!.toFixed(2)}</span>
+          <span style={summaryBadge}>median ${medianEquity!.toFixed(2)}</span>
+          <span style={summaryBadge}>bottom ${bottomEquity!.toFixed(2)}</span>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gap: 10 }}>
         {rankedAgents.map((agent, index) => (
           <div key={agent.id} style={card}>
@@ -260,4 +288,13 @@ const filterButton: React.CSSProperties = {
   color: '#7ee787',
   fontWeight: 700,
   cursor: 'pointer',
+};
+
+const summaryBadge: React.CSSProperties = {
+  border: '1px solid #253042',
+  borderRadius: 999,
+  padding: '4px 10px',
+  background: '#0b0f14',
+  color: '#9ab',
+  fontWeight: 700,
 };
