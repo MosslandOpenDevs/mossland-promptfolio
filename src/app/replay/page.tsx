@@ -63,11 +63,13 @@ export default async function ReplayIndexPage({
   const buildReplayHref = (
     nextSort: 'name' | 'equity',
     nextMinEq: number = effectiveMinEq,
-    nextMaxEq: number = effectiveMaxEq
+    nextMaxEq: number = effectiveMaxEq,
+    nextQuery: string = query
   ) => {
     const params = new URLSearchParams();
     params.set('sort', nextSort);
-    if (query) params.set('q', query);
+    const trimmedQuery = nextQuery.trim();
+    if (trimmedQuery) params.set('q', trimmedQuery);
     if (nextMinEq > 0) params.set('minEq', String(nextMinEq));
     if (nextMaxEq > 0) params.set('maxEq', String(nextMaxEq));
     return `/replay?${params.toString()}`;
@@ -169,6 +171,27 @@ export default async function ReplayIndexPage({
           </Link>
         )}
       </form>
+
+      {(query || effectiveMinEq > 0 || effectiveMaxEq > 0) && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
+          <span style={{ opacity: 0.7 }}>active filters:</span>
+          {query && (
+            <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, '')} style={activeFilterChip}>
+              q: {query} ✕
+            </Link>
+          )}
+          {effectiveMinEq > 0 && (
+            <Link href={buildReplayHref(sort, 0, effectiveMaxEq)} style={activeFilterChip}>
+              min ≥ ${effectiveMinEq.toLocaleString()} ✕
+            </Link>
+          )}
+          {effectiveMaxEq > 0 && (
+            <Link href={buildReplayHref(sort, effectiveMinEq, 0)} style={activeFilterChip}>
+              max ≤ ${effectiveMaxEq.toLocaleString()} ✕
+            </Link>
+          )}
+        </div>
+      )}
 
       {isEqRangeAutoCorrected && (
         <div style={{ fontSize: 12, opacity: 0.75, color: '#ffd38f' }}>
@@ -305,4 +328,14 @@ const summaryBadge: React.CSSProperties = {
   background: '#0b0f14',
   color: '#9ab',
   fontWeight: 700,
+};
+
+const activeFilterChip: React.CSSProperties = {
+  border: '1px solid #253042',
+  borderRadius: 999,
+  padding: '4px 10px',
+  background: '#131a24',
+  color: '#c2d4ea',
+  textDecoration: 'none',
+  fontWeight: 600,
 };
