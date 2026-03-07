@@ -5,12 +5,21 @@ import { buildReplayTimeline } from '../../../../lib/replay';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AgentReplayPage({ params }: { params: { id: string } }) {
+export default async function AgentReplayPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   const locale = getLocale();
   const d = db();
 
   const agent = d.prepare(`SELECT * FROM agents WHERE id=?`).get(params.id) as any;
   if (!agent) return notFound();
+
+  const fromParam = Array.isArray(searchParams?.from) ? searchParams?.from[0] : searchParams?.from;
+  const safeReplayHref = fromParam?.startsWith('/replay') ? fromParam : '/replay';
 
   const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
   if (!season) {
@@ -54,7 +63,7 @@ export default async function AgentReplayPage({ params }: { params: { id: string
     <main style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
         <h2 style={{ margin: 0 }}>{agent.avatar_emoji} {agent.name} — Replay</h2>
-        <a href={`/agents/${agent.id}`} style={{ color: '#7ee787', textDecoration: 'none' }}>← back</a>
+        <a href={safeReplayHref} style={{ color: '#7ee787', textDecoration: 'none' }}>← back to replay</a>
       </div>
 
       <div style={card}>

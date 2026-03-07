@@ -220,7 +220,10 @@ export default async function ReplayIndexPage({
                   <div style={{ fontSize: 12, opacity: 0.7 }}>#{index + 1}</div>
                 )}
               </div>
-              <Link href={`/agents/${agent.id}/replay`} style={{ color: '#7ee787' }}>
+              <Link
+                href={`/agents/${agent.id}/replay?from=${encodeURIComponent(buildReplayHref(sort, effectiveMinEq, effectiveMaxEq))}`}
+                style={{ color: '#7ee787' }}
+              >
                 open timeline →
               </Link>
             </div>
