@@ -23,6 +23,9 @@ export default async function ReplayIndexPage({
   const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
   const query = (qParam ?? '').trim();
   const queryLower = query.toLowerCase();
+  const minEqParam = Array.isArray(searchParams?.minEq) ? searchParams?.minEq[0] : searchParams?.minEq;
+  const parsedMinEq = Number(minEqParam ?? '');
+  const minEq = Number.isFinite(parsedMinEq) && parsedMinEq > 0 ? parsedMinEq : 0;
 
   const agents = d
     .prepare(
@@ -46,6 +49,7 @@ export default async function ReplayIndexPage({
       const haystack = `${agent.name ?? ''} ${agent.id ?? ''}`.toLowerCase();
       return haystack.includes(queryLower);
     })
+    .filter((agent) => agent.equity >= minEq)
     .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.equity - a.equity));
 
   return (
@@ -59,10 +63,24 @@ export default async function ReplayIndexPage({
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 12, opacity: 0.85 }}>
         <span>sort:</span>
-        <Link href={query ? `/replay?sort=equity&q=${encodeURIComponent(query)}` : '/replay?sort=equity'} style={{ color: sort === 'equity' ? '#7ee787' : '#9ab' }}>
+        <Link
+          href={
+            query || minEq
+              ? `/replay?sort=equity${query ? `&q=${encodeURIComponent(query)}` : ''}${minEq ? `&minEq=${minEq}` : ''}`
+              : '/replay?sort=equity'
+          }
+          style={{ color: sort === 'equity' ? '#7ee787' : '#9ab' }}
+        >
           equity
         </Link>
-        <Link href={query ? `/replay?sort=name&q=${encodeURIComponent(query)}` : '/replay?sort=name'} style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}>
+        <Link
+          href={
+            query || minEq
+              ? `/replay?sort=name${query ? `&q=${encodeURIComponent(query)}` : ''}${minEq ? `&minEq=${minEq}` : ''}`
+              : '/replay?sort=name'
+          }
+          style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}
+        >
           name
         </Link>
         <span style={{ opacity: 0.7 }}>
@@ -85,8 +103,24 @@ export default async function ReplayIndexPage({
             minWidth: 220,
           }}
         />
+        <input
+          name="minEq"
+          type="number"
+          min={0}
+          step="10"
+          defaultValue={minEq > 0 ? minEq : ''}
+          placeholder="min equity"
+          style={{
+            background: '#0b0f14',
+            border: '1px solid #253042',
+            color: '#e6edf3',
+            borderRadius: 8,
+            padding: '8px 10px',
+            width: 130,
+          }}
+        />
         <button type="submit" style={filterButton}>apply</button>
-        {query && (
+        {(query || minEq > 0) && (
           <Link href={sort === 'name' ? '/replay?sort=name' : '/replay?sort=equity'} style={{ color: '#9ab', fontSize: 12 }}>
             clear
           </Link>
@@ -118,7 +152,9 @@ export default async function ReplayIndexPage({
       </div>
 
       {rankedAgents.length === 0 && (
-        <div style={{ opacity: 0.7 }}>{query ? `No agents matched "${query}".` : 'No agents yet.'}</div>
+        <div style={{ opacity: 0.7 }}>
+          {query || minEq > 0 ? `No agents matched current filters.` : 'No agents yet.'}
+        </div>
       )}
     </main>
   );
