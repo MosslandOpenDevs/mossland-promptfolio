@@ -19,7 +19,7 @@ export default async function ReplayIndexPage({
   const mocUsd = Number(lastTick?.moc_usd ?? 0);
 
   const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
-  const sort = sortParam === 'name' ? 'name' : 'equity';
+  const sort = sortParam === 'name' || sortParam === 'pnl' ? sortParam : 'equity';
   const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
   const query = (qParam ?? '').trim();
   const queryLower = query.toLowerCase();
@@ -61,10 +61,14 @@ export default async function ReplayIndexPage({
     })
     .filter((agent) => agent.equity >= effectiveMinEq)
     .filter((agent) => (effectiveMaxEq > 0 ? agent.equity <= effectiveMaxEq : true))
-    .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : b.equity - a.equity));
+    .sort((a, b) => {
+      if (sort === 'name') return a.name.localeCompare(b.name);
+      if (sort === 'pnl') return b.pnl - a.pnl;
+      return b.equity - a.equity;
+    });
 
   const buildReplayHref = (
-    nextSort: 'name' | 'equity',
+    nextSort: 'name' | 'equity' | 'pnl',
     nextMinEq: number = effectiveMinEq,
     nextMaxEq: number = effectiveMaxEq,
     nextQuery: string = query
@@ -117,6 +121,9 @@ export default async function ReplayIndexPage({
         <span>sort:</span>
         <Link href={buildReplayHref('equity')} style={{ color: sort === 'equity' ? '#7ee787' : '#9ab' }}>
           equity
+        </Link>
+        <Link href={buildReplayHref('pnl')} style={{ color: sort === 'pnl' ? '#7ee787' : '#9ab' }}>
+          pnl
         </Link>
         <Link href={buildReplayHref('name')} style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}>
           name
@@ -290,7 +297,7 @@ export default async function ReplayIndexPage({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ fontSize: 22 }}>{agent.avatar_emoji}</div>
                 <div style={{ fontWeight: 800 }}>{agent.name}</div>
-                {sort === 'equity' && (
+                {(sort === 'equity' || sort === 'pnl') && (
                   <div style={{ fontSize: 12, opacity: 0.7 }}>#{index + 1}</div>
                 )}
               </div>
