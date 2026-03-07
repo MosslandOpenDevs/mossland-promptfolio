@@ -43,11 +43,14 @@ export default async function ReplayIndexPage({
     )
     .all(season?.id ?? '') as any[];
 
+  const startingCashUsd = Number(season?.starting_cash_usd ?? 0);
+
   const computedAgents = agents.map((agent) => {
-    const cash = Number(agent.cash_usd ?? season?.starting_cash_usd ?? 0);
+    const cash = Number(agent.cash_usd ?? startingCashUsd);
     const units = Number(agent.moc_units ?? 0);
     const equity = cash + units * mocUsd;
-    return { ...agent, cash, units, equity };
+    const pnl = equity - startingCashUsd;
+    return { ...agent, cash, units, equity, pnl };
   });
 
   const rankedAgents = computedAgents
@@ -94,6 +97,12 @@ export default async function ReplayIndexPage({
   const equitySpread = topEquity !== null && bottomEquity !== null ? topEquity - bottomEquity : null;
   const equitySpreadRatio =
     equitySpread !== null && medianEquity !== null && medianEquity > 0 ? (equitySpread / medianEquity) * 100 : null;
+  const profitableCount = rankedAgents.filter((agent) => agent.pnl > 0).length;
+  const profitableRatio = rankedAgents.length > 0 ? (profitableCount / rankedAgents.length) * 100 : null;
+  const averagePnl =
+    rankedAgents.length === 0
+      ? null
+      : rankedAgents.reduce((sum, agent) => sum + agent.pnl, 0) / rankedAgents.length;
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
@@ -263,6 +272,12 @@ export default async function ReplayIndexPage({
           <span style={summaryBadge}>median ${medianEquity!.toFixed(2)}</span>
           <span style={summaryBadge}>avg ${averageEquity!.toFixed(2)}</span>
           <span style={summaryBadge}>bottom ${bottomEquity!.toFixed(2)}</span>
+          {averagePnl !== null && (
+            <span style={summaryBadge}>avg pnl {averagePnl >= 0 ? '+' : '-'}${Math.abs(averagePnl).toFixed(2)}</span>
+          )}
+          {profitableRatio !== null && (
+            <span style={summaryBadge}>profitable {profitableCount}/{rankedAgents.length} ({profitableRatio.toFixed(1)}%)</span>
+          )}
           {equitySpread !== null && <span style={summaryBadge}>spread ${equitySpread.toFixed(2)}</span>}
           {equitySpreadRatio !== null && <span style={summaryBadge}>spread {equitySpreadRatio.toFixed(1)}%</span>}
         </div>
@@ -288,6 +303,9 @@ export default async function ReplayIndexPage({
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 8, opacity: 0.8, fontSize: 13, flexWrap: 'wrap' }}>
               <div>equity ${agent.equity.toFixed(2)}</div>
+              <div>
+                pnl {agent.pnl >= 0 ? '+' : '-'}${Math.abs(agent.pnl).toFixed(2)}
+              </div>
               <div>cash ${agent.cash.toFixed(2)}</div>
               <div>MOC {agent.units.toFixed(2)}</div>
             </div>
