@@ -3,13 +3,13 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Spinner from './Spinner';
-import { buildNetworkRetryHint, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage } from '../lib/tick-feedback';
+import { buildNetworkRetryHint, buildTickErrorCode, buildTickErrorMessage, buildTickRetryHint, buildTickSuccessMessage } from '../lib/tick-feedback';
 
 export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [seed, setSeed] = useState(() => String(Date.now()));
-  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string; hint?: string | null } | null>(null);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string; hint?: string | null; code?: string | null } | null>(null);
 
   async function run() {
     if (disabled || busy) return;
@@ -25,21 +25,27 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
       });
       const bodyText = await res.text();
       if (!res.ok) {
+        const contentType = res.headers.get('content-type');
         setNotice({
           type: 'error',
           text: buildTickErrorMessage({
             status: res.status,
             bodyText,
-            contentType: res.headers.get('content-type'),
+            contentType,
           }),
           hint: buildTickRetryHint(
             {
               status: res.status,
               bodyText,
-              contentType: res.headers.get('content-type'),
+              contentType,
             },
             res.headers.get('retry-after')
           ),
+          code: buildTickErrorCode({
+            status: res.status,
+            bodyText,
+            contentType,
+          }),
         });
         return;
       }
@@ -91,7 +97,12 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
             gap: 4,
           }}
         >
-          <div>{notice.text}</div>
+          <div>
+            {notice.text}
+            {notice.type === 'error' && notice.code && (
+              <span style={{ marginLeft: 6, opacity: 0.85, fontSize: 10 }}>[{notice.code}]</span>
+            )}
+          </div>
           {notice.hint && <div style={{ opacity: 0.9 }}>{notice.hint}</div>}
         </div>
       )}
