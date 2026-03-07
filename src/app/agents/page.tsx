@@ -120,4 +120,8 @@ const pre: React.CSSProperties = {
   opacity: 0.85,
   fontSize: 13,
   lineHeight: 1.4,
+  display: '-webkit-box',
+  WebkitLineClamp: 4,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
 };
