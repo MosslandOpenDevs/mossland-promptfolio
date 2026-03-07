@@ -29,6 +29,8 @@ export default async function ReplayIndexPage({
   const maxEqParam = Array.isArray(searchParams?.maxEq) ? searchParams?.maxEq[0] : searchParams?.maxEq;
   const parsedMaxEq = Number(maxEqParam ?? '');
   const maxEq = Number.isFinite(parsedMaxEq) && parsedMaxEq > 0 ? parsedMaxEq : 0;
+  const profitableParam = Array.isArray(searchParams?.profitable) ? searchParams?.profitable[0] : searchParams?.profitable;
+  const profitableOnly = profitableParam === '1' || profitableParam === 'true';
   const isEqRangeAutoCorrected = minEq > 0 && maxEq > 0 && minEq > maxEq;
   const [effectiveMinEq, effectiveMaxEq] = isEqRangeAutoCorrected
     ? [maxEq, minEq]
@@ -61,6 +63,7 @@ export default async function ReplayIndexPage({
     })
     .filter((agent) => agent.equity >= effectiveMinEq)
     .filter((agent) => (effectiveMaxEq > 0 ? agent.equity <= effectiveMaxEq : true))
+    .filter((agent) => (profitableOnly ? agent.pnl > 0 : true))
     .sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name);
       if (sort === 'pnl') return b.pnl - a.pnl;
@@ -71,7 +74,8 @@ export default async function ReplayIndexPage({
     nextSort: 'name' | 'equity' | 'pnl',
     nextMinEq: number = effectiveMinEq,
     nextMaxEq: number = effectiveMaxEq,
-    nextQuery: string = query
+    nextQuery: string = query,
+    nextProfitableOnly: boolean = profitableOnly
   ) => {
     const params = new URLSearchParams();
     params.set('sort', nextSort);
@@ -79,6 +83,7 @@ export default async function ReplayIndexPage({
     if (trimmedQuery) params.set('q', trimmedQuery);
     if (nextMinEq > 0) params.set('minEq', String(nextMinEq));
     if (nextMaxEq > 0) params.set('maxEq', String(nextMaxEq));
+    if (nextProfitableOnly) params.set('profitable', '1');
     return `/replay?${params.toString()}`;
   };
 
@@ -180,15 +185,19 @@ export default async function ReplayIndexPage({
             width: 130,
           }}
         />
+        <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12, opacity: 0.85 }}>
+          <input name="profitable" type="checkbox" value="1" defaultChecked={profitableOnly} />
+          profitable only
+        </label>
         <button type="submit" style={filterButton}>apply</button>
-        {(query || effectiveMinEq > 0 || effectiveMaxEq > 0) && (
-          <Link href={buildReplayHref(sort, 0, 0)} style={{ color: '#9ab', fontSize: 12 }}>
+        {(query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly) && (
+          <Link href={buildReplayHref(sort, 0, 0, '', false)} style={{ color: '#9ab', fontSize: 12 }}>
             clear
           </Link>
         )}
       </form>
 
-      {(query || effectiveMinEq > 0 || effectiveMaxEq > 0) && (
+      {(query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly) && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
           <span style={{ opacity: 0.7 }}>active filters:</span>
           {query && (
@@ -204,6 +213,11 @@ export default async function ReplayIndexPage({
           {effectiveMaxEq > 0 && (
             <Link href={buildReplayHref(sort, effectiveMinEq, 0)} style={activeFilterChip}>
               max ≤ ${effectiveMaxEq.toLocaleString()} ✕
+            </Link>
+          )}
+          {profitableOnly && (
+            <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, false)} style={activeFilterChip}>
+              profitable only ✕
             </Link>
           )}
         </div>
@@ -322,7 +336,7 @@ export default async function ReplayIndexPage({
 
       {rankedAgents.length === 0 && (
         <div style={{ opacity: 0.7 }}>
-          {query || effectiveMinEq > 0 || effectiveMaxEq > 0 ? `No agents matched current filters.` : 'No agents yet.'}
+          {query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly ? `No agents matched current filters.` : 'No agents yet.'}
         </div>
       )}
     </main>
