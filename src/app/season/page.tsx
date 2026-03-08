@@ -2,30 +2,9 @@ import Link from 'next/link';
 import { db } from '../../lib/db';
 import { ensureWeeklySeason } from '../../lib/weekly';
 import { getLocale, t } from '../../lib/i18n';
+import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getLatestTickAgeMs, parsePositivePrice } from '../../lib/market-metrics';
 
 export const dynamic = 'force-dynamic';
-
-function formatDuration(ms: number | null, locale: 'en' | 'ko') {
-  if (!ms || !Number.isFinite(ms) || ms < 0) {
-    return '—';
-  }
-
-  const totalMinutes = Math.floor(ms / 60000);
-  if (totalMinutes < 1) {
-    return locale === 'ko' ? '1분 미만' : '<1 min';
-  }
-
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const minutes = totalMinutes % 60;
-  const parts: string[] = [];
-
-  if (days > 0) parts.push(locale === 'ko' ? `${days}일` : `${days}d`);
-  if (hours > 0) parts.push(locale === 'ko' ? `${hours}시간` : `${hours}h`);
-  if (minutes > 0 && parts.length < 2) parts.push(locale === 'ko' ? `${minutes}분` : `${minutes}m`);
-
-  return parts.join(' ');
-}
 
 export default async function SeasonPage() {
   const locale = getLocale();
@@ -36,52 +15,18 @@ export default async function SeasonPage() {
     : [];
 
   const lastTick = ticks[0] ?? null;
-  const latestPrice = Number(lastTick?.moc_usd ?? 0);
+  const latestPrice = parsePositivePrice(lastTick?.moc_usd) ?? 0;
   const priorTick = ticks[1] ?? null;
-  const priorPrice = Number(priorTick?.moc_usd ?? 0);
+  const priorPrice = parsePositivePrice(priorTick?.moc_usd) ?? 0;
   const priceDelta = lastTick && priorTick ? latestPrice - priorPrice : null;
-  const tickPrices = ticks.map((tick) => Number(tick.moc_usd)).filter((price) => Number.isFinite(price) && price > 0);
+  const tickPrices = ticks.map((tick) => parsePositivePrice(tick.moc_usd)).filter((price): price is number => price !== null);
   const highPrice = tickPrices.length > 0 ? Math.max(...tickPrices) : null;
   const lowPrice = tickPrices.length > 0 ? Math.min(...tickPrices) : null;
   const averagePrice = tickPrices.length > 0 ? tickPrices.reduce((sum, price) => sum + price, 0) / tickPrices.length : null;
   const latestVsAverage = latestPrice > 0 && averagePrice ? latestPrice - averagePrice : null;
-  const directionStreak = (() => {
-    if (ticks.length < 2) return 0;
-
-    let streak = 0;
-    let direction: 'up' | 'down' | null = null;
-
-    for (let index = 0; index < ticks.length - 1; index += 1) {
-      const current = Number(ticks[index]?.moc_usd ?? 0);
-      const previous = Number(ticks[index + 1]?.moc_usd ?? 0);
-      const delta = current - previous;
-
-      if (delta === 0) break;
-
-      const nextDirection = delta > 0 ? 'up' : 'down';
-      if (!direction) {
-        direction = nextDirection;
-        streak = 1;
-        continue;
-      }
-
-      if (direction !== nextDirection) break;
-      streak += 1;
-    }
-
-    return direction ? streak : 0;
-  })();
-  const parsedTickTimes = ticks
-    .map((tick) => Date.parse(String(tick.ts ?? '')))
-    .filter((value) => Number.isFinite(value));
-  const averageTickIntervalMs =
-    parsedTickTimes.length >= 2
-      ? parsedTickTimes
-          .slice(0, -1)
-          .reduce((sum, value, index) => sum + Math.abs(value - parsedTickTimes[index + 1]!), 0) /
-        (parsedTickTimes.length - 1)
-      : null;
-  const latestTickAgeMs = lastTick?.ts ? Date.now() - Date.parse(String(lastTick.ts)) : null;
+  const { direction: streakDirection, streak: directionStreak } = getDirectionStreak(ticks);
+  const averageTickIntervalMs = getAverageTickIntervalMs(ticks);
+  const latestTickAgeMs = getLatestTickAgeMs(ticks);
   const seasonStartedAtMs = season?.created_at ? Date.parse(String(season.created_at)) : null;
   const seasonAgeMs = seasonStartedAtMs && Number.isFinite(seasonStartedAtMs) ? Date.now() - seasonStartedAtMs : null;
 
@@ -176,9 +121,9 @@ export default async function SeasonPage() {
             <div><span style={dim}>name</span> {season.name}</div>
             <div><span style={dim}>starting_cash</span> ${Number(season.starting_cash_usd).toFixed(2)}</div>
             <div><span style={dim}>id</span> {season.id}</div>
-            <div><span style={dim}>age</span> {formatDuration(seasonAgeMs, locale)}</div>
+            <div><span style={dim}>age</span> {formatDurationShort(seasonAgeMs, locale)}</div>
             <div><span style={dim}>last_tick</span> {lastTick?.ts ?? '—'}</div>
-            <div><span style={dim}>last_tick_age</span> {formatDuration(latestTickAgeMs, locale)}</div>
+            <div><span style={dim}>last_tick_age</span> {formatDurationShort(latestTickAgeMs, locale)}</div>
           </div>
         ) : (
           <div style={{ opacity: 0.7, marginTop: 8 }}>{t(locale, 'noSeason')}</div>
@@ -237,15 +182,13 @@ export default async function SeasonPage() {
             <div style={summaryCard}>
               <div style={summaryLabel}>{locale === 'ko' ? '최근 추세' : 'current streak'}</div>
               <div style={summaryValue}>
-                {directionStreak > 0
-                  ? `${priceDelta !== null && priceDelta >= 0 ? '↑' : '↓'} ${directionStreak}`
-                  : '—'}
+                {directionStreak > 0 ? `${streakDirection === 'up' ? '↑' : '↓'} ${directionStreak}` : '—'}
               </div>
               <div style={summaryHint}>
                 {directionStreak > 0
                   ? locale === 'ko'
-                    ? `${priceDelta !== null && priceDelta >= 0 ? '상승' : '하락'} 연속 ${directionStreak}틱`
-                    : `${priceDelta !== null && priceDelta >= 0 ? 'up' : 'down'} for ${directionStreak} straight ticks`
+                    ? `${streakDirection === 'up' ? '상승' : '하락'} 연속 ${directionStreak}틱`
+                    : `${streakDirection === 'up' ? 'up' : 'down'} for ${directionStreak} straight ticks`
                   : locale === 'ko'
                     ? '추세를 판단할 tick 부족'
                     : 'not enough ticks for a streak'}
@@ -280,7 +223,7 @@ export default async function SeasonPage() {
 
             <div style={summaryCard}>
               <div style={summaryLabel}>{locale === 'ko' ? '틱 간격' : 'tick cadence'}</div>
-              <div style={summaryValue}>{formatDuration(averageTickIntervalMs, locale)}</div>
+              <div style={summaryValue}>{formatDurationShort(averageTickIntervalMs, locale)}</div>
               <div style={summaryHint}>
                 {averageTickIntervalMs !== null
                   ? locale === 'ko'

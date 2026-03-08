@@ -6,6 +6,7 @@ import TerminalLog, { type TerminalRow } from '../components/TerminalLog';
 import ZineStamp from '../components/ZineStamp';
 import ExecuteTickButton from '../components/ExecuteTickButton';
 import { memeLine } from '../lib/meme';
+import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,10 +18,15 @@ export default async function Page() {
   const season = ensureWeeklySeason();
   const lastTick = d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 1`).get(season.id) as any;
 
-  const mocUsd = lastTick?.moc_usd ?? null;
+  const mocUsd = parsePositivePrice(lastTick?.moc_usd);
 
   const ticksCountRow = d.prepare(`SELECT count(*) as c FROM ticks WHERE season_id=?`).get(season.id) as any;
   const ticksCount = Number(ticksCountRow?.c ?? 0);
+
+  const recentTicks = d.prepare(`SELECT ts, moc_usd FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 12`).all(season.id) as Array<{ ts: string; moc_usd: number | string }>;
+  const { direction: streakDirection, streak: directionStreak } = getDirectionStreak(recentTicks);
+  const averageTickIntervalMs = getAverageTickIntervalMs(recentTicks);
+  const latestTickAgeMs = getLatestTickAgeMs(recentTicks);
 
   const agentsCountRow = d.prepare(`SELECT count(*) as c FROM agents`).get() as any;
   const agentsCount = Number(agentsCountRow?.c ?? 0);
@@ -201,6 +207,36 @@ export default async function Page() {
 
             <div className="pf-dim" style={{ fontSize: 10, textAlign: 'center' }}>
               * WARNING: Unregulated paper trading zone.
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Market freshness</div>
+              <span className="pf-pill">cadence {formatDurationShort(averageTickIntervalMs, locale)}</span>
+            </div>
+            <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
+              <div>
+                <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Last tick age</div>
+                <div style={{ fontWeight: 900, fontSize: 22 }}>{formatDurationShort(latestTickAgeMs, locale)}</div>
+              </div>
+              <div>
+                <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Momentum</div>
+                <div style={{ fontWeight: 900, fontSize: 22 }}>
+                  {directionStreak > 0 ? `${streakDirection === 'up' ? '↑' : '↓'} ${directionStreak}` : '—'}
+                </div>
+              </div>
+              <div>
+                <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Feed state</div>
+                <div style={{ fontWeight: 900, fontSize: 22 }}>
+                  {latestTickAgeMs !== null && latestTickAgeMs <= 15 * 60 * 1000 ? 'FRESH' : latestTickAgeMs !== null ? 'STALE' : 'EMPTY'}
+                </div>
+              </div>
+            </div>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              {directionStreak > 0
+                ? `Recent price action is ${streakDirection === 'up' ? 'stacking upward' : 'sliding downward'} for ${directionStreak} ticks.`
+                : 'Need at least two clean ticks to estimate momentum.'}
             </div>
           </div>
 
