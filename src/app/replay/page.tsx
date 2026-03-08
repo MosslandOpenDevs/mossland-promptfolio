@@ -32,7 +32,9 @@ export default async function ReplayIndexPage({
   const profitableParam = Array.isArray(searchParams?.profitable) ? searchParams?.profitable[0] : searchParams?.profitable;
   const profitableOnly = profitableParam === '1' || profitableParam === 'true';
   const lossOnlyParam = Array.isArray(searchParams?.lossOnly) ? searchParams?.lossOnly[0] : searchParams?.lossOnly;
-  const lossOnly = !profitableOnly && (lossOnlyParam === '1' || lossOnlyParam === 'true');
+  const requestedLossOnly = lossOnlyParam === '1' || lossOnlyParam === 'true';
+  const lossOnly = !profitableOnly && requestedLossOnly;
+  const isProfitFilterConflict = profitableOnly && requestedLossOnly;
   const isEqRangeAutoCorrected = minEq > 0 && maxEq > 0 && minEq > maxEq;
   const [effectiveMinEq, effectiveMaxEq] = isEqRangeAutoCorrected
     ? [maxEq, minEq]
@@ -246,6 +248,12 @@ export default async function ReplayIndexPage({
       {isEqRangeAutoCorrected && (
         <div style={{ fontSize: 12, opacity: 0.75, color: '#ffd38f' }}>
           min/max equity values were reversed, so the range was auto-corrected.
+        </div>
+      )}
+
+      {isProfitFilterConflict && (
+        <div style={{ fontSize: 12, opacity: 0.75, color: '#ffd38f' }}>
+          both “profitable only” and “loss only” were selected; showing profitable-only results.
         </div>
       )}
 
