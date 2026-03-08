@@ -42,6 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="pf-nav">
               <a href="/">{t(locale, 'home')}</a>
               <a href="/agents">{t(locale, 'agents')}</a>
+              <a href="/season">{t(locale, 'season')}</a>
               <a href="/leaderboard">{t(locale, 'leaderboard')}</a>
               <a href="/replay">{t(locale, 'replay')}</a>
               <LocaleToggle locale={locale} />
