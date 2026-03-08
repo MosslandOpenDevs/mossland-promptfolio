@@ -103,6 +103,63 @@ export default async function Page() {
     ? `${latestTrade.agent_name} ${latestTrade.side} ${Number(latestTrade.moc_units).toFixed(2)} MOC`
     : 'No trade headlines yet';
   const recentAgents = Array.from(new Set(trades.map((tr) => String(tr.agent_name)).filter(Boolean))).slice(0, 4);
+  const isFeedStale = latestTickAgeMs !== null && latestTickAgeMs > 15 * 60 * 1000;
+  const hasMomentum = directionStreak >= 3;
+
+  const nextAction =
+    agentsCount === 0
+      ? {
+          state: 'bootstrap',
+          badge: 'setup',
+          title: 'Create your first trading agent.',
+          note: 'Start in Agent Lab, then run one tick to generate a live portfolio.',
+          href: '/agents',
+          cta: 'Open Agent Lab',
+        }
+      : ticksCount === 0
+        ? {
+            state: 'first-tick',
+            badge: 'data missing',
+            title: 'Run the first tick to fetch price + decisions.',
+            note: 'A fresh tick unlocks leaderboard, pulse signals, and replay data.',
+            href: '/season',
+            cta: 'Open Season HQ',
+          }
+        : isFeedStale
+          ? {
+              state: 'stale',
+              badge: 'stale feed',
+              title: 'Refresh the feed before making decisions.',
+              note: 'Last tick is stale. Run a new tick from Command center now.',
+              href: '/season',
+              cta: 'View Season Status',
+            }
+          : trades.length === 0
+            ? {
+                state: 'no-trades',
+                badge: 'waiting',
+                title: 'Generate the first trade log.',
+                note: 'Your agents exist, but no trades were recorded in this season yet.',
+                href: '/replay',
+                cta: 'Open Replay',
+              }
+            : hasMomentum
+              ? {
+                  state: 'momentum',
+                  badge: streakDirection === 'up' ? 'uptrend' : 'downtrend',
+                  title: `Momentum is ${streakDirection === 'up' ? 'stacking up' : 'sliding down'}.`,
+                  note: `Current streak: ${directionStreak} ticks. Inspect top agents before the next rebalance.`,
+                  href: '/leaderboard',
+                  cta: 'Review Leaders',
+                }
+              : {
+                  state: 'monitor',
+                  badge: 'steady',
+                  title: 'Monitor one more tick for a cleaner signal.',
+                  note: 'Market is active but momentum is not strong yet.',
+                  href: '/replay',
+                  cta: 'Inspect Replay',
+                };
 
   for (const tr of trades) {
     const units = Number(tr.moc_units);
@@ -190,6 +247,19 @@ export default async function Page() {
         </div>
 
         <div style={{ display: 'grid', gap: 12 }}>
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Next action</div>
+              <span className="pf-pill">{nextAction.badge}</span>
+            </div>
+            <div style={{ fontWeight: 900, letterSpacing: '.04em' }}>{nextAction.title}</div>
+            <div className="pf-dim" style={{ fontSize: 11 }}>{nextAction.note}</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Link href={nextAction.href} className="pf-btn">{nextAction.cta}</Link>
+              {nextAction.state === 'first-tick' || nextAction.state === 'stale' ? <span className="pf-pill">run execute tick now</span> : null}
+            </div>
+          </div>
+
           <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="pf-h2">Command center</div>
