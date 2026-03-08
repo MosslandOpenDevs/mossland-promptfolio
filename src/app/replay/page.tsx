@@ -348,7 +348,7 @@ export default async function ReplayIndexPage({
               </div>
               <Link
                 href={`/agents/${agent.id}/replay?from=${encodeURIComponent(
-                  buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, profitableOnly, lossOnly)
+                  buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, profitableOnly, requestedLossOnly)
                 )}`}
                 style={{ color: '#7ee787' }}
               >
