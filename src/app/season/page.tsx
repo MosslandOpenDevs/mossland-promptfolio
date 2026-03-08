@@ -5,6 +5,28 @@ import { getLocale, t } from '../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
+function formatDuration(ms: number | null, locale: 'en' | 'ko') {
+  if (!ms || !Number.isFinite(ms) || ms < 0) {
+    return '—';
+  }
+
+  const totalMinutes = Math.floor(ms / 60000);
+  if (totalMinutes < 1) {
+    return locale === 'ko' ? '1분 미만' : '<1 min';
+  }
+
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+
+  if (days > 0) parts.push(locale === 'ko' ? `${days}일` : `${days}d`);
+  if (hours > 0) parts.push(locale === 'ko' ? `${hours}시간` : `${hours}h`);
+  if (minutes > 0 && parts.length < 2) parts.push(locale === 'ko' ? `${minutes}분` : `${minutes}m`);
+
+  return parts.join(' ');
+}
+
 export default async function SeasonPage() {
   const locale = getLocale();
   const d = db();
@@ -49,6 +71,19 @@ export default async function SeasonPage() {
 
     return direction ? streak : 0;
   })();
+  const parsedTickTimes = ticks
+    .map((tick) => Date.parse(String(tick.ts ?? '')))
+    .filter((value) => Number.isFinite(value));
+  const averageTickIntervalMs =
+    parsedTickTimes.length >= 2
+      ? parsedTickTimes
+          .slice(0, -1)
+          .reduce((sum, value, index) => sum + Math.abs(value - parsedTickTimes[index + 1]!), 0) /
+        (parsedTickTimes.length - 1)
+      : null;
+  const latestTickAgeMs = lastTick?.ts ? Date.now() - Date.parse(String(lastTick.ts)) : null;
+  const seasonStartedAtMs = season?.created_at ? Date.parse(String(season.created_at)) : null;
+  const seasonAgeMs = seasonStartedAtMs && Number.isFinite(seasonStartedAtMs) ? Date.now() - seasonStartedAtMs : null;
 
   const recentTradeMixRow = season
     ? (d.prepare(
@@ -74,6 +109,7 @@ export default async function SeasonPage() {
   const agentCount = Number(agentCountRow?.c ?? 0);
   const portfolioCount = Number(portfolioCountRow?.c ?? 0);
   const tradeCount = Number(tradeCountRow?.c ?? 0);
+  const tradesPerTick = ticks.length > 0 ? tradeCount / ticks.length : null;
 
   const summaryItems = [
     {
@@ -140,7 +176,9 @@ export default async function SeasonPage() {
             <div><span style={dim}>name</span> {season.name}</div>
             <div><span style={dim}>starting_cash</span> ${Number(season.starting_cash_usd).toFixed(2)}</div>
             <div><span style={dim}>id</span> {season.id}</div>
+            <div><span style={dim}>age</span> {formatDuration(seasonAgeMs, locale)}</div>
             <div><span style={dim}>last_tick</span> {lastTick?.ts ?? '—'}</div>
+            <div><span style={dim}>last_tick_age</span> {formatDuration(latestTickAgeMs, locale)}</div>
           </div>
         ) : (
           <div style={{ opacity: 0.7, marginTop: 8 }}>{t(locale, 'noSeason')}</div>
@@ -237,6 +275,34 @@ export default async function SeasonPage() {
                 {locale === 'ko'
                   ? `BUY / SELL / HOLD 누적 분포`
                   : 'cumulative BUY / SELL / HOLD distribution'}
+              </div>
+            </div>
+
+            <div style={summaryCard}>
+              <div style={summaryLabel}>{locale === 'ko' ? '틱 간격' : 'tick cadence'}</div>
+              <div style={summaryValue}>{formatDuration(averageTickIntervalMs, locale)}</div>
+              <div style={summaryHint}>
+                {averageTickIntervalMs !== null
+                  ? locale === 'ko'
+                    ? '최근 tick 평균 간격'
+                    : 'average interval across recent ticks'
+                  : locale === 'ko'
+                    ? '간격 계산용 tick 부족'
+                    : 'need more ticks to estimate cadence'}
+              </div>
+            </div>
+
+            <div style={summaryCard}>
+              <div style={summaryLabel}>{locale === 'ko' ? '틱당 거래' : 'trades per tick'}</div>
+              <div style={summaryValue}>{tradesPerTick !== null ? tradesPerTick.toFixed(1) : '—'}</div>
+              <div style={summaryHint}>
+                {tradesPerTick !== null
+                  ? locale === 'ko'
+                    ? '최근 표시 중인 tick 기준 실행 밀도'
+                    : 'execution density across visible ticks'
+                  : locale === 'ko'
+                    ? '비교할 tick 없음'
+                    : 'need ticks to compare activity'}
               </div>
             </div>
           </div>

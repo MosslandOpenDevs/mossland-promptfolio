@@ -28,7 +28,7 @@ export function defaultStartingCashUsd(): number {
   return n;
 }
 
-export function ensureWeeklySeason(): { id: string; name: string; starting_cash_usd: number } {
+export function ensureWeeklySeason(): { id: string; name: string; starting_cash_usd: number; created_at: string } {
   const d = db();
   const id = weeklySeasonId();
   const key = weeklySeasonKey();
@@ -40,6 +40,6 @@ export function ensureWeeklySeason(): { id: string; name: string; starting_cash_
      VALUES (?, ?, ?, datetime('now'))`
   ).run(id, name, starting);
 
-  const season = d.prepare(`SELECT id, name, starting_cash_usd FROM seasons WHERE id=?`).get(id) as any;
+  const season = d.prepare(`SELECT id, name, starting_cash_usd, created_at FROM seasons WHERE id=?`).get(id) as any;
   return season;
 }
