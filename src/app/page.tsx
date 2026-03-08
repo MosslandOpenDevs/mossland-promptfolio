@@ -151,6 +151,7 @@ export default async function Page() {
             </div>
             <div style={{ marginTop: 10, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <span className="pf-pill">moc_usd: {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : '—'}</span>
+              <span className="pf-pill">last_tick: {lastTick?.ts ? String(lastTick.ts).slice(11, 19) : '—'}</span>
               <span className="pf-pill">ticks: {ticksCount}</span>
               <span className="pf-pill">agents: {agentsCount}</span>
               <span className="pf-pill">BUY: {sideCounts.BUY}</span>
