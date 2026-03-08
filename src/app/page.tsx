@@ -78,6 +78,26 @@ export default async function Page() {
     { BUY: 0, SELL: 0, HOLD: 0 }
   );
 
+  const latestTrade = trades[0] ?? null;
+  const pulseLabel =
+    sideCounts.BUY > sideCounts.SELL
+      ? 'BUY PRESSURE'
+      : sideCounts.SELL > sideCounts.BUY
+        ? 'SELL PRESSURE'
+        : sideCounts.HOLD > 0
+          ? 'HOLDING PATTERN'
+          : 'AWAITING SIGNAL';
+  const pulseTone =
+    sideCounts.BUY > sideCounts.SELL
+      ? 'var(--primary)'
+      : sideCounts.SELL > sideCounts.BUY
+        ? 'var(--alert)'
+        : 'var(--ink)';
+  const recentHeadline = latestTrade
+    ? `${latestTrade.agent_name} ${latestTrade.side} ${Number(latestTrade.moc_units).toFixed(2)} MOC`
+    : 'No trade headlines yet';
+  const recentAgents = Array.from(new Set(trades.map((tr) => String(tr.agent_name)).filter(Boolean))).slice(0, 4);
+
   for (const tr of trades) {
     const units = Number(tr.moc_units);
     const usd = Number(tr.price_usd);
@@ -180,6 +200,30 @@ export default async function Page() {
 
             <div className="pf-dim" style={{ fontSize: 10, textAlign: 'center' }}>
               * WARNING: Unregulated paper trading zone.
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Pulse board</div>
+              <span className="pf-pill" style={{ color: pulseTone, borderColor: pulseTone }}>{pulseLabel}</span>
+            </div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ fontWeight: 900, letterSpacing: '.04em' }}>{recentHeadline}</div>
+              <div className="pf-dim" style={{ fontSize: 11 }}>
+                {latestTrade
+                  ? `Latest note: "${String(latestTrade.reason ?? '').slice(0, 96)}${String(latestTrade.reason ?? '').length > 96 ? '…' : ''}"`
+                  : 'Run EXECUTE TICK to generate the first market memo.'}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {recentAgents.length > 0 ? (
+                recentAgents.map((name) => (
+                  <span key={name} className="pf-pill">desk: {name}</span>
+                ))
+              ) : (
+                <span className="pf-pill">desk: waiting for agents</span>
+              )}
             </div>
           </div>
 
