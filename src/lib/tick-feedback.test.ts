@@ -21,13 +21,19 @@ test('buildTickErrorMessage maps 429 to rate-limit hint', () => {
 });
 
 test('buildTickErrorMessage maps gateway timeout class status', () => {
-  const message = buildTickErrorMessage({
+  const timeoutMessage = buildTickErrorMessage({
+    status: 408,
+    bodyText: '',
+    contentType: 'text/plain',
+  });
+  const unavailableMessage = buildTickErrorMessage({
     status: 503,
     bodyText: '',
     contentType: 'text/plain',
   });
 
-  assert.equal(message, 'Price service is temporarily unavailable. Please retry shortly.');
+  assert.equal(timeoutMessage, 'Price service is temporarily unavailable. Please retry shortly.');
+  assert.equal(unavailableMessage, 'Price service is temporarily unavailable. Please retry shortly.');
 });
 
 test('buildTickErrorMessage maps auth failures to refresh hint', () => {
@@ -81,6 +87,7 @@ test('buildTickErrorMessage returns generic fallback for empty response', () => 
 });
 
 test('isTickErrorRetryable returns true for transient status codes', () => {
+  assert.equal(isTickErrorRetryable({ status: 408, bodyText: '', contentType: 'text/plain' }), true);
   assert.equal(isTickErrorRetryable({ status: 429, bodyText: '', contentType: 'text/plain' }), true);
   assert.equal(isTickErrorRetryable({ status: 503, bodyText: '', contentType: 'text/plain' }), true);
 });
@@ -161,6 +168,7 @@ test('buildTickRetryHint returns null for non-retryable failures', () => {
 
 test('getTickRetryDelayMs returns numeric delay for retryable failures', () => {
   assert.equal(getTickRetryDelayMs({ status: 429, bodyText: '', contentType: 'text/plain' }), 3000);
+  assert.equal(getTickRetryDelayMs({ status: 408, bodyText: '', contentType: 'text/plain' }), 5000);
   assert.equal(getTickRetryDelayMs({ status: 503, bodyText: '', contentType: 'text/plain' }), 5000);
   assert.equal(getTickRetryDelayMs({ status: 500, bodyText: 'Database is locked', contentType: 'text/plain' }), 2000);
 });
@@ -212,6 +220,7 @@ test('resolveRetryDelayMs applies configured merge strategies', () => {
 
 test('buildTickErrorCode maps retry and backend classes', () => {
   assert.equal(buildTickErrorCode({ status: 429, bodyText: '', contentType: 'text/plain' }), 'rate_limited');
+  assert.equal(buildTickErrorCode({ status: 408, bodyText: '', contentType: 'text/plain' }), 'service_unavailable');
   assert.equal(buildTickErrorCode({ status: 503, bodyText: '', contentType: 'text/plain' }), 'service_unavailable');
   assert.equal(buildTickErrorCode({ status: 403, bodyText: '', contentType: 'text/plain' }), 'unauthorized');
   assert.equal(

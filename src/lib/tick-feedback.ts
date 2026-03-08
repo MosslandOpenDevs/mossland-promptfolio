@@ -13,7 +13,7 @@ export function isTickErrorRetryable(params: {
 }): boolean {
   const { status, bodyText, contentType } = params;
 
-  if ([429, 502, 503, 504].includes(status)) {
+  if ([408, 429, 502, 503, 504].includes(status)) {
     return true;
   }
 
@@ -54,7 +54,7 @@ export function getTickRetryDelayMs(params: {
     return 3000;
   }
 
-  if ([502, 503, 504].includes(params.status)) {
+  if ([408, 502, 503, 504].includes(params.status)) {
     return 5000;
   }
 
@@ -193,7 +193,7 @@ export function buildTickErrorCode(params: {
   const raw = bodyText.trim();
 
   if (status === 429) return 'rate_limited';
-  if (status === 502 || status === 503 || status === 504) return 'service_unavailable';
+  if (status === 408 || status === 502 || status === 503 || status === 504) return 'service_unavailable';
   if (status === 401 || status === 403) return 'unauthorized';
   if (!raw) return 'http_error';
 
@@ -230,7 +230,7 @@ export function buildTickErrorMessage(params: {
     return 'Rate limited by price feed. Retry in a few seconds.';
   }
 
-  if (status === 502 || status === 503 || status === 504) {
+  if (status === 408 || status === 502 || status === 503 || status === 504) {
     return 'Price service is temporarily unavailable. Please retry shortly.';
   }
 
