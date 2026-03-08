@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '../../lib/db';
 import { getLocale } from '../../lib/i18n';
+import { ensureWeeklySeason } from '../../lib/weekly';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export default async function ReplayIndexPage({
   getLocale();
   const d = db();
 
-  const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
+  const season = ensureWeeklySeason();
   const lastTick = season
     ? (d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 1`).get(season.id) as any)
     : null;

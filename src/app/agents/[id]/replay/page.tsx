@@ -2,6 +2,7 @@ import { db } from '../../../../lib/db';
 import { notFound } from 'next/navigation';
 import { getLocale, t } from '../../../../lib/i18n';
 import { buildReplayTimeline } from '../../../../lib/replay';
+import { ensureWeeklySeason } from '../../../../lib/weekly';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,15 +22,7 @@ export default async function AgentReplayPage({
   const fromParam = Array.isArray(searchParams?.from) ? searchParams?.from[0] : searchParams?.from;
   const safeReplayHref = fromParam?.startsWith('/replay') ? fromParam : '/replay';
 
-  const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
-  if (!season) {
-    return (
-      <main>
-        <h2>{agent.avatar_emoji} {agent.name} — Replay</h2>
-        <div style={{ opacity: 0.7 }}>{t(locale, 'createSeasonFirst')}</div>
-      </main>
-    );
-  }
+  const season = ensureWeeklySeason();
 
   const lastTick = d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 1`).get(season.id) as any;
   const mocUsd = lastTick?.moc_usd ?? 0;

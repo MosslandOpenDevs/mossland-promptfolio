@@ -1,20 +1,13 @@
 import { db } from '../../lib/db';
 import { getLocale, t } from '../../lib/i18n';
+import { ensureWeeklySeason } from '../../lib/weekly';
 
 export const dynamic = 'force-dynamic';
 
 export default async function LeaderboardPage() {
   const locale = getLocale();
   const d = db();
-  const season = d.prepare(`SELECT * FROM seasons ORDER BY created_at DESC LIMIT 1`).get() as any;
-  if (!season) {
-    return (
-      <main>
-        <h2>{t(locale, 'leaderboard')}</h2>
-        <div style={{ opacity: 0.7 }}>{t(locale, 'createSeasonFirst')}</div>
-      </main>
-    );
-  }
+  const season = ensureWeeklySeason();
 
   const lastTick = d.prepare(`SELECT * FROM ticks WHERE season_id=? ORDER BY ts DESC LIMIT 1`).get(season.id) as any;
   const mocUsd = lastTick?.moc_usd ?? 0;
