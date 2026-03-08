@@ -52,7 +52,8 @@ export default async function ReplayIndexPage({
     const units = Number(agent.moc_units ?? 0);
     const equity = cash + units * mocUsd;
     const pnl = equity - startingCashUsd;
-    return { ...agent, cash, units, equity, pnl };
+    const roi = startingCashUsd > 0 ? (pnl / startingCashUsd) * 100 : 0;
+    return { ...agent, cash, units, equity, pnl, roi };
   });
 
   const rankedAgents = computedAgents
@@ -67,6 +68,7 @@ export default async function ReplayIndexPage({
     .sort((a, b) => {
       if (sort === 'name') return a.name.localeCompare(b.name);
       if (sort === 'pnl') return b.pnl - a.pnl;
+      if (sort === 'roi') return b.roi - a.roi;
       return b.equity - a.equity;
     });
 
@@ -132,6 +134,9 @@ export default async function ReplayIndexPage({
         </Link>
         <Link href={buildReplayHref('name')} style={{ color: sort === 'name' ? '#7ee787' : '#9ab' }}>
           name
+        </Link>
+        <Link href={buildReplayHref('roi')} style={{ color: sort === 'roi' ? '#7ee787' : '#9ab' }}>
+          roi
         </Link>
         <span style={{ opacity: 0.7 }}>
           {rankedAgents.length}/{computedAgents.length} shown
@@ -311,7 +316,7 @@ export default async function ReplayIndexPage({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ fontSize: 22 }}>{agent.avatar_emoji}</div>
                 <div style={{ fontWeight: 800 }}>{agent.name}</div>
-                {(sort === 'equity' || sort === 'pnl') && (
+                {(sort === 'equity' || sort === 'pnl' || sort === 'roi') && (
                   <div style={{ fontSize: 12, opacity: 0.7 }}>#{index + 1}</div>
                 )}
               </div>
@@ -326,6 +331,9 @@ export default async function ReplayIndexPage({
               <div>equity ${agent.equity.toFixed(2)}</div>
               <div>
                 pnl {agent.pnl >= 0 ? '+' : '-'}${Math.abs(agent.pnl).toFixed(2)}
+              </div>
+              <div>
+                roi {agent.roi >= 0 ? '+' : '-'}{Math.abs(agent.roi).toFixed(2)}%
               </div>
               <div>cash ${agent.cash.toFixed(2)}</div>
               <div>MOC {agent.units.toFixed(2)}</div>
