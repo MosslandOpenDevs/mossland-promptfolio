@@ -83,7 +83,7 @@ export default async function ReplayIndexPage({
     nextMaxEq: number = effectiveMaxEq,
     nextQuery: string = query,
     nextProfitableOnly: boolean = profitableOnly,
-    nextLossOnly: boolean = lossOnly
+    nextLossOnly: boolean = requestedLossOnly
   ) => {
     const params = new URLSearchParams();
     params.set('sort', nextSort);
@@ -203,18 +203,18 @@ export default async function ReplayIndexPage({
           profitable only
         </label>
         <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center', fontSize: 12, opacity: 0.85 }}>
-          <input name="lossOnly" type="checkbox" value="1" defaultChecked={lossOnly} />
+          <input name="lossOnly" type="checkbox" value="1" defaultChecked={requestedLossOnly} />
           loss only
         </label>
         <button type="submit" style={filterButton}>apply</button>
-        {(query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly || lossOnly) && (
+        {(query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly || requestedLossOnly) && (
           <Link href={buildReplayHref(sort, 0, 0, '', false, false)} style={{ color: '#9ab', fontSize: 12 }}>
             clear
           </Link>
         )}
       </form>
 
-      {(query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly || lossOnly) && (
+      {(query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly || requestedLossOnly) && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
           <span style={{ opacity: 0.7 }}>active filters:</span>
           {query && (
@@ -233,12 +233,15 @@ export default async function ReplayIndexPage({
             </Link>
           )}
           {profitableOnly && (
-            <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, false, false)} style={activeFilterChip}>
+            <Link
+              href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, false, requestedLossOnly)}
+              style={activeFilterChip}
+            >
               profitable only ✕
             </Link>
           )}
-          {lossOnly && (
-            <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, false, false)} style={activeFilterChip}>
+          {requestedLossOnly && (
+            <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, profitableOnly, false)} style={activeFilterChip}>
               loss only ✕
             </Link>
           )}
