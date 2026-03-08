@@ -18,6 +18,50 @@ export default async function SeasonPage() {
   const priorTick = ticks[1] ?? null;
   const priorPrice = Number(priorTick?.moc_usd ?? 0);
   const priceDelta = lastTick && priorTick ? latestPrice - priorPrice : null;
+  const tickPrices = ticks.map((tick) => Number(tick.moc_usd)).filter((price) => Number.isFinite(price) && price > 0);
+  const highPrice = tickPrices.length > 0 ? Math.max(...tickPrices) : null;
+  const lowPrice = tickPrices.length > 0 ? Math.min(...tickPrices) : null;
+  const averagePrice = tickPrices.length > 0 ? tickPrices.reduce((sum, price) => sum + price, 0) / tickPrices.length : null;
+  const latestVsAverage = latestPrice > 0 && averagePrice ? latestPrice - averagePrice : null;
+  const directionStreak = (() => {
+    if (ticks.length < 2) return 0;
+
+    let streak = 0;
+    let direction: 'up' | 'down' | null = null;
+
+    for (let index = 0; index < ticks.length - 1; index += 1) {
+      const current = Number(ticks[index]?.moc_usd ?? 0);
+      const previous = Number(ticks[index + 1]?.moc_usd ?? 0);
+      const delta = current - previous;
+
+      if (delta === 0) break;
+
+      const nextDirection = delta > 0 ? 'up' : 'down';
+      if (!direction) {
+        direction = nextDirection;
+        streak = 1;
+        continue;
+      }
+
+      if (direction !== nextDirection) break;
+      streak += 1;
+    }
+
+    return direction ? streak : 0;
+  })();
+
+  const recentTradeMixRow = season
+    ? (d.prepare(
+        `SELECT side, count(*) as c
+         FROM trades
+         WHERE season_id=?
+         GROUP BY side`
+      ).all(season.id) as Array<{ side: string; c: number }>)
+    : [];
+  const recentTradeMix = recentTradeMixRow.reduce(
+    (acc, row) => ({ ...acc, [row.side]: Number(row.c ?? 0) }),
+    { BUY: 0, SELL: 0, HOLD: 0 } as Record<string, number>
+  );
 
   const agentCountRow = d.prepare(`SELECT count(*) as c FROM agents`).get() as any;
   const portfolioCountRow = season
@@ -123,6 +167,81 @@ export default async function SeasonPage() {
         </button>
         {!season && <div style={{ opacity: 0.7, fontSize: 12, marginTop: 8 }}>{t(locale, 'createSeasonFirst')}</div>}
       </form>
+
+      {season && (
+        <div style={card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ fontWeight: 700 }}>{locale === 'ko' ? '시장 스냅샷' : 'Market snapshot'}</div>
+            <div style={{ opacity: 0.7, fontSize: 12 }}>
+              {ticks.length > 0
+                ? locale === 'ko'
+                  ? `최근 ${ticks.length}개 tick 기준`
+                  : `based on latest ${ticks.length} ticks`
+                : t(locale, 'noTicks')}
+            </div>
+          </div>
+
+          <div style={{ ...summaryGrid, marginTop: 10 }}>
+            <div style={summaryCard}>
+              <div style={summaryLabel}>{locale === 'ko' ? '가격 범위' : 'price range'}</div>
+              <div style={summaryValue}>{highPrice !== null && lowPrice !== null ? `$${lowPrice.toFixed(6)} → $${highPrice.toFixed(6)}` : '—'}</div>
+              <div style={summaryHint}>
+                {averagePrice !== null
+                  ? locale === 'ko'
+                    ? `평균 $${averagePrice.toFixed(6)}`
+                    : `average $${averagePrice.toFixed(6)}`
+                  : locale === 'ko'
+                    ? '범위를 계산할 tick 없음'
+                    : 'need ticks to calculate range'}
+              </div>
+            </div>
+
+            <div style={summaryCard}>
+              <div style={summaryLabel}>{locale === 'ko' ? '최근 추세' : 'current streak'}</div>
+              <div style={summaryValue}>
+                {directionStreak > 0
+                  ? `${priceDelta !== null && priceDelta >= 0 ? '↑' : '↓'} ${directionStreak}`
+                  : '—'}
+              </div>
+              <div style={summaryHint}>
+                {directionStreak > 0
+                  ? locale === 'ko'
+                    ? `${priceDelta !== null && priceDelta >= 0 ? '상승' : '하락'} 연속 ${directionStreak}틱`
+                    : `${priceDelta !== null && priceDelta >= 0 ? 'up' : 'down'} for ${directionStreak} straight ticks`
+                  : locale === 'ko'
+                    ? '추세를 판단할 tick 부족'
+                    : 'not enough ticks for a streak'}
+              </div>
+            </div>
+
+            <div style={summaryCard}>
+              <div style={summaryLabel}>{locale === 'ko' ? '평균 대비 현재' : 'vs average'}</div>
+              <div style={summaryValue}>
+                {latestVsAverage !== null ? `${latestVsAverage >= 0 ? '+' : '-'}$${Math.abs(latestVsAverage).toFixed(6)}` : '—'}
+              </div>
+              <div style={summaryHint}>
+                {latestVsAverage !== null
+                  ? locale === 'ko'
+                    ? `현재가 ${latestVsAverage >= 0 ? '평균 위' : '평균 아래'}`
+                    : `latest price is ${latestVsAverage >= 0 ? 'above' : 'below'} average`
+                  : locale === 'ko'
+                    ? '비교할 평균 없음'
+                    : 'average comparison unavailable'}
+              </div>
+            </div>
+
+            <div style={summaryCard}>
+              <div style={summaryLabel}>{locale === 'ko' ? '행동 믹스' : 'action mix'}</div>
+              <div style={summaryValue}>{`${recentTradeMix.BUY}/${recentTradeMix.SELL}/${recentTradeMix.HOLD}`}</div>
+              <div style={summaryHint}>
+                {locale === 'ko'
+                  ? `BUY / SELL / HOLD 누적 분포`
+                  : 'cumulative BUY / SELL / HOLD distribution'}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {season && (
         <div style={card}>
