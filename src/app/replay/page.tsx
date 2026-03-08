@@ -19,7 +19,7 @@ export default async function ReplayIndexPage({
   const mocUsd = Number(lastTick?.moc_usd ?? 0);
 
   const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
-  const sort = sortParam === 'name' || sortParam === 'pnl' ? sortParam : 'equity';
+  const sort = sortParam === 'name' || sortParam === 'pnl' || sortParam === 'roi' ? sortParam : 'equity';
   const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
   const query = (qParam ?? '').trim();
   const queryLower = query.toLowerCase();
@@ -71,7 +71,7 @@ export default async function ReplayIndexPage({
     });
 
   const buildReplayHref = (
-    nextSort: 'name' | 'equity' | 'pnl',
+    nextSort: 'name' | 'equity' | 'pnl' | 'roi',
     nextMinEq: number = effectiveMinEq,
     nextMaxEq: number = effectiveMaxEq,
     nextQuery: string = query,
