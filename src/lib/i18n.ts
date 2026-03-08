@@ -45,6 +45,8 @@ const dict = {
     createSeasonFirst: 'Create a season first.',
     recentTicks: 'Recent ticks',
     noTicks: 'No ticks yet.',
+    noPortfolios: 'No portfolios yet. Create agents + run a tick.',
+    mocUsdLabel: 'moc_usd',
 
     currentPrompt: 'Current prompt',
     updatePrompt: 'Update prompt',
@@ -93,6 +95,8 @@ const dict = {
     createSeasonFirst: '먼저 시즌을 만들어야 해.',
     recentTicks: '최근 Tick',
     noTicks: '아직 Tick이 없어.',
+    noPortfolios: '아직 포트폴리오가 없어. 에이전트를 만든 뒤 Tick을 실행해.',
+    mocUsdLabel: 'moc_usd',
 
     currentPrompt: '현재 프롬프트',
     updatePrompt: '프롬프트 수정',

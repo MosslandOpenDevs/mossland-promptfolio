@@ -38,8 +38,10 @@ export default async function LeaderboardPage() {
     <main style={{ display: 'grid', gap: 16 }}>
       <h2 style={{ margin: 0 }}>{t(locale, 'leaderboard')}</h2>
       <div style={card}>
-        <div><span style={dim}>season</span> {season.name}</div>
-        <div><span style={dim}>moc_usd</span> {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : 'run a tick'}</div>
+        <div>
+          <span style={dim}>{t(locale, 'season')}</span> {season.name}
+        </div>
+        <div><span style={dim}>{t(locale, 'mocUsdLabel')}</span> {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : 'run a tick'}</div>
       </div>
 
       <div style={{ display: 'grid', gap: 10 }}>
@@ -59,7 +61,7 @@ export default async function LeaderboardPage() {
             </div>
           </div>
         ))}
-        {scored.length === 0 && <div style={{ opacity: 0.7 }}>No portfolios yet. Create agents + run a tick.</div>}
+        {scored.length === 0 && <div style={{ opacity: 0.7 }}>{t(locale, 'noPortfolios')}</div>}
       </div>
     </main>
   );
