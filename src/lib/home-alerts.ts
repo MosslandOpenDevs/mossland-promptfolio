@@ -5,6 +5,8 @@ export type HomeAlert = {
   tone: HomeAlertTone;
   label: string;
   message: string;
+  href: string;
+  cta: string;
 };
 
 export function getHomeAlerts(params: {
@@ -25,6 +27,8 @@ export function getHomeAlerts(params: {
       tone: 'danger',
       label: 'setup',
       message: 'No agents online yet. Create at least one desk before the next tick.',
+      href: '/agents',
+      cta: 'Open Agent Lab',
     });
   }
 
@@ -34,6 +38,8 @@ export function getHomeAlerts(params: {
       tone: 'warning',
       label: 'data',
       message: 'No market ticks recorded. Run EXECUTE TICK to unlock live telemetry.',
+      href: '/season',
+      cta: 'Open Season HQ',
     });
   } else if (params.latestTickAgeMs !== null && params.latestTickAgeMs > 15 * 60 * 1000) {
     alerts.push({
@@ -41,6 +47,8 @@ export function getHomeAlerts(params: {
       tone: 'warning',
       label: 'stale',
       message: 'Feed is older than 15 minutes. Refresh before trusting the leaderboard.',
+      href: '/season',
+      cta: 'Refresh feed',
     });
   } else if (params.latestTickAgeMs !== null) {
     alerts.push({
@@ -48,6 +56,8 @@ export function getHomeAlerts(params: {
       tone: 'success',
       label: 'fresh',
       message: 'Feed is fresh enough for quick operator checks.',
+      href: '/leaderboard',
+      cta: 'Review leaderboard',
     });
   }
 
@@ -57,6 +67,8 @@ export function getHomeAlerts(params: {
       tone: 'warning',
       label: 'activity',
       message: 'Ticks exist but no trades landed yet. Inspect prompts or wait for another cycle.',
+      href: '/replay',
+      cta: 'Inspect replay',
     });
   }
 
@@ -69,6 +81,8 @@ export function getHomeAlerts(params: {
         params.streakDirection === 'up'
           ? `Price momentum is stacking up for ${params.directionStreak} ticks.`
           : `Price momentum is sliding down for ${params.directionStreak} ticks.`,
+      href: '/leaderboard',
+      cta: 'Review leaders',
     });
   }
 
@@ -82,6 +96,8 @@ export function getHomeAlerts(params: {
         params.buyCount > params.sellCount
           ? 'Recent desks are leaning BUY-heavy. Double-check concentration risk.'
           : 'Recent desks are leaning SELL-heavy. Watch for over-defensive positioning.',
+      href: '/replay',
+      cta: 'Open replay tape',
     });
   }
 

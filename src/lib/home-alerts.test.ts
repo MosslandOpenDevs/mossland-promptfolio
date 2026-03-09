@@ -20,18 +20,28 @@ test('getHomeAlerts prioritizes missing setup and stale data', () => {
 });
 
 test('getHomeAlerts includes momentum and flow imbalance after freshness', () => {
+  const alerts = getHomeAlerts({
+    agentsCount: 4,
+    ticksCount: 8,
+    tradesCount: 8,
+    latestTickAgeMs: 5 * 60 * 1000,
+    directionStreak: 4,
+    streakDirection: 'up',
+    buyCount: 6,
+    sellCount: 2,
+  });
+
   assert.deepEqual(
-    getHomeAlerts({
-      agentsCount: 4,
-      ticksCount: 8,
-      tradesCount: 8,
-      latestTickAgeMs: 5 * 60 * 1000,
-      directionStreak: 4,
-      streakDirection: 'up',
-      buyCount: 6,
-      sellCount: 2,
-    }).map((alert) => alert.id),
+    alerts.map((alert) => alert.id),
     ['feed-fresh', 'momentum', 'desk-imbalance']
+  );
+  assert.deepEqual(
+    alerts.map((alert) => ({ id: alert.id, href: alert.href, cta: alert.cta })),
+    [
+      { id: 'feed-fresh', href: '/leaderboard', cta: 'Review leaderboard' },
+      { id: 'momentum', href: '/leaderboard', cta: 'Review leaders' },
+      { id: 'desk-imbalance', href: '/replay', cta: 'Open replay tape' },
+    ]
   );
 });
 

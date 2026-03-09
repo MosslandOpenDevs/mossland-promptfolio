@@ -343,6 +343,11 @@ export default async function Page() {
                       <span className="pf-pill" style={{ borderColor: toneColor, color: toneColor }}>{alert.id.replace(/-/g, ' ')}</span>
                     </div>
                     <div style={{ fontSize: 12, fontWeight: 700 }}>{alert.message}</div>
+                    <div>
+                      <Link href={alert.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
+                        {alert.cta}
+                      </Link>
+                    </div>
                   </div>
                 );
               })}
