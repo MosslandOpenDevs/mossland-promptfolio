@@ -22,10 +22,18 @@ export default async function LeaderboardPage() {
     )
     .all(season.id) as any[];
 
-  const scored = rows.map((r) => {
-    const equity = Number(r.cash_usd) + Number(r.moc_units) * mocUsd;
-    return { ...r, equity };
-  }).sort((a,b)=>b.equity-a.equity);
+  const scored = rows
+    .map((r) => {
+      const equity = Number(r.cash_usd) + Number(r.moc_units) * mocUsd;
+      return { ...r, equity };
+    })
+    .sort((a, b) => b.equity - a.equity);
+
+  const leader = scored[0] ?? null;
+  const runnerUp = scored[1] ?? null;
+  const leaderGap = leader && runnerUp ? leader.equity - runnerUp.equity : null;
+  const averageEquity = scored.length > 0 ? scored.reduce((sum, row) => sum + row.equity, 0) / scored.length : null;
+  const latestPortfolioUpdate = scored[0]?.updated_at ?? null;
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
@@ -35,6 +43,26 @@ export default async function LeaderboardPage() {
           <span style={dim}>{t(locale, 'season')}</span> {season.name}
         </div>
         <div><span style={dim}>{t(locale, 'mocUsdLabel')}</span> {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : 'run a tick'}</div>
+      </div>
+
+      <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+        <div style={card}>
+          <div style={dimLabel}>Active desks</div>
+          <div style={metricValue}>{scored.length}</div>
+          <div style={metricHint}>Portfolios ranked in the current season.</div>
+        </div>
+        <div style={card}>
+          <div style={dimLabel}>Leader gap</div>
+          <div style={metricValue}>{leaderGap !== null ? `$${leaderGap.toFixed(2)}` : '—'}</div>
+          <div style={metricHint}>
+            {leader && runnerUp ? `${leader.name} vs ${runnerUp.name}` : 'Need at least two desks for a gap signal.'}
+          </div>
+        </div>
+        <div style={card}>
+          <div style={dimLabel}>Average equity</div>
+          <div style={metricValue}>{averageEquity !== null ? `$${averageEquity.toFixed(2)}` : '—'}</div>
+          <div style={metricHint}>{latestPortfolioUpdate ? `Latest rebalance ${latestPortfolioUpdate}` : 'No portfolio updates yet.'}</div>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gap: 10 }}>
@@ -68,3 +96,20 @@ const card: React.CSSProperties = {
 };
 
 const dim: React.CSSProperties = { opacity: 0.6, marginRight: 6 };
+const dimLabel: React.CSSProperties = {
+  opacity: 0.6,
+  fontSize: 12,
+  textTransform: 'uppercase',
+  letterSpacing: '.08em',
+};
+const metricValue: React.CSSProperties = {
+  fontSize: 28,
+  fontWeight: 900,
+  marginTop: 6,
+  fontVariantNumeric: 'tabular-nums',
+};
+const metricHint: React.CSSProperties = {
+  opacity: 0.72,
+  fontSize: 12,
+  marginTop: 6,
+};
