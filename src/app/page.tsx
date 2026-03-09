@@ -100,12 +100,52 @@ export default async function Page() {
       : sideCounts.SELL > sideCounts.BUY
         ? 'var(--alert)'
         : 'var(--ink)';
+  const hasMomentum = directionStreak >= 3;
+  const regime =
+    trades.length === 0
+      ? {
+          label: 'NO FLOW',
+          tone: 'var(--ink)',
+          note: 'Need a fresh tick before the desk can read market posture.',
+          ctaHref: '/season',
+          ctaLabel: 'Run a fresh tick',
+        }
+      : hasMomentum && streakDirection === 'up'
+        ? {
+            label: 'RISK-ON',
+            tone: 'var(--primary)',
+            note: 'Buy pressure and upward streak are aligned. Review the leaders before the next rebalance.',
+            ctaHref: '/leaderboard',
+            ctaLabel: 'Review leaders',
+          }
+        : hasMomentum && streakDirection === 'down'
+          ? {
+              label: 'RISK-OFF',
+              tone: 'var(--alert)',
+              note: 'Downward streak is building. Inspect defensive desks and stale positions now.',
+              ctaHref: '/replay',
+              ctaLabel: 'Inspect replay',
+            }
+          : sideCounts.HOLD >= Math.max(sideCounts.BUY, sideCounts.SELL)
+            ? {
+                label: 'WAIT-AND-SEE',
+                tone: '#b45309',
+                note: 'Hold decisions dominate. Gather one more tick before rotating exposure.',
+                ctaHref: '/season',
+                ctaLabel: 'Open season HQ',
+              }
+            : {
+                label: 'MIXED TAPE',
+                tone: 'var(--ink)',
+                note: 'Flow is active but conviction is split. Use replay to audit trade reasons before acting.',
+                ctaHref: '/replay',
+                ctaLabel: 'Audit trade tape',
+              };
   const recentHeadline = latestTrade
     ? `${latestTrade.agent_name} ${latestTrade.side} ${Number(latestTrade.moc_units).toFixed(2)} MOC`
     : 'No trade headlines yet';
   const recentAgents = Array.from(new Set(trades.map((tr) => String(tr.agent_name)).filter(Boolean))).slice(0, 4);
   const isFeedStale = latestTickAgeMs !== null && latestTickAgeMs > 15 * 60 * 1000;
-  const hasMomentum = directionStreak >= 3;
   const homeAlerts = getHomeAlerts({
     agentsCount,
     ticksCount,
@@ -376,6 +416,22 @@ export default async function Page() {
               ) : (
                 <span className="pf-pill">desk: waiting for agents</span>
               )}
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Market regime</div>
+              <span className="pf-pill" style={{ color: regime.tone, borderColor: regime.tone }}>{regime.label}</span>
+            </div>
+            <div style={{ fontWeight: 900, letterSpacing: '.04em' }}>{regime.note}</div>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              {latestTickAgeMs !== null
+                ? `Feed age ${formatDurationShort(latestTickAgeMs, locale)} · momentum ${directionStreak > 0 ? `${streakDirection === 'up' ? '↑' : '↓'} ${directionStreak}` : 'flat'} · trade mix ${sideCounts.BUY}/${sideCounts.SELL}/${sideCounts.HOLD}`
+                : 'Need recent tick data to derive regime confidence.'}
+            </div>
+            <div>
+              <Link href={regime.ctaHref} className="pf-btn" style={{ display: 'inline-flex' }}>{regime.ctaLabel}</Link>
             </div>
           </div>
 
