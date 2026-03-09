@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, parsePositivePrice } from './market-metrics.ts';
+import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getEquityBand, parsePositivePrice } from './market-metrics.ts';
 
 test('parsePositivePrice returns null for zero, negatives, and invalid input', () => {
   assert.equal(parsePositivePrice(0), null);
@@ -48,5 +48,39 @@ test('getDirectionStreak detects upward and downward streaks', () => {
       { moc_usd: 1.05 },
     ]),
     { direction: 'down', streak: 2 }
+  );
+});
+
+test('getEquityBand labels leader, outperformers, and laggards', () => {
+  assert.deepEqual(
+    getEquityBand({ equity: 140, averageEquity: 110, leaderEquity: 140, totalDesks: 4 }),
+    { label: 'Leader', tone: 'leader' }
+  );
+
+  assert.deepEqual(
+    getEquityBand({ equity: 118, averageEquity: 100, leaderEquity: 130, totalDesks: 4 }),
+    { label: 'Above avg', tone: 'positive' }
+  );
+
+  assert.deepEqual(
+    getEquityBand({ equity: 94, averageEquity: 100, leaderEquity: 130, totalDesks: 4 }),
+    { label: 'Below avg', tone: 'warning' }
+  );
+
+  assert.deepEqual(
+    getEquityBand({ equity: 102, averageEquity: 100, leaderEquity: 130, totalDesks: 4 }),
+    { label: 'On pace', tone: 'neutral' }
+  );
+});
+
+test('getEquityBand handles solo desk and missing rank state', () => {
+  assert.deepEqual(
+    getEquityBand({ equity: 120, averageEquity: 120, leaderEquity: 120, totalDesks: 1 }),
+    { label: 'Solo desk', tone: 'neutral' }
+  );
+
+  assert.deepEqual(
+    getEquityBand({ equity: Number.NaN, averageEquity: 120, leaderEquity: 120, totalDesks: 4 }),
+    { label: 'Unranked', tone: 'neutral' }
   );
 });

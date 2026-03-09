@@ -1,5 +1,6 @@
 import { db } from '../../lib/db';
 import { getLocale, t } from '../../lib/i18n';
+import { getEquityBand } from '../../lib/market-metrics';
 import { ensureWeeklySeason } from '../../lib/weekly';
 
 export const dynamic = 'force-dynamic';
@@ -34,6 +35,7 @@ export default async function LeaderboardPage() {
   const leaderGap = leader && runnerUp ? leader.equity - runnerUp.equity : null;
   const averageEquity = scored.length > 0 ? scored.reduce((sum, row) => sum + row.equity, 0) / scored.length : null;
   const latestPortfolioUpdate = scored[0]?.updated_at ?? null;
+  const spread = leader && scored.length > 0 ? leader.equity - scored[scored.length - 1]!.equity : null;
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
@@ -63,25 +65,50 @@ export default async function LeaderboardPage() {
           <div style={metricValue}>{averageEquity !== null ? `$${averageEquity.toFixed(2)}` : '—'}</div>
           <div style={metricHint}>{latestPortfolioUpdate ? `Latest rebalance ${latestPortfolioUpdate}` : 'No portfolio updates yet.'}</div>
         </div>
+        <div style={card}>
+          <div style={dimLabel}>Field spread</div>
+          <div style={metricValue}>{spread !== null ? `$${spread.toFixed(2)}` : '—'}</div>
+          <div style={metricHint}>Gap between the top desk and the last ranked desk.</div>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gap: 10 }}>
-        {scored.map((r, idx) => (
-          <div key={r.id} style={card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ fontSize: 22 }}>{r.avatar_emoji}</div>
-                <div style={{ fontWeight: 800 }}>{idx + 1}. {r.name}</div>
+        {scored.map((r, idx) => {
+          const band = getEquityBand({
+            equity: Number(r.equity),
+            averageEquity,
+            leaderEquity: leader?.equity ?? null,
+            totalDesks: scored.length,
+          });
+          const bandColor = band.tone === 'leader'
+            ? '#f59e0b'
+            : band.tone === 'positive'
+              ? '#22c55e'
+              : band.tone === 'warning'
+                ? '#f97316'
+                : '#94a3b8';
+
+          return (
+            <div key={r.id} style={card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ fontSize: 22 }}>{r.avatar_emoji}</div>
+                  <div style={{ fontWeight: 800 }}>{idx + 1}. {r.name}</div>
+                  <span style={{ border: `1px solid ${bandColor}`, color: bandColor, borderRadius: 999, padding: '2px 8px', fontSize: 11, fontWeight: 800, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                    {band.label}
+                  </span>
+                </div>
+                <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 800 }}>${Number(r.equity).toFixed(2)}</div>
               </div>
-              <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 800 }}>${Number(r.equity).toFixed(2)}</div>
+              <div style={{ display: 'flex', gap: 12, marginTop: 8, opacity: 0.8, fontSize: 13, flexWrap: 'wrap' }}>
+                <div>cash ${Number(r.cash_usd).toFixed(2)}</div>
+                <div>MOC {Number(r.moc_units).toFixed(2)}</div>
+                <div>vs avg {averageEquity !== null ? `${r.equity - averageEquity >= 0 ? '+' : ''}${Number(r.equity - averageEquity).toFixed(2)}` : '—'}</div>
+                <div style={{ marginLeft: 'auto', opacity: 0.7 }}>{r.updated_at}</div>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 12, marginTop: 8, opacity: 0.8, fontSize: 13 }}>
-              <div>cash ${Number(r.cash_usd).toFixed(2)}</div>
-              <div>MOC {Number(r.moc_units).toFixed(2)}</div>
-              <div style={{ marginLeft: 'auto', opacity: 0.7 }}>{r.updated_at}</div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {scored.length === 0 && <div style={{ opacity: 0.7 }}>{t(locale, 'noPortfolios')}</div>}
       </div>
     </main>

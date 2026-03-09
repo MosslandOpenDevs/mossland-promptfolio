@@ -84,3 +84,42 @@ export function getLatestTickAgeMs(ticks: MarketTickLike[]): number | null {
 
   return Date.now() - latestTs;
 }
+
+export function getEquityBand(params: {
+  equity: number;
+  averageEquity: number | null;
+  leaderEquity: number | null;
+  totalDesks: number;
+}): { label: string; tone: 'leader' | 'positive' | 'neutral' | 'warning' } {
+  const { equity, averageEquity, leaderEquity, totalDesks } = params;
+
+  if (!Number.isFinite(equity) || totalDesks <= 0) {
+    return { label: 'Unranked', tone: 'neutral' };
+  }
+
+  if (totalDesks === 1) {
+    return { label: 'Solo desk', tone: 'neutral' };
+  }
+
+  if (leaderEquity !== null && Math.abs(leaderEquity - equity) < 0.005) {
+    return { label: 'Leader', tone: 'leader' };
+  }
+
+  if (averageEquity === null) {
+    return { label: 'Tracking', tone: 'neutral' };
+  }
+
+  const deltaFromAverage = equity - averageEquity;
+  const baseline = Math.max(Math.abs(averageEquity), 1);
+  const relativeDelta = deltaFromAverage / baseline;
+
+  if (relativeDelta >= 0.05) {
+    return { label: 'Above avg', tone: 'positive' };
+  }
+
+  if (relativeDelta <= -0.05) {
+    return { label: 'Below avg', tone: 'warning' };
+  }
+
+  return { label: 'On pace', tone: 'neutral' };
+}
