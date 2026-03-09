@@ -9,7 +9,7 @@ import CopyBriefButton from '../components/CopyBriefButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
-import { buildHomeBriefing, buildOperatorChecklist } from '../lib/home-briefing';
+import { buildHomeBriefing, buildOperatorChecklist, buildOperatorPriorityQueue } from '../lib/home-briefing';
 
 export const dynamic = 'force-dynamic';
 
@@ -356,6 +356,16 @@ export default async function Page() {
     feedState,
     activeDeskCount,
   });
+  const operatorPriorityQueue = buildOperatorPriorityQueue({
+    agentsCount,
+    ticksCount,
+    feedState,
+    activeDeskCount,
+    directionStreak,
+    streakDirection,
+    buyCount: sideCounts.BUY,
+    sellCount: sideCounts.SELL,
+  });
 
   return (
     <main style={{ display: 'grid', gap: 14 }}>
@@ -539,6 +549,34 @@ export default async function Page() {
                   </Link>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Operator priority queue</div>
+              <span className="pf-pill">top 3 tasks</span>
+            </div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {operatorPriorityQueue.map((item, index) => {
+                const toneColor = item.tone === 'urgent' ? 'var(--alert)' : item.tone === 'ready' ? 'var(--primary)' : '#b45309';
+                const toneLabel = item.tone === 'urgent' ? 'NOW' : item.tone === 'ready' ? 'GO' : 'WATCH';
+
+                return (
+                  <div key={item.id} style={{ border: `2px solid ${toneColor}`, borderRadius: 12, padding: '10px 12px', background: 'rgba(255,255,255,.76)', display: 'grid', gap: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase', color: toneColor }}>#{index + 1} {item.label}</div>
+                      <span className="pf-pill" style={{ borderColor: toneColor, color: toneColor }}>{toneLabel}</span>
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700 }}>{item.detail}</div>
+                    <div>
+                      <Link href={item.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
+                        {item.cta}
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

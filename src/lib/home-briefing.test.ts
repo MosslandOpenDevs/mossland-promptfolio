@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHomeBriefing, buildOperatorChecklist } from './home-briefing.ts';
+import { buildHomeBriefing, buildOperatorChecklist, buildOperatorPriorityQueue } from './home-briefing.ts';
 
 test('buildHomeBriefing formats a concise operator snapshot', () => {
   const summary = buildHomeBriefing({
@@ -105,6 +105,51 @@ test('buildOperatorChecklist escalates missing setup and empty feed', () => {
       { id: 'agent-coverage', status: 'action', cta: 'Open Agent Lab' },
       { id: 'feed-readiness', status: 'action', cta: 'Run first tick' },
       { id: 'signal-diversity', status: 'watch', cta: 'Monitor replay' },
+    ]
+  );
+});
+
+test('buildOperatorPriorityQueue surfaces urgent desk actions before trend work', () => {
+  assert.deepEqual(
+    buildOperatorPriorityQueue({
+      agentsCount: 2,
+      ticksCount: 7,
+      feedState: 'STALE',
+      activeDeskCount: 1,
+      directionStreak: 4,
+      streakDirection: 'up',
+      buyCount: 5,
+      sellCount: 1,
+    }).map((item) => ({ id: item.id, tone: item.tone, cta: item.cta })),
+    [
+      { id: 'refresh-feed', tone: 'urgent', cta: 'Refresh feed' },
+      { id: 'broaden-coverage', tone: 'watch', cta: 'Review desk mix' },
+      { id: 'press-uptrend', tone: 'ready', cta: 'Review leaders' },
+    ]
+  );
+});
+
+test('buildOperatorPriorityQueue falls back to a steady monitoring task', () => {
+  assert.deepEqual(
+    buildOperatorPriorityQueue({
+      agentsCount: 3,
+      ticksCount: 6,
+      feedState: 'FRESH',
+      activeDeskCount: 3,
+      directionStreak: 1,
+      streakDirection: null,
+      buyCount: 2,
+      sellCount: 1,
+    }),
+    [
+      {
+        id: 'monitor-quiet-board',
+        tone: 'ready',
+        label: 'Board is steady',
+        detail: 'No urgent operator tasks right now. Monitor replay or leaderboard for the next edge.',
+        href: '/replay',
+        cta: 'Monitor replay',
+      },
     ]
   );
 });
