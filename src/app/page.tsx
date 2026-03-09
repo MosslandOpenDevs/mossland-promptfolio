@@ -7,6 +7,7 @@ import ZineStamp from '../components/ZineStamp';
 import ExecuteTickButton from '../components/ExecuteTickButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
+import { getHomeAlerts } from '../lib/home-alerts';
 
 export const dynamic = 'force-dynamic';
 
@@ -105,6 +106,16 @@ export default async function Page() {
   const recentAgents = Array.from(new Set(trades.map((tr) => String(tr.agent_name)).filter(Boolean))).slice(0, 4);
   const isFeedStale = latestTickAgeMs !== null && latestTickAgeMs > 15 * 60 * 1000;
   const hasMomentum = directionStreak >= 3;
+  const homeAlerts = getHomeAlerts({
+    agentsCount,
+    ticksCount,
+    tradesCount: trades.length,
+    latestTickAgeMs,
+    directionStreak,
+    streakDirection,
+    buyCount: sideCounts.BUY,
+    sellCount: sideCounts.SELL,
+  });
 
   const nextAction =
     agentsCount === 0
@@ -307,6 +318,34 @@ export default async function Page() {
               {directionStreak > 0
                 ? `Recent price action is ${streakDirection === 'up' ? 'stacking upward' : 'sliding downward'} for ${directionStreak} ticks.`
                 : 'Need at least two clean ticks to estimate momentum.'}
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Operator radar</div>
+              <span className="pf-pill">top 3 signals</span>
+            </div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {homeAlerts.map((alert) => {
+                const toneColor = alert.tone === 'danger'
+                  ? 'var(--alert)'
+                  : alert.tone === 'warning'
+                    ? '#b45309'
+                    : alert.tone === 'success'
+                      ? 'var(--primary)'
+                      : 'var(--ink)';
+
+                return (
+                  <div key={alert.id} style={{ border: `2px solid ${toneColor}`, borderRadius: 12, padding: '10px 12px', background: 'rgba(255,255,255,.72)', display: 'grid', gap: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase', color: toneColor }}>{alert.label}</div>
+                      <span className="pf-pill" style={{ borderColor: toneColor, color: toneColor }}>{alert.id.replace(/-/g, ' ')}</span>
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700 }}>{alert.message}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
