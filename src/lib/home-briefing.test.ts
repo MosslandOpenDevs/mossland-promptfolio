@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue } from './home-briefing.ts';
+import { buildHomeBriefing, buildLeaderboardBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue } from './home-briefing.ts';
 
 test('buildHomeBriefing formats a concise operator snapshot', () => {
   const summary = buildHomeBriefing({
@@ -54,6 +54,34 @@ test('buildHomeBriefing falls back when price is missing', () => {
   assert.match(summary, /Feed: EMPTY · freshness — · cadence —/);
   assert.match(summary, /Coverage: No active desks/);
   assert.match(summary, /Watchlist: No desk watchlist yet/);
+});
+
+
+
+test('buildLeaderboardBriefing formats a compact standings handoff', () => {
+  const summary = buildLeaderboardBriefing({
+    seasonName: 'Week 11',
+    mocUsd: 0.1234567,
+    totalDesks: 4,
+    leaderName: 'Desk Alpha',
+    leaderEquity: 143.42,
+    leaderGap: 8.2,
+    spread: 17.55,
+    averageEquity: 132.18,
+    latestPortfolioUpdate: '2026-03-10T06:45:00.000Z',
+    topDeskNames: ['Desk Alpha', 'Desk Beta', 'Desk Gamma'],
+  });
+
+  assert.match(summary, /LEADERBOARD BRIEF/);
+  assert.match(summary, /Season: Week 11/);
+  assert.match(summary, /MOC: \$0\.123457/);
+  assert.match(summary, /Active desks: 4/);
+  assert.match(summary, /Leader: Desk Alpha leads at \$143\.42/);
+  assert.match(summary, /Leader gap: \$8\.20/);
+  assert.match(summary, /Field spread: \$17\.55/);
+  assert.match(summary, /Average equity: \$132\.18/);
+  assert.match(summary, /Top desks: Desk Alpha, Desk Beta, Desk Gamma/);
+  assert.match(summary, /Latest rebalance: 2026-03-10T06:45:00\.000Z/);
 });
 
 test('buildOperatorChecklist marks ready, watch, and action states', () => {

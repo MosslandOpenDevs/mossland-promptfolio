@@ -1,6 +1,8 @@
 import Link from 'next/link';
+import CopyBriefButton from '../../components/CopyBriefButton';
 import { db } from '../../lib/db';
 import { getLocale, t } from '../../lib/i18n';
+import { buildLeaderboardBriefing } from '../../lib/home-briefing';
 import { getEquityBand } from '../../lib/market-metrics';
 import { ensureWeeklySeason } from '../../lib/weekly';
 
@@ -37,6 +39,19 @@ export default async function LeaderboardPage() {
   const averageEquity = scored.length > 0 ? scored.reduce((sum, row) => sum + row.equity, 0) / scored.length : null;
   const latestPortfolioUpdate = scored[0]?.updated_at ?? null;
   const spread = leader && scored.length > 0 ? leader.equity - scored[scored.length - 1]!.equity : null;
+  const leaderboardBrief = buildLeaderboardBriefing({
+    seasonName: season.name,
+    mocUsd: mocUsd ? Number(mocUsd) : null,
+    totalDesks: scored.length,
+    leaderName: leader?.name ?? null,
+    leaderEquity: leader ? Number(leader.equity) : null,
+    leaderGap,
+    spread,
+    averageEquity,
+    latestPortfolioUpdate,
+    topDeskNames: scored.slice(0, 3).map((row) => String(row.name)),
+  });
+
   const quickLinks = [
     { href: '/', label: locale === 'ko' ? '홈 대시보드' : 'Home dashboard' },
     { href: '/replay', label: locale === 'ko' ? '리플레이 보기' : 'Open replay' },
@@ -57,10 +72,22 @@ export default async function LeaderboardPage() {
         </div>
       </div>
       <div style={card}>
-        <div>
-          <span style={dim}>{t(locale, 'season')}</span> {season.name}
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div>
+              <span style={dim}>{t(locale, 'season')}</span> {season.name}
+            </div>
+            <div><span style={dim}>{t(locale, 'mocUsdLabel')}</span> {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : 'run a tick'}</div>
+            <div style={metricHint}>
+              {leader
+                ? `${leader.name} leads ${runnerUp ? `by $${leaderGap?.toFixed(2) ?? '0.00'} over ${runnerUp.name}` : 'the board'} · ${latestPortfolioUpdate ? `updated ${latestPortfolioUpdate}` : 'awaiting rebalance timestamp'}`
+                : 'Run a tick to populate the standings.'}
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <CopyBriefButton text={leaderboardBrief} />
+          </div>
         </div>
-        <div><span style={dim}>{t(locale, 'mocUsdLabel')}</span> {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : 'run a tick'}</div>
       </div>
 
       <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>

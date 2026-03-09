@@ -44,6 +44,43 @@ export function buildHomeBriefing(params: {
     .join('\n');
 }
 
+
+export function buildLeaderboardBriefing(params: {
+  seasonName: string;
+  mocUsd: number | null;
+  totalDesks: number;
+  leaderName: string | null;
+  leaderEquity: number | null;
+  leaderGap: number | null;
+  spread: number | null;
+  averageEquity: number | null;
+  latestPortfolioUpdate: string | null;
+  topDeskNames?: string[];
+}) {
+  const priceLabel = params.mocUsd === null ? '—' : `$${params.mocUsd.toFixed(6)}`;
+  const leaderLine =
+    params.leaderName && params.leaderEquity !== null
+      ? `${params.leaderName} leads at $${params.leaderEquity.toFixed(2)}`
+      : 'No desk is ranked yet';
+  const gapLine = params.leaderGap !== null ? `$${params.leaderGap.toFixed(2)}` : '—';
+  const spreadLine = params.spread !== null ? `$${params.spread.toFixed(2)}` : '—';
+  const averageLine = params.averageEquity !== null ? `$${params.averageEquity.toFixed(2)}` : '—';
+  const topDeskLine = params.topDeskNames && params.topDeskNames.length > 0 ? params.topDeskNames.join(', ') : 'No top desks yet';
+
+  return [
+    'LEADERBOARD BRIEF',
+    `Season: ${params.seasonName}`,
+    `MOC: ${priceLabel}`,
+    `Active desks: ${params.totalDesks}`,
+    `Leader: ${leaderLine}`,
+    `Leader gap: ${gapLine}`,
+    `Field spread: ${spreadLine}`,
+    `Average equity: ${averageLine}`,
+    `Top desks: ${topDeskLine}`,
+    `Latest rebalance: ${params.latestPortfolioUpdate ?? '—'}`,
+  ].join('\n');
+}
+
 export type OperatorChecklistItem = {
   id: string;
   status: 'ready' | 'watch' | 'action';
