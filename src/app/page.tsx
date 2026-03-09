@@ -235,21 +235,6 @@ export default async function Page() {
         ? formatDurationShort(freshnessBudget.remainingMs, locale)
         : `${formatDurationShort(Math.abs(freshnessBudget.remainingMs), locale)} late`;
   const cadenceLabel = formatDurationShort(averageTickIntervalMs, locale);
-  const operatorBriefing = buildHomeBriefing({
-    seasonName: season?.name ?? '—',
-    mocUsd: mocUsd ?? null,
-    feedState,
-    freshnessLabel,
-    cadenceLabel,
-    regimeLabel: regime.label,
-    regimeNote: regime.note,
-    pulseLabel,
-    briefHeadline: homeBrief.headline,
-    briefDetail: homeBrief.detail,
-    nextActionTitle: nextAction.title,
-    nextActionCta: nextAction.cta,
-  });
-
   for (const tr of trades) {
     const units = Number(tr.moc_units);
     const usd = Number(tr.price_usd);
@@ -330,6 +315,24 @@ export default async function Page() {
         trade_count: number | string;
       }>)
     : [];
+
+  const operatorBriefing = buildHomeBriefing({
+    seasonName: season?.name ?? '—',
+    mocUsd: mocUsd ?? null,
+    feedState,
+    freshnessLabel,
+    cadenceLabel,
+    regimeLabel: regime.label,
+    regimeNote: regime.note,
+    pulseLabel,
+    briefHeadline: homeBrief.headline,
+    briefDetail: homeBrief.detail,
+    nextActionTitle: nextAction.title,
+    nextActionCta: nextAction.cta,
+    activeDeskCount,
+    tradeMixLabel: `BUY ${sideCounts.BUY} · SELL ${sideCounts.SELL} · HOLD ${sideCounts.HOLD}`,
+    watchlistNames: deskWatchlist.map((desk) => desk.name),
+  });
 
   return (
     <main style={{ display: 'grid', gap: 14 }}>
