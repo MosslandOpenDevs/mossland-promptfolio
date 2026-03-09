@@ -5,9 +5,11 @@ import { getLocale, t } from '../lib/i18n';
 import TerminalLog, { type TerminalRow } from '../components/TerminalLog';
 import ZineStamp from '../components/ZineStamp';
 import ExecuteTickButton from '../components/ExecuteTickButton';
+import CopyBriefButton from '../components/CopyBriefButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
+import { buildHomeBriefing } from '../lib/home-briefing';
 
 export const dynamic = 'force-dynamic';
 
@@ -224,6 +226,29 @@ export default async function Page() {
                   href: '/replay',
                   cta: 'Inspect Replay',
                 };
+
+  const feedState = latestTickAgeMs !== null && latestTickAgeMs <= 15 * 60 * 1000 ? 'FRESH' : latestTickAgeMs !== null ? 'STALE' : 'EMPTY';
+  const freshnessLabel =
+    freshnessBudget.remainingMs === null
+      ? '—'
+      : freshnessBudget.remainingMs > 0
+        ? formatDurationShort(freshnessBudget.remainingMs, locale)
+        : `${formatDurationShort(Math.abs(freshnessBudget.remainingMs), locale)} late`;
+  const cadenceLabel = formatDurationShort(averageTickIntervalMs, locale);
+  const operatorBriefing = buildHomeBriefing({
+    seasonName: season?.name ?? '—',
+    mocUsd: mocUsd ?? null,
+    feedState,
+    freshnessLabel,
+    cadenceLabel,
+    regimeLabel: regime.label,
+    regimeNote: regime.note,
+    pulseLabel,
+    briefHeadline: homeBrief.headline,
+    briefDetail: homeBrief.detail,
+    nextActionTitle: nextAction.title,
+    nextActionCta: nextAction.cta,
+  });
 
   for (const tr of trades) {
     const units = Number(tr.moc_units);
@@ -444,11 +469,15 @@ export default async function Page() {
           <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator brief</div>
-              <span className="pf-pill" style={{ borderColor: briefToneColor, color: briefToneColor }}>{homeBrief.tone}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill" style={{ borderColor: briefToneColor, color: briefToneColor }}>{homeBrief.tone}</span>
+                <CopyBriefButton text={operatorBriefing} />
+              </div>
             </div>
             <div style={{ border: `2px solid ${briefToneColor}`, borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.78)', display: 'grid', gap: 8 }}>
               <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase', color: briefToneColor }}>{homeBrief.headline}</div>
               <div style={{ fontSize: 12, fontWeight: 700 }}>{homeBrief.detail}</div>
+              <div className="pf-dim" style={{ fontSize: 11, whiteSpace: 'pre-line' }}>{operatorBriefing}</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Link href={homeBrief.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
                   {homeBrief.cta}
