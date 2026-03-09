@@ -6,7 +6,7 @@ import TerminalLog, { type TerminalRow } from '../components/TerminalLog';
 import ZineStamp from '../components/ZineStamp';
 import ExecuteTickButton from '../components/ExecuteTickButton';
 import { memeLine } from '../lib/meme';
-import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
+import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts } from '../lib/home-alerts';
 
 export const dynamic = 'force-dynamic';
@@ -28,6 +28,7 @@ export default async function Page() {
   const { direction: streakDirection, streak: directionStreak } = getDirectionStreak(recentTicks);
   const averageTickIntervalMs = getAverageTickIntervalMs(recentTicks);
   const latestTickAgeMs = getLatestTickAgeMs(recentTicks);
+  const freshnessBudget = getFreshnessBudget({ latestTickAgeMs });
 
   const agentsCountRow = d.prepare(`SELECT count(*) as c FROM agents`).get() as any;
   const agentsCount = Number(agentsCountRow?.c ?? 0);
@@ -393,6 +394,16 @@ export default async function Page() {
                 <div style={{ fontWeight: 900, fontSize: 22 }}>{formatDurationShort(latestTickAgeMs, locale)}</div>
               </div>
               <div>
+                <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Freshness budget</div>
+                <div style={{ fontWeight: 900, fontSize: 22, color: freshnessBudget.tone === 'stale' ? 'var(--alert)' : freshnessBudget.tone === 'warning' ? '#b45309' : freshnessBudget.tone === 'fresh' ? 'var(--primary)' : 'var(--ink)' }}>
+                  {freshnessBudget.remainingMs === null
+                    ? '—'
+                    : freshnessBudget.remainingMs > 0
+                      ? formatDurationShort(freshnessBudget.remainingMs, locale)
+                      : `${formatDurationShort(Math.abs(freshnessBudget.remainingMs), locale)} late`}
+                </div>
+              </div>
+              <div>
                 <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Momentum</div>
                 <div style={{ fontWeight: 900, fontSize: 22 }}>
                   {directionStreak > 0 ? `${streakDirection === 'up' ? '↑' : '↓'} ${directionStreak}` : '—'}
@@ -404,6 +415,13 @@ export default async function Page() {
                   {latestTickAgeMs !== null && latestTickAgeMs <= 15 * 60 * 1000 ? 'FRESH' : latestTickAgeMs !== null ? 'STALE' : 'EMPTY'}
                 </div>
               </div>
+            </div>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              {freshnessBudget.remainingMs === null
+                ? 'Run the first tick to start the freshness timer.'
+                : freshnessBudget.isStale
+                  ? `Feed is ${formatDurationShort(Math.abs(freshnessBudget.remainingMs), locale)} behind the freshness target. Run a new tick now.`
+                  : `${freshnessBudget.label}: ${formatDurationShort(freshnessBudget.remainingMs, locale)} left before the feed turns stale.`}
             </div>
             <div className="pf-dim" style={{ fontSize: 11 }}>
               {directionStreak > 0

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getEquityBand, parsePositivePrice } from './market-metrics.ts';
+import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getEquityBand, getFreshnessBudget, parsePositivePrice } from './market-metrics.ts';
 
 test('parsePositivePrice returns null for zero, negatives, and invalid input', () => {
   assert.equal(parsePositivePrice(0), null);
@@ -49,6 +49,36 @@ test('getDirectionStreak detects upward and downward streaks', () => {
     ]),
     { direction: 'down', streak: 2 }
   );
+});
+
+test('getFreshnessBudget classifies fresh, warning, stale, and empty states', () => {
+  assert.deepEqual(getFreshnessBudget({ latestTickAgeMs: null }), {
+    remainingMs: null,
+    isStale: false,
+    label: 'No tick yet',
+    tone: 'empty',
+  });
+
+  assert.deepEqual(getFreshnessBudget({ latestTickAgeMs: 5 * 60 * 1000 }), {
+    remainingMs: 10 * 60 * 1000,
+    isStale: false,
+    label: 'Fresh window',
+    tone: 'fresh',
+  });
+
+  assert.deepEqual(getFreshnessBudget({ latestTickAgeMs: 11 * 60 * 1000 }), {
+    remainingMs: 4 * 60 * 1000,
+    isStale: false,
+    label: 'Expiring soon',
+    tone: 'warning',
+  });
+
+  assert.deepEqual(getFreshnessBudget({ latestTickAgeMs: 16 * 60 * 1000 }), {
+    remainingMs: -1 * 60 * 1000,
+    isStale: true,
+    label: 'Overdue',
+    tone: 'stale',
+  });
 });
 
 test('getEquityBand labels leader, outperformers, and laggards', () => {

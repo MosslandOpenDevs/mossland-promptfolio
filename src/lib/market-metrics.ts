@@ -85,6 +85,53 @@ export function getLatestTickAgeMs(ticks: MarketTickLike[]): number | null {
   return Date.now() - latestTs;
 }
 
+export function getFreshnessBudget(params: {
+  latestTickAgeMs: number | null;
+  staleAfterMs?: number;
+}): {
+  remainingMs: number | null;
+  isStale: boolean;
+  label: string;
+  tone: 'fresh' | 'warning' | 'stale' | 'empty';
+} {
+  const { latestTickAgeMs, staleAfterMs = 15 * 60 * 1000 } = params;
+
+  if (latestTickAgeMs === null || !Number.isFinite(latestTickAgeMs)) {
+    return {
+      remainingMs: null,
+      isStale: false,
+      label: 'No tick yet',
+      tone: 'empty',
+    };
+  }
+
+  const remainingMs = staleAfterMs - latestTickAgeMs;
+  if (remainingMs <= 0) {
+    return {
+      remainingMs,
+      isStale: true,
+      label: 'Overdue',
+      tone: 'stale',
+    };
+  }
+
+  if (remainingMs <= 5 * 60 * 1000) {
+    return {
+      remainingMs,
+      isStale: false,
+      label: 'Expiring soon',
+      tone: 'warning',
+    };
+  }
+
+  return {
+    remainingMs,
+    isStale: false,
+    label: 'Fresh window',
+    tone: 'fresh',
+  };
+}
+
 export function getEquityBand(params: {
   equity: number;
   averageEquity: number | null;
