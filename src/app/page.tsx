@@ -6,6 +6,7 @@ import TerminalLog, { type TerminalRow } from '../components/TerminalLog';
 import ZineStamp from '../components/ZineStamp';
 import ExecuteTickButton from '../components/ExecuteTickButton';
 import CopyBriefButton from '../components/CopyBriefButton';
+import CopyAnchorLinkButton from '../components/CopyAnchorLinkButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
@@ -542,6 +543,7 @@ export default async function Page() {
               <div className="pf-h2">Operator brief</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill" style={{ borderColor: briefToneColor, color: briefToneColor }}>{homeBrief.tone}</span>
+                <CopyAnchorLinkButton anchorId="operator-brief" title="Copy operator brief link" />
                 <CopyBriefButton text={operatorBriefing} />
               </div>
             </div>
@@ -571,6 +573,7 @@ export default async function Page() {
               <div className="pf-h2">Shift handoff</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill">quick passdown</span>
+                <CopyAnchorLinkButton anchorId="shift-handoff" title="Copy shift handoff link" />
                 <CopyBriefButton text={operatorHandoff} />
               </div>
             </div>
@@ -583,11 +586,12 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="operator-priority-queue" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator priority queue</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill">top 3 tasks</span>
+                <CopyAnchorLinkButton anchorId="operator-priority-queue" title="Copy operator priority queue link" />
                 <CopyBriefButton text={operatorActionPlan} />
               </div>
             </div>
@@ -652,7 +656,10 @@ export default async function Page() {
           <div id="operator-radar" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator radar</div>
-              <span className="pf-pill">top 3 signals</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill">top 3 signals</span>
+                <CopyAnchorLinkButton anchorId="operator-radar" title="Copy operator radar link" />
+              </div>
             </div>
             <div style={{ display: 'grid', gap: 8 }}>
               {homeAlerts.map((alert) => {
