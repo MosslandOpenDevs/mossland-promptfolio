@@ -101,5 +101,16 @@ export function getHomeAlerts(params: {
     });
   }
 
+  if (alerts.length === 0) {
+    alerts.push({
+      id: 'system-ready',
+      tone: 'neutral',
+      label: 'steady',
+      message: 'No urgent signals right now. Monitor replay or leaderboard for the next edge.',
+      href: '/replay',
+      cta: 'Monitor replay',
+    });
+  }
+
   return alerts.slice(0, 3);
 }

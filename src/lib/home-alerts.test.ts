@@ -60,3 +60,19 @@ test('getHomeAlerts caps output to top three signals', () => {
     3
   );
 });
+
+test('getHomeAlerts returns a steady fallback when no urgent signals exist', () => {
+  assert.deepEqual(
+    getHomeAlerts({
+      agentsCount: 3,
+      ticksCount: 6,
+      tradesCount: 4,
+      latestTickAgeMs: null,
+      directionStreak: 0,
+      streakDirection: null,
+      buyCount: 2,
+      sellCount: 2,
+    }).map((alert) => ({ id: alert.id, cta: alert.cta })),
+    [{ id: 'system-ready', cta: 'Monitor replay' }]
+  );
+});
