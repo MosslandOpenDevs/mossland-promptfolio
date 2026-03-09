@@ -384,6 +384,23 @@ export default async function Page() {
         </div>
       </div>
 
+      <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="pf-h2">Quick jumps</div>
+          <span className="pf-pill">home navigation</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a href="#command-center" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Command center</a>
+          <a href="#operator-brief" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator brief</a>
+          <a href="#operator-radar" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator radar</a>
+          <a href="#desk-watchlist" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Desk watchlist</a>
+          <a href="#leaderboard-top" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Leaderboard</a>
+        </div>
+        <div className="pf-dim" style={{ fontSize: 11 }}>
+          Jump straight to the live action blocks instead of scanning the whole dashboard.
+        </div>
+      </div>
+
       <div className="pf-grid">
         <div style={{ display: 'grid', gap: 12 }}>
           <div className="pf-card" style={{ position: 'relative', overflow: 'hidden' }}>
@@ -425,7 +442,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="command-center" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="pf-h2">Command center</div>
               <ZineStamp text="LIVE" />
@@ -496,7 +513,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="operator-brief" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator brief</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -557,7 +574,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="operator-radar" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator radar</div>
               <span className="pf-pill">top 3 signals</span>
@@ -631,7 +648,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="desk-watchlist" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Desk watchlist</div>
               <span className="pf-pill">top 3 desks</span>
@@ -688,7 +705,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card">
+          <div id="leaderboard-top" className="pf-card" style={{ scrollMarginTop: 24 }}>
             <div className="pf-h2" style={{ marginBottom: 10 }}>Leaderboard (top)</div>
             <div style={{ display: 'grid', gap: 10 }}>
               {top.map((a: any, idx: number) => (
