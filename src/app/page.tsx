@@ -9,7 +9,7 @@ import CopyBriefButton from '../components/CopyBriefButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
-import { buildHomeBriefing, buildOperatorChecklist, buildOperatorPriorityQueue } from '../lib/home-briefing';
+import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorPriorityQueue } from '../lib/home-briefing';
 
 export const dynamic = 'force-dynamic';
 
@@ -366,6 +366,10 @@ export default async function Page() {
     buyCount: sideCounts.BUY,
     sellCount: sideCounts.SELL,
   });
+  const operatorActionPlan = buildOperatorActionPlan({
+    queue: operatorPriorityQueue,
+    checklist: operatorChecklist,
+  });
 
   return (
     <main style={{ display: 'grid', gap: 14 }}>
@@ -555,7 +559,13 @@ export default async function Page() {
           <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator priority queue</div>
-              <span className="pf-pill">top 3 tasks</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill">top 3 tasks</span>
+                <CopyBriefButton text={operatorActionPlan} />
+              </div>
+            </div>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              Copy a ready-to-share action plan with the top queue and readiness checks.
             </div>
             <div style={{ display: 'grid', gap: 8 }}>
               {operatorPriorityQueue.map((item, index) => {

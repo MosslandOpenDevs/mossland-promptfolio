@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHomeBriefing, buildOperatorChecklist, buildOperatorPriorityQueue } from './home-briefing.ts';
+import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorPriorityQueue } from './home-briefing.ts';
 
 test('buildHomeBriefing formats a concise operator snapshot', () => {
   const summary = buildHomeBriefing({
@@ -152,4 +152,52 @@ test('buildOperatorPriorityQueue falls back to a steady monitoring task', () => 
       },
     ]
   );
+});
+
+test('buildOperatorActionPlan formats queue and readiness into a copyable plan', () => {
+  const plan = buildOperatorActionPlan({
+    queue: [
+      {
+        id: 'refresh-feed',
+        tone: 'urgent',
+        label: 'Refresh the feed',
+        detail: 'Current tape is stale. Pull a fresh tick before making desk decisions.',
+        href: '/season',
+        cta: 'Refresh feed',
+      },
+      {
+        id: 'press-uptrend',
+        tone: 'ready',
+        label: 'Press the leaders',
+        detail: 'Momentum is up for 4 ticks. Review top desks before the next rebalance.',
+        href: '/leaderboard',
+        cta: 'Review leaders',
+      },
+    ],
+    checklist: [
+      {
+        id: 'agent-coverage',
+        status: 'ready',
+        label: 'Desk coverage',
+        detail: '3 desks online and ready for the next cycle.',
+        href: '/agents',
+        cta: 'Review desks',
+      },
+      {
+        id: 'feed-readiness',
+        status: 'action',
+        label: 'Feed readiness',
+        detail: 'Tick data exists, but the feed is stale. Refresh it before making decisions.',
+        href: '/season',
+        cta: 'Refresh feed',
+      },
+    ],
+  });
+
+  assert.match(plan, /OPERATOR ACTION PLAN/);
+  assert.match(plan, /1\. Refresh the feed — Current tape is stale\./);
+  assert.match(plan, /2\. Press the leaders — Momentum is up for 4 ticks\./);
+  assert.match(plan, /READINESS/);
+  assert.match(plan, /- READY: Desk coverage — 3 desks online and ready for the next cycle\./);
+  assert.match(plan, /- ACTION: Feed readiness — Tick data exists, but the feed is stale\./);
 });

@@ -62,6 +62,22 @@ export type OperatorPriorityItem = {
   cta: string;
 };
 
+export function buildOperatorActionPlan(params: {
+  queue: OperatorPriorityItem[];
+  checklist: OperatorChecklistItem[];
+}) {
+  const queueLines =
+    params.queue.length > 0
+      ? params.queue.map((item, index) => `${index + 1}. ${item.label} — ${item.detail} (${item.cta})`)
+      : ['1. Monitor board — No urgent operator tasks right now. (Monitor replay)'];
+  const checklistLines = params.checklist.map((item) => {
+    const statusLabel = item.status === 'ready' ? 'READY' : item.status === 'action' ? 'ACTION' : 'WATCH';
+    return `- ${statusLabel}: ${item.label} — ${item.detail}`;
+  });
+
+  return ['OPERATOR ACTION PLAN', ...queueLines, '', 'READINESS', ...checklistLines].join('\n');
+}
+
 export function buildOperatorChecklist(params: {
   agentsCount: number;
   ticksCount: number;
