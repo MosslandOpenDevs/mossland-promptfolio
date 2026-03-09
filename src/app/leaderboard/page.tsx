@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { db } from '../../lib/db';
 import { getLocale, t } from '../../lib/i18n';
 import { getEquityBand } from '../../lib/market-metrics';
@@ -36,10 +37,25 @@ export default async function LeaderboardPage() {
   const averageEquity = scored.length > 0 ? scored.reduce((sum, row) => sum + row.equity, 0) / scored.length : null;
   const latestPortfolioUpdate = scored[0]?.updated_at ?? null;
   const spread = leader && scored.length > 0 ? leader.equity - scored[scored.length - 1]!.equity : null;
+  const quickLinks = [
+    { href: '/', label: locale === 'ko' ? '홈 대시보드' : 'Home dashboard' },
+    { href: '/replay', label: locale === 'ko' ? '리플레이 보기' : 'Open replay' },
+    { href: '/season', label: locale === 'ko' ? '시즌 HQ' : 'Season HQ' },
+    { href: '/agents', label: locale === 'ko' ? '에이전트 랩' : 'Agent Lab' },
+  ];
 
   return (
     <main style={{ display: 'grid', gap: 16 }}>
-      <h2 style={{ margin: 0 }}>{t(locale, 'leaderboard')}</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <h2 style={{ margin: 0 }}>{t(locale, 'leaderboard')}</h2>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {quickLinks.map((link) => (
+            <Link key={link.href} href={link.href} style={quickLink}>
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
       <div style={card}>
         <div>
           <span style={dim}>{t(locale, 'season')}</span> {season.name}
@@ -87,6 +103,7 @@ export default async function LeaderboardPage() {
               : band.tone === 'warning'
                 ? '#f97316'
                 : '#94a3b8';
+          const leaderDelta = leader ? leader.equity - Number(r.equity) : null;
 
           return (
             <div key={r.id} style={card}>
@@ -98,13 +115,24 @@ export default async function LeaderboardPage() {
                     {band.label}
                   </span>
                 </div>
-                <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 800 }}>${Number(r.equity).toFixed(2)}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  {leaderDelta !== null && idx > 0 ? <span style={deltaChip}>gap ${leaderDelta.toFixed(2)}</span> : null}
+                  <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 800 }}>${Number(r.equity).toFixed(2)}</div>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 12, marginTop: 8, opacity: 0.8, fontSize: 13, flexWrap: 'wrap' }}>
                 <div>cash ${Number(r.cash_usd).toFixed(2)}</div>
                 <div>MOC {Number(r.moc_units).toFixed(2)}</div>
                 <div>vs avg {averageEquity !== null ? `${r.equity - averageEquity >= 0 ? '+' : ''}${Number(r.equity - averageEquity).toFixed(2)}` : '—'}</div>
                 <div style={{ marginLeft: 'auto', opacity: 0.7 }}>{r.updated_at}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                <Link href={`/agents/${r.id}/replay?from=/leaderboard`} style={actionLink}>
+                  {locale === 'ko' ? '데스크 리플레이' : 'Desk replay'}
+                </Link>
+                <Link href={`/agents/${r.id}`} style={actionLinkMuted}>
+                  {locale === 'ko' ? '에이전트 상세' : 'Agent detail'}
+                </Link>
               </div>
             </div>
           );
@@ -139,4 +167,43 @@ const metricHint: React.CSSProperties = {
   opacity: 0.72,
   fontSize: 12,
   marginTop: 6,
+};
+const quickLink: React.CSSProperties = {
+  border: '1px solid #253042',
+  borderRadius: 999,
+  padding: '6px 10px',
+  background: '#0b0f14',
+  color: '#c2d4ea',
+  textDecoration: 'none',
+  fontSize: 12,
+  fontWeight: 700,
+};
+const deltaChip: React.CSSProperties = {
+  border: '1px solid #253042',
+  borderRadius: 999,
+  padding: '2px 8px',
+  background: '#131a24',
+  color: '#c2d4ea',
+  fontSize: 11,
+  fontWeight: 700,
+};
+const actionLink: React.CSSProperties = {
+  border: '1px solid #2a6b3f',
+  borderRadius: 999,
+  padding: '6px 10px',
+  background: '#10311d',
+  color: '#7ee787',
+  textDecoration: 'none',
+  fontSize: 12,
+  fontWeight: 700,
+};
+const actionLinkMuted: React.CSSProperties = {
+  border: '1px solid #253042',
+  borderRadius: 999,
+  padding: '6px 10px',
+  background: '#0b0f14',
+  color: '#c2d4ea',
+  textDecoration: 'none',
+  fontSize: 12,
+  fontWeight: 700,
 };
