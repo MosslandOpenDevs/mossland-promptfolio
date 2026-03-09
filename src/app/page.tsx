@@ -9,7 +9,7 @@ import CopyBriefButton from '../components/CopyBriefButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
-import { buildHomeBriefing } from '../lib/home-briefing';
+import { buildHomeBriefing, buildOperatorChecklist } from '../lib/home-briefing';
 
 export const dynamic = 'force-dynamic';
 
@@ -350,6 +350,12 @@ export default async function Page() {
     tradeMixLabel: `BUY ${sideCounts.BUY} · SELL ${sideCounts.SELL} · HOLD ${sideCounts.HOLD}`,
     watchlistNames: deskWatchlist.map((desk) => desk.name),
   });
+  const operatorChecklist = buildOperatorChecklist({
+    agentsCount,
+    ticksCount,
+    feedState,
+    activeDeskCount,
+  });
 
   return (
     <main style={{ display: 'grid', gap: 14 }}>
@@ -516,6 +522,38 @@ export default async function Page() {
                   </Link>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Operator checklist</div>
+              <span className="pf-pill">3-step readiness</span>
+            </div>
+            <div style={{ display: 'grid', gap: 8 }}>
+              {operatorChecklist.map((item) => {
+                const toneColor = item.status === 'ready'
+                  ? 'var(--primary)'
+                  : item.status === 'action'
+                    ? 'var(--alert)'
+                    : '#b45309';
+                const statusLabel = item.status === 'ready' ? 'READY' : item.status === 'action' ? 'ACTION' : 'WATCH';
+
+                return (
+                  <div key={item.id} style={{ border: `2px solid ${toneColor}`, borderRadius: 12, padding: '10px 12px', background: 'rgba(255,255,255,.74)', display: 'grid', gap: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase', color: toneColor }}>{item.label}</div>
+                      <span className="pf-pill" style={{ borderColor: toneColor, color: toneColor }}>{statusLabel}</span>
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700 }}>{item.detail}</div>
+                    <div>
+                      <Link href={item.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
+                        {item.cta}
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
