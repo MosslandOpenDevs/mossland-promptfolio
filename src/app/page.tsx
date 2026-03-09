@@ -7,7 +7,7 @@ import ZineStamp from '../components/ZineStamp';
 import ExecuteTickButton from '../components/ExecuteTickButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
-import { getHomeAlerts } from '../lib/home-alerts';
+import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
 
 export const dynamic = 'force-dynamic';
 
@@ -160,6 +160,15 @@ export default async function Page() {
     buyCount: sideCounts.BUY,
     sellCount: sideCounts.SELL,
   });
+  const homeBrief = getHomeBrief(homeAlerts);
+  const briefToneColor =
+    homeBrief.tone === 'danger'
+      ? 'var(--alert)'
+      : homeBrief.tone === 'warning'
+        ? '#b45309'
+        : homeBrief.tone === 'success'
+          ? 'var(--primary)'
+          : 'var(--ink)';
 
   const nextAction =
     agentsCount === 0
@@ -429,6 +438,27 @@ export default async function Page() {
               {directionStreak > 0
                 ? `Recent price action is ${streakDirection === 'up' ? 'stacking upward' : 'sliding downward'} for ${directionStreak} ticks.`
                 : 'Need at least two clean ticks to estimate momentum.'}
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Operator brief</div>
+              <span className="pf-pill" style={{ borderColor: briefToneColor, color: briefToneColor }}>{homeBrief.tone}</span>
+            </div>
+            <div style={{ border: `2px solid ${briefToneColor}`, borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.78)', display: 'grid', gap: 8 }}>
+              <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase', color: briefToneColor }}>{homeBrief.headline}</div>
+              <div style={{ fontSize: 12, fontWeight: 700 }}>{homeBrief.detail}</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Link href={homeBrief.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
+                  {homeBrief.cta}
+                </Link>
+                {homeBrief.secondaryCtas.map((cta) => (
+                  <Link key={cta.id} href={cta.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px', background: 'rgba(255,255,255,.92)' }}>
+                    {cta.cta}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
 

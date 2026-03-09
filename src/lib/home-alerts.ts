@@ -9,6 +9,19 @@ export type HomeAlert = {
   cta: string;
 };
 
+export type HomeBrief = {
+  headline: string;
+  detail: string;
+  tone: HomeAlertTone;
+  href: string;
+  cta: string;
+  secondaryCtas: Array<{
+    id: string;
+    href: string;
+    cta: string;
+  }>;
+};
+
 export function getHomeAlerts(params: {
   agentsCount: number;
   ticksCount: number;
@@ -140,4 +153,40 @@ export function getHomeAlerts(params: {
   }
 
   return alerts.slice(0, 3);
+}
+
+export function getHomeBrief(alerts: HomeAlert[]): HomeBrief {
+  const primary = alerts[0];
+  const secondaryCtas = alerts.slice(1, 3).map((alert) => ({
+    id: alert.id,
+    href: alert.href,
+    cta: alert.cta,
+  }));
+
+  if (!primary) {
+    return {
+      headline: 'Operator board is quiet.',
+      detail: 'No active alerts yet. Run another cycle or inspect the replay for fresh signals.',
+      tone: 'neutral',
+      href: '/replay',
+      cta: 'Monitor replay',
+      secondaryCtas: [],
+    };
+  }
+
+  const headlineByTone: Record<HomeAlertTone, string> = {
+    danger: `Immediate action: ${primary.label}`,
+    warning: `Watch now: ${primary.label}`,
+    success: `Opportunity: ${primary.label}`,
+    neutral: `Operator brief: ${primary.label}`,
+  };
+
+  return {
+    headline: headlineByTone[primary.tone],
+    detail: primary.message,
+    tone: primary.tone,
+    href: primary.href,
+    cta: primary.cta,
+    secondaryCtas,
+  };
 }

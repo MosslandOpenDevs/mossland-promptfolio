@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { getHomeAlerts } from './home-alerts.ts';
+import { getHomeAlerts, getHomeBrief } from './home-alerts.ts';
 
 test('getHomeAlerts prioritizes missing setup and stale data', () => {
   assert.deepEqual(
@@ -125,4 +125,45 @@ test('getHomeAlerts flags when a single desk dominates recent tape', () => {
       { id: 'desk-concentration', cta: 'Review desk mix' },
     ]
   );
+});
+
+test('getHomeBrief promotes the top alert and keeps follow-up actions', () => {
+  const brief = getHomeBrief([
+    {
+      id: 'feed-stale',
+      tone: 'warning',
+      label: 'stale',
+      message: 'Feed is older than 15 minutes. Refresh before trusting the leaderboard.',
+      href: '/season',
+      cta: 'Refresh feed',
+    },
+    {
+      id: 'desk-concentration',
+      tone: 'warning',
+      label: 'coverage',
+      message: 'Recent tape is coming from a single desk.',
+      href: '/agents',
+      cta: 'Review desk mix',
+    },
+  ]);
+
+  assert.deepEqual(brief, {
+    headline: 'Watch now: stale',
+    detail: 'Feed is older than 15 minutes. Refresh before trusting the leaderboard.',
+    tone: 'warning',
+    href: '/season',
+    cta: 'Refresh feed',
+    secondaryCtas: [{ id: 'desk-concentration', href: '/agents', cta: 'Review desk mix' }],
+  });
+});
+
+test('getHomeBrief falls back to a quiet board state', () => {
+  assert.deepEqual(getHomeBrief([]), {
+    headline: 'Operator board is quiet.',
+    detail: 'No active alerts yet. Run another cycle or inspect the replay for fresh signals.',
+    tone: 'neutral',
+    href: '/replay',
+    cta: 'Monitor replay',
+    secondaryCtas: [],
+  });
 });
