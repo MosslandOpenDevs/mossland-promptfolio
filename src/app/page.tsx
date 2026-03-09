@@ -244,6 +244,56 @@ export default async function Page() {
       ).all(season.id, mocUsd ?? 0) as any[])
     : [];
 
+  const deskWatchlist = season
+    ? (d.prepare(
+        `SELECT
+           a.id,
+           a.name,
+           a.avatar_emoji,
+           p.cash_usd,
+           p.moc_units,
+           lt.side as last_side,
+           lt.reason as last_reason,
+           tk.ts as last_tick_ts,
+           COALESCE(stats.trade_count, 0) as trade_count
+         FROM portfolios p
+         JOIN agents a ON a.id = p.agent_id
+         LEFT JOIN (
+           SELECT tr.agent_id, tr.side, tr.reason, tr.tick_id
+           FROM trades tr
+           INNER JOIN (
+             SELECT agent_id, MAX(created_at) as max_created_at
+             FROM trades
+             WHERE season_id = ?
+             GROUP BY agent_id
+           ) latest
+             ON latest.agent_id = tr.agent_id
+            AND latest.max_created_at = tr.created_at
+           WHERE tr.season_id = ?
+         ) lt ON lt.agent_id = p.agent_id
+         LEFT JOIN ticks tk ON tk.id = lt.tick_id
+         LEFT JOIN (
+           SELECT agent_id, COUNT(*) as trade_count
+           FROM trades
+           WHERE season_id = ?
+           GROUP BY agent_id
+         ) stats ON stats.agent_id = p.agent_id
+         WHERE p.season_id = ?
+         ORDER BY trade_count DESC, (p.cash_usd + p.moc_units * ?) DESC
+         LIMIT 3`
+      ).all(season.id, season.id, season.id, season.id, mocUsd ?? 0) as Array<{
+        id: string;
+        name: string;
+        avatar_emoji: string | null;
+        cash_usd: number | string;
+        moc_units: number | string;
+        last_side: 'BUY' | 'SELL' | 'HOLD' | null;
+        last_reason: string | null;
+        last_tick_ts: string | null;
+        trade_count: number | string;
+      }>)
+    : [];
+
   return (
     <main style={{ display: 'grid', gap: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 12, flexWrap: 'wrap' }}>
@@ -432,6 +482,63 @@ export default async function Page() {
             </div>
             <div>
               <Link href={regime.ctaHref} className="pf-btn" style={{ display: 'inline-flex' }}>{regime.ctaLabel}</Link>
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Desk watchlist</div>
+              <span className="pf-pill">top 3 desks</span>
+            </div>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {deskWatchlist.map((desk) => {
+                const equity = mocUsd ? (Number(desk.cash_usd) + Number(desk.moc_units) * Number(mocUsd)).toFixed(2) : '—';
+                const sideTone = desk.last_side === 'BUY'
+                  ? 'var(--primary)'
+                  : desk.last_side === 'SELL'
+                    ? 'var(--alert)'
+                    : desk.last_side === 'HOLD'
+                      ? '#b45309'
+                      : 'var(--ink)';
+                const reason = String(desk.last_reason ?? '').trim();
+                const tradeCount = Number(desk.trade_count ?? 0);
+
+                return (
+                  <div key={desk.id} style={{ border: `2px solid ${sideTone}`, borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.74)', display: 'grid', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'start', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <div className="pf-polaroid" style={{ minWidth: 52, transform: 'rotate(-2deg)' }}>
+                          <div style={{ height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                            {desk.avatar_emoji ?? '🧠'}
+                          </div>
+                          <div style={{ borderTop: '1px solid rgba(0,0,0,.08)', paddingTop: 4, textAlign: 'center', fontFamily: 'Permanent Marker, cursive', fontSize: 10 }}>
+                            {desk.name}
+                          </div>
+                        </div>
+                        <div style={{ display: 'grid', gap: 4 }}>
+                          <div style={{ fontWeight: 900, letterSpacing: '.05em' }}>{desk.name}</div>
+                          <div className="pf-dim" style={{ fontSize: 11 }}>equity ${equity} · trades {tradeCount}</div>
+                        </div>
+                      </div>
+                      <span className="pf-pill" style={{ borderColor: sideTone, color: sideTone }}>
+                        {desk.last_side ?? 'NO SIGNAL'}
+                      </span>
+                    </div>
+                    <div className="pf-dim" style={{ fontSize: 11 }}>
+                      {reason
+                        ? `Latest memo: "${reason.slice(0, 120)}${reason.length > 120 ? '…' : ''}"`
+                        : 'No trade memo yet. Run a fresh tick to get a signal.'}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span className="pf-pill">last tick: {desk.last_tick_ts ? String(desk.last_tick_ts).slice(11, 19) : '—'}</span>
+                      <Link href={`/agents/${desk.id}/replay`} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
+                        Open desk replay
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+              {deskWatchlist.length === 0 && <div className="pf-dim">No active desks yet. Create agents + run a tick.</div>}
             </div>
           </div>
 
