@@ -371,13 +371,14 @@ export default async function Page() {
     queue: operatorPriorityQueue,
     checklist: operatorChecklist,
   });
+  const topPriorityTask = operatorPriorityQueue[0] ?? null;
   const operatorHandoff = buildOperatorHandoff({
     seasonName: season?.name ?? '—',
     feedState,
     freshnessLabel,
     regimeLabel: regime.label,
     pulseLabel,
-    topTask: operatorPriorityQueue[0] ?? null,
+    topTask: topPriorityTask,
     checklist: operatorChecklist,
   });
 
@@ -550,7 +551,12 @@ export default async function Page() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill" style={{ borderColor: briefToneColor, color: briefToneColor }}>{homeBrief.tone}</span>
                 <CopyAnchorLinkButton anchorId="operator-brief" title="Copy operator brief link" />
-                <CopyBriefButton text={operatorBriefing} />
+                <CopyBriefButton
+                  text={operatorBriefing}
+                  idleLabel="COPY BRIEF"
+                  successLabel="BRIEF COPIED"
+                  title="Copy operator brief"
+                />
               </div>
             </div>
             <div style={{ border: `2px solid ${briefToneColor}`, borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.78)', display: 'grid', gap: 8 }}>
@@ -580,15 +586,51 @@ export default async function Page() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill">quick passdown</span>
                 <CopyAnchorLinkButton anchorId="shift-handoff" title="Copy shift handoff link" />
-                <CopyBriefButton text={operatorHandoff} />
+                <CopyBriefButton
+                  text={operatorHandoff}
+                  idleLabel="COPY HANDOFF"
+                  successLabel="HANDOFF COPIED"
+                  title="Copy shift handoff"
+                />
               </div>
             </div>
             <div className="pf-dim" style={{ fontSize: 11 }}>
               One glance for the next operator: feed state, regime, pulse, top task, and readiness.
             </div>
             <div style={{ border: '2px dashed rgba(0,0,0,.22)', borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.78)', display: 'grid', gap: 8 }}>
-              <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>SHIFT HANDOFF</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>SHIFT HANDOFF</div>
+                {topPriorityTask ? (
+                  <span
+                    className="pf-pill"
+                    style={{
+                      borderColor:
+                        topPriorityTask.tone === 'urgent'
+                          ? 'var(--alert)'
+                          : topPriorityTask.tone === 'ready'
+                            ? 'var(--primary)'
+                            : '#b45309',
+                      color:
+                        topPriorityTask.tone === 'urgent'
+                          ? 'var(--alert)'
+                          : topPriorityTask.tone === 'ready'
+                            ? 'var(--primary)'
+                            : '#b45309',
+                    }}
+                  >
+                    top task: {topPriorityTask.label}
+                  </span>
+                ) : null}
+              </div>
               <div className="pf-dim" style={{ fontSize: 11, whiteSpace: 'pre-line' }}>{operatorHandoff}</div>
+              {topPriorityTask ? (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <Link href={topPriorityTask.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
+                    {topPriorityTask.cta}
+                  </Link>
+                  <span className="pf-pill">next move: {topPriorityTask.detail}</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -598,7 +640,12 @@ export default async function Page() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill">top 3 tasks</span>
                 <CopyAnchorLinkButton anchorId="operator-priority-queue" title="Copy operator priority queue link" />
-                <CopyBriefButton text={operatorActionPlan} />
+                <CopyBriefButton
+                  text={operatorActionPlan}
+                  idleLabel="COPY QUEUE"
+                  successLabel="QUEUE COPIED"
+                  title="Copy operator priority queue"
+                />
               </div>
             </div>
             <div className="pf-dim" style={{ fontSize: 11 }}>
@@ -633,7 +680,12 @@ export default async function Page() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill">3-step readiness</span>
                 <CopyAnchorLinkButton anchorId="operator-checklist" title="Copy operator checklist link" />
-                <CopyBriefButton text={operatorChecklist.map((item) => `${item.label}: ${item.detail}`).join('\n')} />
+                <CopyBriefButton
+                  text={operatorChecklist.map((item) => `${item.label}: ${item.detail}`).join('\n')}
+                  idleLabel="COPY CHECKLIST"
+                  successLabel="CHECKLIST COPIED"
+                  title="Copy operator checklist"
+                />
               </div>
             </div>
             <div style={{ display: 'grid', gap: 8 }}>

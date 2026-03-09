@@ -2,7 +2,17 @@
 
 import { useState } from 'react';
 
-export default function CopyBriefButton({ text }: { text: string }) {
+export default function CopyBriefButton({
+  text,
+  idleLabel = 'COPY BRIEF',
+  successLabel = 'BRIEF COPIED',
+  title = 'Copy operator brief',
+}: {
+  text: string;
+  idleLabel?: string;
+  successLabel?: string;
+  title?: string;
+}) {
   const [state, setState] = useState<'idle' | 'done' | 'error'>('idle');
 
   const handleCopy = async () => {
@@ -16,15 +26,19 @@ export default function CopyBriefButton({ text }: { text: string }) {
     }
   };
 
+  const buttonTitle = state === 'done' ? `${successLabel.toLowerCase()}` : state === 'error' ? 'Copy failed' : title;
+  const buttonLabel = state === 'done' ? successLabel : state === 'error' ? 'COPY FAILED' : idleLabel;
+
   return (
     <button
       type="button"
       className="pf-btn"
       onClick={handleCopy}
       aria-live="polite"
-      title={state === 'done' ? 'Brief copied' : state === 'error' ? 'Copy failed' : 'Copy operator brief'}
+      title={buttonTitle}
+      aria-label={buttonTitle}
     >
-      {state === 'done' ? 'BRIEF COPIED' : state === 'error' ? 'COPY FAILED' : 'COPY BRIEF'}
+      {buttonLabel}
     </button>
   );
 }
