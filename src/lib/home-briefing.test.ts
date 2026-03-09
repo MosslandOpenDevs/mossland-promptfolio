@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorPriorityQueue } from './home-briefing.ts';
+import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue } from './home-briefing.ts';
 
 test('buildHomeBriefing formats a concise operator snapshot', () => {
   const summary = buildHomeBriefing({
@@ -200,4 +200,48 @@ test('buildOperatorActionPlan formats queue and readiness into a copyable plan',
   assert.match(plan, /READINESS/);
   assert.match(plan, /- READY: Desk coverage — 3 desks online and ready for the next cycle\./);
   assert.match(plan, /- ACTION: Feed readiness — Tick data exists, but the feed is stale\./);
+});
+
+test('buildOperatorHandoff creates a concise shift summary', () => {
+  const handoff = buildOperatorHandoff({
+    seasonName: 'Week 11',
+    feedState: 'STALE',
+    freshnessLabel: '12m late',
+    regimeLabel: 'RISK-OFF',
+    pulseLabel: 'SELL PRESSURE',
+    topTask: {
+      id: 'refresh-feed',
+      tone: 'urgent',
+      label: 'Refresh the feed',
+      detail: 'Current tape is stale. Pull a fresh tick before making desk decisions.',
+      href: '/season',
+      cta: 'Refresh feed',
+    },
+    checklist: [
+      {
+        id: 'agent-coverage',
+        status: 'ready',
+        label: 'Desk coverage',
+        detail: '3 desks online and ready for the next cycle.',
+        href: '/agents',
+        cta: 'Review desks',
+      },
+      {
+        id: 'feed-readiness',
+        status: 'action',
+        label: 'Feed readiness',
+        detail: 'Tick data exists, but the feed is stale. Refresh it before making decisions.',
+        href: '/season',
+        cta: 'Refresh feed',
+      },
+    ],
+  });
+
+  assert.match(handoff, /SHIFT HANDOFF/);
+  assert.match(handoff, /Season: Week 11/);
+  assert.match(handoff, /Feed: STALE \(12m late\)/);
+  assert.match(handoff, /Regime: RISK-OFF/);
+  assert.match(handoff, /Pulse: SELL PRESSURE/);
+  assert.match(handoff, /Top task: Refresh the feed \(Refresh feed\)/);
+  assert.match(handoff, /Readiness: Desk coverage: READY · Feed readiness: ACTION/);
 });

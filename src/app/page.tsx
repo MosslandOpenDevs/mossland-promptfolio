@@ -9,7 +9,7 @@ import CopyBriefButton from '../components/CopyBriefButton';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
-import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorPriorityQueue } from '../lib/home-briefing';
+import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue } from '../lib/home-briefing';
 
 export const dynamic = 'force-dynamic';
 
@@ -370,6 +370,15 @@ export default async function Page() {
     queue: operatorPriorityQueue,
     checklist: operatorChecklist,
   });
+  const operatorHandoff = buildOperatorHandoff({
+    seasonName: season?.name ?? '—',
+    feedState,
+    freshnessLabel,
+    regimeLabel: regime.label,
+    pulseLabel,
+    topTask: operatorPriorityQueue[0] ?? null,
+    checklist: operatorChecklist,
+  });
 
   return (
     <main style={{ display: 'grid', gap: 14 }}>
@@ -406,6 +415,7 @@ export default async function Page() {
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href="#command-center" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Command center</a>
           <a href="#operator-brief" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator brief</a>
+          <a href="#shift-handoff" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Shift handoff</a>
           <a href="#operator-radar" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator radar</a>
           <a href="#desk-watchlist" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Desk watchlist</a>
           <a href="#leaderboard-top" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Leaderboard</a>
@@ -553,6 +563,23 @@ export default async function Page() {
                   </Link>
                 ))}
               </div>
+            </div>
+          </div>
+
+          <div id="shift-handoff" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Shift handoff</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill">quick passdown</span>
+                <CopyBriefButton text={operatorHandoff} />
+              </div>
+            </div>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              One glance for the next operator: feed state, regime, pulse, top task, and readiness.
+            </div>
+            <div style={{ border: '2px dashed rgba(0,0,0,.22)', borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.78)', display: 'grid', gap: 8 }}>
+              <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase' }}>SHIFT HANDOFF</div>
+              <div className="pf-dim" style={{ fontSize: 11, whiteSpace: 'pre-line' }}>{operatorHandoff}</div>
             </div>
           </div>
 

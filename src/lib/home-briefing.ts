@@ -78,6 +78,30 @@ export function buildOperatorActionPlan(params: {
   return ['OPERATOR ACTION PLAN', ...queueLines, '', 'READINESS', ...checklistLines].join('\n');
 }
 
+export function buildOperatorHandoff(params: {
+  seasonName: string;
+  feedState: 'FRESH' | 'STALE' | 'EMPTY';
+  freshnessLabel: string;
+  regimeLabel: string;
+  pulseLabel: string;
+  topTask: OperatorPriorityItem | null;
+  checklist: OperatorChecklistItem[];
+}) {
+  const readinessLine = params.checklist
+    .map((item) => `${item.label}: ${item.status.toUpperCase()}`)
+    .join(' · ');
+
+  return [
+    'SHIFT HANDOFF',
+    `Season: ${params.seasonName}`,
+    `Feed: ${params.feedState} (${params.freshnessLabel})`,
+    `Regime: ${params.regimeLabel}`,
+    `Pulse: ${params.pulseLabel}`,
+    `Top task: ${params.topTask ? `${params.topTask.label} (${params.topTask.cta})` : 'Monitor board (Monitor replay)'}`,
+    `Readiness: ${readinessLine}`,
+  ].join('\n');
+}
+
 export function buildOperatorChecklist(params: {
   agentsCount: number;
   ticksCount: number;
