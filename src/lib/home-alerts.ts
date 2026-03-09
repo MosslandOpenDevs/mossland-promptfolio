@@ -14,6 +14,7 @@ export function getHomeAlerts(params: {
   ticksCount: number;
   tradesCount: number;
   latestTickAgeMs: number | null;
+  averageTickIntervalMs?: number | null;
   directionStreak: number;
   streakDirection: 'up' | 'down' | null;
   buyCount: number;
@@ -69,6 +70,22 @@ export function getHomeAlerts(params: {
       message: 'Ticks exist but no trades landed yet. Inspect prompts or wait for another cycle.',
       href: '/replay',
       cta: 'Inspect replay',
+    });
+  }
+
+  if (
+    params.ticksCount >= 3 &&
+    params.averageTickIntervalMs !== null &&
+    params.averageTickIntervalMs !== undefined &&
+    params.averageTickIntervalMs > 10 * 60 * 1000
+  ) {
+    alerts.push({
+      id: 'cadence-slow',
+      tone: 'warning',
+      label: 'cadence',
+      message: 'Average tick cadence has slowed beyond 10 minutes. Check automation before the feed goes stale.',
+      href: '/season',
+      cta: 'Inspect season cadence',
     });
   }
 

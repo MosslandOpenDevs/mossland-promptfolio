@@ -111,6 +111,7 @@ export default async function Page() {
     ticksCount,
     tradesCount: trades.length,
     latestTickAgeMs,
+    averageTickIntervalMs,
     directionStreak,
     streakDirection,
     buyCount: sideCounts.BUY,
