@@ -13,6 +13,18 @@ import { buildHomeBriefing } from '../lib/home-briefing';
 
 export const dynamic = 'force-dynamic';
 
+function formatClockLabel(ts: string | null | undefined, locale: 'en' | 'ko') {
+  if (!ts) return '—';
+  const date = new Date(ts);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat(locale === 'ko' ? 'ko-KR' : 'en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+}
+
 export default async function Page() {
   const locale = getLocale();
   const d = db();
@@ -31,6 +43,11 @@ export default async function Page() {
   const averageTickIntervalMs = getAverageTickIntervalMs(recentTicks);
   const latestTickAgeMs = getLatestTickAgeMs(recentTicks);
   const freshnessBudget = getFreshnessBudget({ latestTickAgeMs });
+  const lastTickLabel = formatClockLabel(lastTick?.ts ?? null, locale);
+  const staleByLabel =
+    lastTick?.ts && freshnessBudget.remainingMs !== null
+      ? formatClockLabel(new Date(new Date(lastTick.ts).getTime() + freshnessBudget.remainingMs).toISOString(), locale)
+      : '—';
 
   const agentsCountRow = d.prepare(`SELECT count(*) as c FROM agents`).get() as any;
   const agentsCount = Number(agentsCountRow?.c ?? 0);
@@ -462,6 +479,10 @@ export default async function Page() {
                   ? `Feed is ${formatDurationShort(Math.abs(freshnessBudget.remainingMs), locale)} behind the freshness target. Run a new tick now.`
                   : `${freshnessBudget.label}: ${formatDurationShort(freshnessBudget.remainingMs, locale)} left before the feed turns stale.`}
             </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span className="pf-pill">last tick {lastTickLabel}</span>
+              <span className="pf-pill">stale by {staleByLabel}</span>
+            </div>
             <div className="pf-dim" style={{ fontSize: 11 }}>
               {directionStreak > 0
                 ? `Recent price action is ${streakDirection === 'up' ? 'stacking upward' : 'sliding downward'} for ${directionStreak} ticks.`
@@ -480,6 +501,10 @@ export default async function Page() {
             <div style={{ border: `2px solid ${briefToneColor}`, borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.78)', display: 'grid', gap: 8 }}>
               <div style={{ fontWeight: 900, letterSpacing: '.08em', textTransform: 'uppercase', color: briefToneColor }}>{homeBrief.headline}</div>
               <div style={{ fontSize: 12, fontWeight: 700 }}>{homeBrief.detail}</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <span className="pf-pill">tick {lastTickLabel}</span>
+                <span className="pf-pill">deadline {staleByLabel}</span>
+              </div>
               <div className="pf-dim" style={{ fontSize: 11, whiteSpace: 'pre-line' }}>{operatorBriefing}</div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <Link href={homeBrief.href} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
