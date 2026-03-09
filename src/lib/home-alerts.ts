@@ -13,6 +13,7 @@ export function getHomeAlerts(params: {
   agentsCount: number;
   ticksCount: number;
   tradesCount: number;
+  activeDeskCount: number;
   latestTickAgeMs: number | null;
   averageTickIntervalMs?: number | null;
   directionStreak: number;
@@ -70,6 +71,15 @@ export function getHomeAlerts(params: {
       message: 'Ticks exist but no trades landed yet. Inspect prompts or wait for another cycle.',
       href: '/replay',
       cta: 'Inspect replay',
+    });
+  } else if (params.tradesCount >= 4 && params.activeDeskCount <= 1) {
+    alerts.push({
+      id: 'desk-concentration',
+      tone: 'warning',
+      label: 'coverage',
+      message: 'Recent tape is coming from a single desk. Broaden agent participation before trusting the signal.',
+      href: '/agents',
+      cta: 'Review desk mix',
     });
   }
 

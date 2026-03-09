@@ -9,6 +9,7 @@ test('getHomeAlerts prioritizes missing setup and stale data', () => {
       agentsCount: 0,
       ticksCount: 0,
       tradesCount: 0,
+      activeDeskCount: 0,
       latestTickAgeMs: null,
       averageTickIntervalMs: null,
       directionStreak: 0,
@@ -25,6 +26,7 @@ test('getHomeAlerts includes momentum and flow imbalance after freshness', () =>
     agentsCount: 4,
     ticksCount: 8,
     tradesCount: 8,
+    activeDeskCount: 4,
     latestTickAgeMs: 5 * 60 * 1000,
     averageTickIntervalMs: 4 * 60 * 1000,
     directionStreak: 4,
@@ -53,6 +55,7 @@ test('getHomeAlerts caps output to top three signals', () => {
       agentsCount: 1,
       ticksCount: 5,
       tradesCount: 0,
+      activeDeskCount: 0,
       latestTickAgeMs: 20 * 60 * 1000,
       averageTickIntervalMs: 12 * 60 * 1000,
       directionStreak: 3,
@@ -70,6 +73,7 @@ test('getHomeAlerts returns a steady fallback when no urgent signals exist', () 
       agentsCount: 3,
       ticksCount: 6,
       tradesCount: 4,
+      activeDeskCount: 3,
       latestTickAgeMs: null,
       averageTickIntervalMs: 5 * 60 * 1000,
       directionStreak: 0,
@@ -87,6 +91,7 @@ test('getHomeAlerts surfaces slow cadence before the feed is stale', () => {
       agentsCount: 3,
       ticksCount: 6,
       tradesCount: 4,
+      activeDeskCount: 2,
       latestTickAgeMs: 7 * 60 * 1000,
       averageTickIntervalMs: 12 * 60 * 1000,
       directionStreak: 0,
@@ -97,6 +102,27 @@ test('getHomeAlerts surfaces slow cadence before the feed is stale', () => {
     [
       { id: 'feed-fresh', cta: 'Review leaderboard' },
       { id: 'cadence-slow', cta: 'Inspect season cadence' },
+    ]
+  );
+});
+
+test('getHomeAlerts flags when a single desk dominates recent tape', () => {
+  assert.deepEqual(
+    getHomeAlerts({
+      agentsCount: 4,
+      ticksCount: 7,
+      tradesCount: 5,
+      activeDeskCount: 1,
+      latestTickAgeMs: 4 * 60 * 1000,
+      averageTickIntervalMs: 4 * 60 * 1000,
+      directionStreak: 0,
+      streakDirection: null,
+      buyCount: 3,
+      sellCount: 2,
+    }).map((alert) => ({ id: alert.id, cta: alert.cta })),
+    [
+      { id: 'feed-fresh', cta: 'Review leaderboard' },
+      { id: 'desk-concentration', cta: 'Review desk mix' },
     ]
   );
 });

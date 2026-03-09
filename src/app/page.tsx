@@ -146,11 +146,13 @@ export default async function Page() {
     ? `${latestTrade.agent_name} ${latestTrade.side} ${Number(latestTrade.moc_units).toFixed(2)} MOC`
     : 'No trade headlines yet';
   const recentAgents = Array.from(new Set(trades.map((tr) => String(tr.agent_name)).filter(Boolean))).slice(0, 4);
+  const activeDeskCount = recentAgents.length;
   const isFeedStale = latestTickAgeMs !== null && latestTickAgeMs > 15 * 60 * 1000;
   const homeAlerts = getHomeAlerts({
     agentsCount,
     ticksCount,
     tradesCount: trades.length,
+    activeDeskCount,
     latestTickAgeMs,
     averageTickIntervalMs,
     directionStreak,
@@ -477,6 +479,7 @@ export default async function Page() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span className="pf-pill">active desks: {activeDeskCount || 0}</span>
               {recentAgents.length > 0 ? (
                 recentAgents.map((name) => (
                   <span key={name} className="pf-pill">desk: {name}</span>
