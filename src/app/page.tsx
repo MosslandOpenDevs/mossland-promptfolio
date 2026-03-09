@@ -415,7 +415,10 @@ export default async function Page() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href="#command-center" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Command center</a>
+          <a href="#market-freshness" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market freshness</a>
           <a href="#operator-brief" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator brief</a>
+          <a href="#operator-priority-queue" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Priority queue</a>
+          <a href="#operator-checklist" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Checklist</a>
           <a href="#shift-handoff" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Shift handoff</a>
           <a href="#operator-radar" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator radar</a>
           <a href="#desk-watchlist" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Desk watchlist</a>
@@ -487,10 +490,13 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="market-freshness" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Market freshness</div>
-              <span className="pf-pill">cadence {formatDurationShort(averageTickIntervalMs, locale)}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill">cadence {formatDurationShort(averageTickIntervalMs, locale)}</span>
+                <CopyAnchorLinkButton anchorId="market-freshness" title="Copy market freshness link" />
+              </div>
             </div>
             <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
               <div>
@@ -621,10 +627,14 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="operator-checklist" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator checklist</div>
-              <span className="pf-pill">3-step readiness</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill">3-step readiness</span>
+                <CopyAnchorLinkButton anchorId="operator-checklist" title="Copy operator checklist link" />
+                <CopyBriefButton text={operatorChecklist.map((item) => `${item.label}: ${item.detail}`).join('\n')} />
+              </div>
             </div>
             <div style={{ display: 'grid', gap: 8 }}>
               {operatorChecklist.map((item) => {
