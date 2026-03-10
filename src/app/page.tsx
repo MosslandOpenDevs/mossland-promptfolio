@@ -7,6 +7,7 @@ import ZineStamp from '../components/ZineStamp';
 import ExecuteTickButton from '../components/ExecuteTickButton';
 import CopyBriefButton from '../components/CopyBriefButton';
 import CopyAnchorLinkButton from '../components/CopyAnchorLinkButton';
+import QuickJumpShortcuts from '../components/QuickJumpShortcuts';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
@@ -28,6 +29,17 @@ function formatClockLabel(ts: string | null | undefined, locale: 'en' | 'ko') {
 
 export default async function Page() {
   const locale = getLocale();
+  const quickJumpItems = [
+    { keyLabel: '1', anchorId: 'command-center', label: 'Command center' },
+    { keyLabel: '2', anchorId: 'market-freshness', label: 'Market freshness' },
+    { keyLabel: '3', anchorId: 'operator-brief', label: 'Operator brief' },
+    { keyLabel: '4', anchorId: 'operator-priority-queue', label: 'Priority queue' },
+    { keyLabel: '5', anchorId: 'operator-checklist', label: 'Checklist' },
+    { keyLabel: '6', anchorId: 'shift-handoff', label: 'Shift handoff' },
+    { keyLabel: '7', anchorId: 'operator-radar', label: 'Operator radar' },
+    { keyLabel: '8', anchorId: 'desk-watchlist', label: 'Desk watchlist' },
+    { keyLabel: '9', anchorId: 'leaderboard-top', label: 'Leaderboard' },
+  ] as const;
   const d = db();
 
   // Auto-create weekly season so the product always feels "alive".
@@ -428,6 +440,7 @@ export default async function Page() {
         <div className="pf-dim" style={{ fontSize: 11 }}>
           Jump straight to the live action blocks instead of scanning the whole dashboard.
         </div>
+        <QuickJumpShortcuts items={quickJumpItems.map((item) => ({ ...item }))} />
       </div>
 
       <div className="pf-grid">
