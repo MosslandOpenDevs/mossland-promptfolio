@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
+const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
+
 function buildAnchorUrl(anchorId: string) {
   if (typeof window === 'undefined') {
     return `#${anchorId}`;
@@ -52,6 +54,7 @@ function jumpToAnchor(anchorId: string) {
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
+  const [resumeAnchorId, setResumeAnchorId] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
@@ -64,7 +67,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   useEffect(() => {
     const syncFromHash = () => {
       const hashAnchor = getHashAnchor();
-      setActiveAnchorId(hashAnchor && itemIds.has(hashAnchor) ? hashAnchor : null);
+      if (hashAnchor && itemIds.has(hashAnchor)) {
+        setActiveAnchorId(hashAnchor);
+        setResumeAnchorId(hashAnchor);
+        return;
+      }
+
+      try {
+        const storedAnchor = window.localStorage.getItem(LAST_ACTIVE_SECTION_STORAGE_KEY);
+        if (storedAnchor && itemIds.has(storedAnchor)) {
+          setResumeAnchorId(storedAnchor);
+          setActiveAnchorId((current) => current ?? storedAnchor);
+          return;
+        }
+      } catch {
+        // Ignore storage read failures and keep hash-only behavior.
+      }
+
+      setActiveAnchorId(null);
+      setResumeAnchorId(null);
     };
 
     syncFromHash();
@@ -72,6 +93,19 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
 
     return () => window.removeEventListener('hashchange', syncFromHash);
   }, [itemIds]);
+
+  useEffect(() => {
+    if (!activeAnchorId) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(LAST_ACTIVE_SECTION_STORAGE_KEY, activeAnchorId);
+      setResumeAnchorId(activeAnchorId);
+    } catch {
+      // Ignore storage write failures and keep navigation interactive.
+    }
+  }, [activeAnchorId]);
 
   useEffect(() => {
     const sections = items
@@ -247,6 +281,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   }, [activeAnchorForCopy, activeAnchorId, items]);
 
   const hasItems = items.length > 0;
+  const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
+  const showResumeButton = Boolean(resumeItem) && resumeItem?.anchorId !== activeItem?.anchorId;
   const effectiveActiveIndex = activeIndex >= 0 ? activeIndex : hasItems ? 0 : -1;
   const canJumpPrev = effectiveActiveIndex > 0;
   const canJumpNext = effectiveActiveIndex >= 0 && effectiveActiveIndex < items.length - 1;
@@ -289,6 +325,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         >
           Home
         </button>
+        {showResumeButton && resumeItem ? (
+          <button
+            type="button"
+            className="pf-pill"
+            aria-label={`Resume ${resumeItem.label}`}
+            title={`Resume ${resumeItem.label} from your last visit`}
+            onClick={() => {
+              setActiveKey('Resume');
+              setActiveAnchorId(resumeItem.anchorId);
+              jumpToAnchor(resumeItem.anchorId);
+              window.setTimeout(() => {
+                setActiveKey((current) => (current === 'Resume' ? null : current));
+              }, 1200);
+            }}
+            style={{ cursor: 'pointer', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}
+          >
+            Resume {resumeItem.label}
+          </button>
+        ) : null}
         <button
           type="button"
           className="pf-pill"
