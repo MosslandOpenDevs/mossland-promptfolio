@@ -31,6 +31,7 @@ function formatClockLabel(ts: string | null | undefined, locale: 'en' | 'ko') {
 export default async function Page() {
   const locale = getLocale();
   const quickJumpItems = [
+    { keyLabel: '0', anchorId: 'home-top', label: 'Top' },
     { keyLabel: '1', anchorId: 'command-center', label: 'Command center' },
     { keyLabel: '2', anchorId: 'market-freshness', label: 'Market freshness' },
     { keyLabel: '3', anchorId: 'operator-brief', label: 'Operator brief' },
@@ -452,7 +453,7 @@ export default async function Page() {
   ].join('\n');
 
   return (
-    <main style={{ display: 'grid', gap: 14 }}>
+    <main id="home-top" tabIndex={-1} style={{ display: 'grid', gap: 14, scrollMarginTop: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h1 className="pf-h1"><span className="underline-doodle">{t(locale, 'arenaTitle')}</span></h1>
@@ -493,6 +494,7 @@ export default async function Page() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a href="#home-top" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Top</a>
           <a href="#command-center" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Command center</a>
           <a href="#market-freshness" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market freshness</a>
           <a href="#operator-brief" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator brief</a>
