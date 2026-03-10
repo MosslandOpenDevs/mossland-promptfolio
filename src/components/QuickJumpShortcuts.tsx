@@ -162,15 +162,15 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
-      if (event.key === '[') {
+      if (event.key === '[' || event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        moveByOffset(-1, '[ ]');
+        moveByOffset(-1, event.key === '[' ? '[ ]' : 'J / K');
         return;
       }
 
-      if (event.key === ']') {
+      if (event.key === ']' || event.key.toLowerCase() === 'j') {
         event.preventDefault();
-        moveByOffset(1, '[ ]');
+        moveByOffset(1, event.key === ']' ? '[ ]' : 'J / K');
         return;
       }
 
@@ -373,7 +373,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               className="pf-pill"
               aria-current={isActive ? 'true' : undefined}
               aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
-              title={`Jump to ${item.label} (Alt+${item.keyLabel}) · use [ and ] for previous/next section`}
+              title={`Jump to ${item.label} (Alt+${item.keyLabel}) · use [ ] or J/K for previous/next section`}
               onClick={() => {
                 setActiveKey(item.keyLabel);
                 setActiveAnchorId(item.anchorId);
