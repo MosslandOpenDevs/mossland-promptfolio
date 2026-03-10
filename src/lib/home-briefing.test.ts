@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHomeBriefing, buildLeaderboardBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue } from './home-briefing.ts';
+import { buildHomeBriefing, buildLeaderboardBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue, buildOperatorRadarBrief } from './home-briefing.ts';
 
 test('buildHomeBriefing formats a concise operator snapshot', () => {
   const summary = buildHomeBriefing({
@@ -272,4 +272,29 @@ test('buildOperatorHandoff creates a concise shift summary', () => {
   assert.match(handoff, /Pulse: SELL PRESSURE/);
   assert.match(handoff, /Top task: Refresh the feed \(Refresh feed\)/);
   assert.match(handoff, /Readiness: Desk coverage: READY · Feed readiness: ACTION/);
+});
+
+test('buildOperatorRadarBrief formats top alerts into a copyable summary', () => {
+  const radar = buildOperatorRadarBrief({
+    seasonName: 'Week 11',
+    feedState: 'FRESH',
+    alerts: [
+      {
+        label: 'Feed freshness',
+        message: 'Fresh tick data is live, so the dashboard is safe for quick operator checks.',
+        cta: 'Open Season HQ',
+      },
+      {
+        label: 'Momentum',
+        message: 'BUY flow is dominating the recent tape. Confirm the move is not just one desk chasing.',
+        cta: 'Open replay tape',
+      },
+    ],
+  });
+
+  assert.match(radar, /OPERATOR RADAR/);
+  assert.match(radar, /Season: Week 11/);
+  assert.match(radar, /Feed: FRESH/);
+  assert.match(radar, /1\. Feed freshness — Fresh tick data is live/);
+  assert.match(radar, /2\. Momentum — BUY flow is dominating the recent tape\./);
 });

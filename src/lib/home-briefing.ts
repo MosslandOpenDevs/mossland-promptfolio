@@ -139,6 +139,23 @@ export function buildOperatorHandoff(params: {
   ].join('\n');
 }
 
+export function buildOperatorRadarBrief(params: {
+  seasonName: string;
+  feedState: 'FRESH' | 'STALE' | 'EMPTY';
+  alerts: Array<{
+    label: string;
+    message: string;
+    cta: string;
+  }>;
+}) {
+  const alertLines =
+    params.alerts.length > 0
+      ? params.alerts.slice(0, 3).map((alert, index) => `${index + 1}. ${alert.label} — ${alert.message} (${alert.cta})`)
+      : ['1. Board is steady — No urgent operator alerts right now. (Monitor replay)'];
+
+  return ['OPERATOR RADAR', `Season: ${params.seasonName}`, `Feed: ${params.feedState}`, ...alertLines].join('\n');
+}
+
 export function buildOperatorChecklist(params: {
   agentsCount: number;
   ticksCount: number;

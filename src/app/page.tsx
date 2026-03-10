@@ -11,7 +11,7 @@ import QuickJumpShortcuts from '../components/QuickJumpShortcuts';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
-import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue } from '../lib/home-briefing';
+import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue, buildOperatorRadarBrief } from '../lib/home-briefing';
 
 export const dynamic = 'force-dynamic';
 
@@ -424,6 +424,15 @@ export default async function Page() {
     topTask: topPriorityTask,
     checklist: operatorChecklist,
   });
+  const operatorRadarBrief = buildOperatorRadarBrief({
+    seasonName: season?.name ?? '—',
+    feedState,
+    alerts: homeAlerts.map((alert) => ({
+      label: alert.label,
+      message: alert.message,
+      cta: alert.cta,
+    })),
+  });
   const operatorSnapshot = [
     `PROMPTFOLIO SNAPSHOT`,
     `Season: ${season?.name ?? '—'}`,
@@ -789,6 +798,12 @@ export default async function Page() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill">top 3 signals</span>
                 <CopyAnchorLinkButton anchorId="operator-radar" title="Copy operator radar link" />
+                <CopyBriefButton
+                  text={operatorRadarBrief}
+                  idleLabel="COPY RADAR"
+                  successLabel="RADAR COPIED"
+                  title="Copy operator radar"
+                />
               </div>
             </div>
             <div style={{ display: 'grid', gap: 8 }}>
