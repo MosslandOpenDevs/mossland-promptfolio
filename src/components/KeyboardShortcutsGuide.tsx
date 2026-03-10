@@ -25,6 +25,19 @@ function isQuestionMarkToggle(event: KeyboardEvent) {
   return event.key === '?' || (event.key === '/' && event.shiftKey);
 }
 
+function jumpToAnchor(anchorId: string) {
+  const nextSection = document.getElementById(anchorId);
+  if (!nextSection) return false;
+
+  nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.history.replaceState(null, '', `#${anchorId}`);
+  window.setTimeout(() => {
+    nextSection.focus({ preventScroll: true });
+  }, 220);
+
+  return true;
+}
+
 export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const panelId = useId();
@@ -128,17 +141,36 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-dim" style={{ fontSize: 11 }}>Copy the link for the section you are currently viewing</span>
           </div>
           {items.map((item) => (
-            <div key={item.anchorId} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              key={item.anchorId}
+              type="button"
+              className="pf-pill"
+              onClick={() => {
+                if (!jumpToAnchor(item.anchorId)) return;
+                setIsOpen(false);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexWrap: 'wrap',
+                cursor: 'pointer',
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+              }}
+              aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
+              title={`Jump to ${item.label} (Alt+${item.keyLabel})`}
+            >
               <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Alt+{item.keyLabel}</span>
               <span className="pf-dim" style={{ fontSize: 11 }}>{item.label}</span>
-            </div>
+            </button>
           ))}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Esc</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Close the guide from anywhere</span>
           </div>
           <div className="pf-dim" style={{ fontSize: 10 }}>
-            Tip: click outside the guide to dismiss it without losing your place.
+            Tip: click any shortcut row to jump straight to that section, or click outside the guide to dismiss it without losing your place.
           </div>
         </div>
       ) : null}
