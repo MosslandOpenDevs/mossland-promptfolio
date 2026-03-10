@@ -246,10 +246,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     };
   }, [activeAnchorForCopy, activeAnchorId, items]);
 
-  const canJumpPrev = activeIndex > 0;
-  const canJumpNext = activeIndex >= 0 && activeIndex < items.length - 1;
   const hasItems = items.length > 0;
-  const sectionPosition = activeIndex >= 0 ? `${activeIndex + 1}/${items.length}` : hasItems ? `1/${items.length}` : '0/0';
+  const effectiveActiveIndex = activeIndex >= 0 ? activeIndex : hasItems ? 0 : -1;
+  const canJumpPrev = effectiveActiveIndex > 0;
+  const canJumpNext = effectiveActiveIndex >= 0 && effectiveActiveIndex < items.length - 1;
+  const sectionPosition = effectiveActiveIndex >= 0 ? `${effectiveActiveIndex + 1}/${items.length}` : '0/0';
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
   const activeHashHref = activeItem ? buildAnchorUrl(activeItem.anchorId) : null;
   const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
@@ -295,8 +296,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           aria-label="Jump to previous section ([)"
           title="Jump to previous section ([)"
           onClick={() => {
-            if (!canJumpPrev || !items[activeIndex - 1]) return;
-            const previousItem = items[activeIndex - 1];
+            const previousItem = effectiveActiveIndex > 0 ? items[effectiveActiveIndex - 1] : null;
+            if (!canJumpPrev || !previousItem) return;
             setActiveKey('[ ]');
             setActiveAnchorId(previousItem.anchorId);
             jumpToAnchor(previousItem.anchorId);
@@ -372,8 +373,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           aria-label="Jump to next section (])"
           title="Jump to next section (])"
           onClick={() => {
-            if (!canJumpNext || !items[activeIndex + 1]) return;
-            const nextItem = items[activeIndex + 1];
+            const nextItem = canJumpNext ? items[effectiveActiveIndex + 1] : null;
+            if (!canJumpNext || !nextItem) return;
             setActiveKey('[ ]');
             setActiveAnchorId(nextItem.anchorId);
             jumpToAnchor(nextItem.anchorId);
