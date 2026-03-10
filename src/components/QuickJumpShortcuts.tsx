@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type ShortcutItem = {
   keyLabel: string;
@@ -8,10 +8,58 @@ type ShortcutItem = {
   label: string;
 };
 
+function getHashAnchor() {
+  return typeof window === 'undefined' ? null : window.location.hash.replace(/^#/, '') || null;
+}
+
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
+  const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
 
   useEffect(() => {
+    const syncFromHash = () => {
+      const hashAnchor = getHashAnchor();
+      setActiveAnchorId(hashAnchor && itemIds.has(hashAnchor) ? hashAnchor : null);
+    };
+
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, [itemIds]);
+
+  useEffect(() => {
+    const sections = items
+      .map((item) => document.getElementById(item.anchorId))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        const nextActiveId = visibleEntries[0]?.target.id;
+        if (!nextActiveId) return;
+
+        setActiveAnchorId((current) => (current === nextActiveId ? current : nextActiveId));
+      },
+      {
+        rootMargin: '-20% 0px -55% 0px',
+        threshold: [0.2, 0.4, 0.6, 0.8],
+      }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [items]);
+
+  useEffect(() => {
+    let resetTimer: number | undefined;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const tagName = target?.tagName;
@@ -33,29 +81,42 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
 
       event.preventDefault();
       setActiveKey(matched.keyLabel);
+      setActiveAnchorId(matched.anchorId);
       nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       window.history.replaceState(null, '', `#${matched.anchorId}`);
-      window.setTimeout(() => setActiveKey((current) => (current === matched.keyLabel ? null : current)), 1200);
+      window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(() => setActiveKey((current) => (current === matched.keyLabel ? null : current)), 1200);
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.clearTimeout(resetTimer);
+    };
   }, [items]);
 
   return (
     <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>
-      {items.map((item) => (
-        <span
-          key={item.anchorId}
-          className="pf-pill"
-          style={{
-            borderColor: activeKey === item.keyLabel ? 'var(--primary)' : undefined,
-            color: activeKey === item.keyLabel ? 'var(--primary)' : undefined,
-          }}
-        >
-          Alt+{item.keyLabel} {item.label}
-        </span>
-      ))}
+      {items.map((item) => {
+        const isActive = activeAnchorId === item.anchorId;
+        const isPressed = activeKey === item.keyLabel;
+
+        return (
+          <span
+            key={item.anchorId}
+            className="pf-pill"
+            aria-current={isActive ? 'true' : undefined}
+            style={{
+              borderColor: isPressed || isActive ? 'var(--primary)' : undefined,
+              color: isPressed || isActive ? 'var(--primary)' : undefined,
+              background: isActive ? 'rgba(255, 255, 255, 0.92)' : undefined,
+              boxShadow: isActive ? '0 0 0 2px rgba(17, 153, 68, 0.12)' : undefined,
+            }}
+          >
+            Alt+{item.keyLabel} {item.label}
+          </span>
+        );
+      })}
     </div>
   );
 }
