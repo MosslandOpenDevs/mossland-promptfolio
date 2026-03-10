@@ -115,6 +115,10 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>[ / ]</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Move to previous or next section</span>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>C</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Copy the link for the section you are currently viewing</span>
+          </div>
           {items.map((item) => (
             <div key={item.anchorId} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Alt+{item.keyLabel}</span>

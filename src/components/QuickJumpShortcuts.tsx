@@ -2,6 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
+async function copyAnchorLink(anchorId: string) {
+  const url = new URL(window.location.href);
+  url.hash = anchorId;
+  await navigator.clipboard.writeText(url.toString());
+}
+
 type ShortcutItem = {
   keyLabel: string;
   anchorId: string;
@@ -28,10 +34,13 @@ function jumpToAnchor(anchorId: string) {
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
+  const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
   const activeIndex = useMemo(() => items.findIndex((item) => item.anchorId === activeAnchorId), [activeAnchorId, items]);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0] ?? null;
+  const activeAnchorForCopy = activeItem?.anchorId ?? 'home-top';
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -79,6 +88,24 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearActiveKeyTimeoutRef.current);
       }
       clearActiveKeyTimeoutRef.current = window.setTimeout(() => setActiveKey(null), 1200);
+    };
+
+    const clearCopyState = (nextState: 'done' | 'error') => {
+      if (clearCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearCopyStateTimeoutRef.current);
+      }
+      clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), nextState === 'done' ? 1600 : 2200);
+    };
+
+    const copyCurrentSection = async () => {
+      try {
+        await copyAnchorLink(activeAnchorForCopy);
+        setCopyState('done');
+        clearCopyState('done');
+      } catch {
+        setCopyState('error');
+        clearCopyState('error');
+      }
     };
 
     const moveByOffset = (offset: number, visualKey: string) => {
@@ -136,6 +163,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (event.key === ']') {
         event.preventDefault();
         moveByOffset(1, '[ ]');
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'c') {
+        event.preventDefault();
+        void copyCurrentSection();
       }
     };
 
@@ -145,11 +178,22 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearActiveKeyTimeoutRef.current !== null) {
         window.clearTimeout(clearActiveKeyTimeoutRef.current);
       }
+      if (clearCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearCopyStateTimeoutRef.current);
+      }
     };
-  }, [activeAnchorId, items]);
+  }, [activeAnchorForCopy, activeAnchorId, items]);
 
   const canJumpPrev = activeIndex > 0;
   const canJumpNext = activeIndex >= 0 && activeIndex < items.length - 1;
+  const copyLabel =
+    copyState === 'done'
+      ? 'LINK COPIED'
+      : copyState === 'error'
+        ? 'COPY FAILED'
+        : activeItem
+          ? `COPY ${activeItem.label.toUpperCase()} LINK`
+          : 'COPY CURRENT LINK';
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -177,6 +221,33 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         <span className="pf-pill" aria-live="polite" style={{ borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}>
           {activeItem ? `Now viewing · ${activeItem.label}` : 'Now viewing · Top'}
         </span>
+        <button
+          type="button"
+          className="pf-pill"
+          aria-live="polite"
+          aria-label={activeItem ? `Copy ${activeItem.label} link (C)` : 'Copy current section link (C)'}
+          title={activeItem ? `Copy ${activeItem.label} link (C)` : 'Copy current section link (C)'}
+          onClick={() => {
+            void copyAnchorLink(activeAnchorForCopy)
+              .then(() => {
+                setCopyState('done');
+                if (clearCopyStateTimeoutRef.current !== null) {
+                  window.clearTimeout(clearCopyStateTimeoutRef.current);
+                }
+                clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), 1600);
+              })
+              .catch(() => {
+                setCopyState('error');
+                if (clearCopyStateTimeoutRef.current !== null) {
+                  window.clearTimeout(clearCopyStateTimeoutRef.current);
+                }
+                clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), 2200);
+              });
+          }}
+          style={{ cursor: 'pointer' }}
+        >
+          {copyLabel}
+        </button>
         <button
           type="button"
           className="pf-pill"
