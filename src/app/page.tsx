@@ -451,6 +451,40 @@ export default async function Page() {
     '[Shift handoff]',
     operatorHandoff,
   ].join('\n');
+  const pulseBoardBrief = [
+    `PULSE BOARD`,
+    `Pulse: ${pulseLabel}`,
+    `Headline: ${recentHeadline}`,
+    latestTrade ? `Latest note: ${String(latestTrade.reason ?? '').trim() || '—'}` : 'Latest note: —',
+    `Active desks: ${activeDeskCount || 0}`,
+    recentAgents.length > 0 ? `Desk list: ${recentAgents.join(', ')}` : 'Desk list: waiting for agents',
+  ].join('\n');
+  const participationBrief = [
+    `DESK PARTICIPATION`,
+    `Status: ${participationLabel}`,
+    `Coverage: ${agentsCount > 0 ? `${Math.round(participationRatio * 100)}%` : '—'}`,
+    `Active desks: ${activeDeskCount}/${agentsCount}`,
+    participationDetail,
+  ].join('\n');
+  const regimeBrief = [
+    `MARKET REGIME`,
+    `Regime: ${regime.label}`,
+    regime.note,
+    latestTickAgeMs !== null
+      ? `Feed age ${formatDurationShort(latestTickAgeMs, locale)} · momentum ${directionStreak > 0 ? `${streakDirection === 'up' ? '↑' : '↓'} ${directionStreak}` : 'flat'} · trade mix ${sideCounts.BUY}/${sideCounts.SELL}/${sideCounts.HOLD}`
+      : 'Need recent tick data to derive regime confidence.',
+  ].join('\n');
+  const deskWatchlistBrief = deskWatchlist.length
+    ? [
+        `DESK WATCHLIST`,
+        ...deskWatchlist.map((desk, index) => {
+          const equity = mocUsd ? (Number(desk.cash_usd) + Number(desk.moc_units) * Number(mocUsd)).toFixed(2) : '—';
+          const reason = String(desk.last_reason ?? '').trim();
+          const tradeCount = Number(desk.trade_count ?? 0);
+          return `${index + 1}. ${desk.name} · equity $${equity} · trades ${tradeCount} · signal ${desk.last_side ?? 'NO SIGNAL'}${reason ? `\n   memo: ${reason}` : ''}`;
+        }),
+      ].join('\n')
+    : 'DESK WATCHLIST\nNo active desks yet. Create agents + run a tick.';
 
   return (
     <main id="home-top" tabIndex={-1} style={{ display: 'grid', gap: 14, scrollMarginTop: 24 }}>
@@ -841,7 +875,15 @@ export default async function Page() {
           <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Pulse board</div>
-              <span className="pf-pill" style={{ color: pulseTone, borderColor: pulseTone }}>{pulseLabel}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill" style={{ color: pulseTone, borderColor: pulseTone }}>{pulseLabel}</span>
+                <CopyBriefButton
+                  text={pulseBoardBrief}
+                  idleLabel="COPY PULSE"
+                  successLabel="PULSE COPIED"
+                  title="Copy pulse board"
+                />
+              </div>
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               <div style={{ fontWeight: 900, letterSpacing: '.04em' }}>{recentHeadline}</div>
@@ -866,7 +908,15 @@ export default async function Page() {
           <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Desk participation</div>
-              <span className="pf-pill" style={{ color: participationTone, borderColor: participationTone }}>{participationLabel}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill" style={{ color: participationTone, borderColor: participationTone }}>{participationLabel}</span>
+                <CopyBriefButton
+                  text={participationBrief}
+                  idleLabel="COPY DESKS"
+                  successLabel="DESKS COPIED"
+                  title="Copy desk participation"
+                />
+              </div>
             </div>
             <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
               <div>
@@ -894,7 +944,15 @@ export default async function Page() {
           <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Market regime</div>
-              <span className="pf-pill" style={{ color: regime.tone, borderColor: regime.tone }}>{regime.label}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill" style={{ color: regime.tone, borderColor: regime.tone }}>{regime.label}</span>
+                <CopyBriefButton
+                  text={regimeBrief}
+                  idleLabel="COPY REGIME"
+                  successLabel="REGIME COPIED"
+                  title="Copy market regime"
+                />
+              </div>
             </div>
             <div style={{ fontWeight: 900, letterSpacing: '.04em' }}>{regime.note}</div>
             <div className="pf-dim" style={{ fontSize: 11 }}>
@@ -910,7 +968,16 @@ export default async function Page() {
           <div id="desk-watchlist" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Desk watchlist</div>
-              <span className="pf-pill">top 3 desks</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill">top 3 desks</span>
+                <CopyAnchorLinkButton anchorId="desk-watchlist" title="Copy desk watchlist link" />
+                <CopyBriefButton
+                  text={deskWatchlistBrief}
+                  idleLabel="COPY WATCHLIST"
+                  successLabel="WATCHLIST COPIED"
+                  title="Copy desk watchlist"
+                />
+              </div>
             </div>
             <div style={{ display: 'grid', gap: 10 }}>
               {deskWatchlist.map((desk) => {
