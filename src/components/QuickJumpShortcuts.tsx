@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 function buildAnchorUrl(anchorId: string) {
+  if (typeof window === 'undefined') {
+    return `#${anchorId}`;
+  }
+
   const url = new URL(window.location.href);
   url.hash = anchorId;
   return url.toString();
