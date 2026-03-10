@@ -550,7 +550,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="command-center" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="command-center" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div className="pf-h2">Command center</div>
               <ZineStamp text="LIVE" />
@@ -570,7 +570,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="market-freshness" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="market-freshness" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Market freshness</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -624,7 +624,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="operator-brief" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="operator-brief" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator brief</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -659,7 +659,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="shift-handoff" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="shift-handoff" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Shift handoff</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -713,7 +713,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="operator-priority-queue" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="operator-priority-queue" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator priority queue</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -753,7 +753,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="operator-checklist" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="operator-checklist" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator checklist</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -794,7 +794,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="operator-radar" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="operator-radar" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Operator radar</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -905,7 +905,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="desk-watchlist" className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
+          <div id="desk-watchlist" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Desk watchlist</div>
               <span className="pf-pill">top 3 desks</span>
@@ -962,7 +962,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div id="leaderboard-top" className="pf-card" style={{ scrollMarginTop: 24 }}>
+          <div id="leaderboard-top" tabIndex={-1} className="pf-card" style={{ scrollMarginTop: 24 }}>
             <div className="pf-h2" style={{ marginBottom: 10 }}>Leaderboard (top)</div>
             <div style={{ display: 'grid', gap: 10 }}>
               {top.map((a: any, idx: number) => (
