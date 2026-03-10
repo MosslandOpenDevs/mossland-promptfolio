@@ -41,6 +41,9 @@ export default async function Page() {
     { keyLabel: '7', anchorId: 'operator-radar', label: 'Operator radar' },
     { keyLabel: '8', anchorId: 'desk-watchlist', label: 'Desk watchlist' },
     { keyLabel: '9', anchorId: 'leaderboard-top', label: 'Leaderboard' },
+    { keyLabel: 'd', anchorId: 'desk-participation', label: 'Desk participation' },
+    { keyLabel: 'p', anchorId: 'pulse-board', label: 'Pulse board' },
+    { keyLabel: 'r', anchorId: 'market-regime', label: 'Market regime' },
   ] as const;
   const d = db();
 
@@ -538,9 +541,12 @@ export default async function Page() {
           <a href="#operator-radar" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator radar</a>
           <a href="#desk-watchlist" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Desk watchlist</a>
           <a href="#leaderboard-top" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Leaderboard</a>
+          <a href="#desk-participation" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Desk participation</a>
+          <a href="#pulse-board" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Pulse board</a>
+          <a href="#market-regime" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market regime</a>
         </div>
         <div className="pf-dim" style={{ fontSize: 11 }}>
-          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 for direct jumps and [ / ] to step section-by-section.
+          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 plus Alt+D / Alt+P / Alt+R for the extra operator panels, and [ / ] to step section-by-section.
         </div>
         <QuickJumpShortcuts items={quickJumpItems.map((item) => ({ ...item }))} />
       </div>
@@ -872,7 +878,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="pulse-board" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Pulse board</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -905,7 +911,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="desk-participation" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Desk participation</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -941,7 +947,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="market-regime" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Market regime</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
