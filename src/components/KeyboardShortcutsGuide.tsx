@@ -112,6 +112,10 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-dim" style={{ fontSize: 11 }}>Open or close this guide</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Home / End</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Jump to the first or last operator section</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>[ / ]</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Move to previous or next section</span>
           </div>

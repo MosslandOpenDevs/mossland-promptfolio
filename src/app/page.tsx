@@ -546,7 +546,7 @@ export default async function Page() {
           <a href="#market-regime" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market regime</a>
         </div>
         <div className="pf-dim" style={{ fontSize: 11 }}>
-          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 plus Alt+D / Alt+P / Alt+R for the extra operator panels, [ / ] to step section-by-section, and C to copy the link for the section currently in view.
+          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 plus Alt+D / Alt+P / Alt+R for the extra operator panels, Home / End to snap to the first or last section, [ / ] to step section-by-section, and C to copy the link for the section currently in view.
         </div>
         <QuickJumpShortcuts items={quickJumpItems.map((item) => ({ ...item }))} />
       </div>

@@ -166,6 +166,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
+      if (event.key === 'Home' && items[0]) {
+        event.preventDefault();
+        if (!jumpToAnchor(items[0].anchorId)) return;
+        setActiveKey('Home');
+        setActiveAnchorId(items[0].anchorId);
+        clearActiveKey();
+        return;
+      }
+
+      if (event.key === 'End' && items[items.length - 1]) {
+        event.preventDefault();
+        const lastItem = items[items.length - 1];
+        if (!jumpToAnchor(lastItem.anchorId)) return;
+        setActiveKey('End');
+        setActiveAnchorId(lastItem.anchorId);
+        clearActiveKey();
+        return;
+      }
+
       if (event.key.toLowerCase() === 'c') {
         event.preventDefault();
         void copyCurrentSection();
@@ -186,6 +205,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
 
   const canJumpPrev = activeIndex > 0;
   const canJumpNext = activeIndex >= 0 && activeIndex < items.length - 1;
+  const hasItems = items.length > 0;
+  const sectionPosition = activeIndex >= 0 ? `${activeIndex + 1}/${items.length}` : hasItems ? `1/${items.length}` : '0/0';
   const copyLabel =
     copyState === 'done'
       ? 'LINK COPIED'
@@ -198,6 +219,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   return (
     <div style={{ display: 'grid', gap: 8 }}>
       <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11, alignItems: 'center' }}>
+        <button
+          type="button"
+          className="pf-pill"
+          disabled={!hasItems}
+          aria-label="Jump to first section (Home)"
+          title="Jump to first section (Home)"
+          onClick={() => {
+            if (!items[0]) return;
+            setActiveKey('Home');
+            setActiveAnchorId(items[0].anchorId);
+            jumpToAnchor(items[0].anchorId);
+            window.setTimeout(() => {
+              setActiveKey((current) => (current === 'Home' ? null : current));
+            }, 1200);
+          }}
+          style={{ cursor: hasItems ? 'pointer' : 'not-allowed', opacity: hasItems ? 1 : 0.55 }}
+        >
+          Home
+        </button>
         <button
           type="button"
           className="pf-pill"
@@ -220,6 +260,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         </button>
         <span className="pf-pill" aria-live="polite" style={{ borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}>
           {activeItem ? `Now viewing · ${activeItem.label}` : 'Now viewing · Top'}
+        </span>
+        <span className="pf-pill" aria-live="polite">
+          Section {sectionPosition}
         </span>
         <button
           type="button"
@@ -267,6 +310,26 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           style={{ cursor: canJumpNext ? 'pointer' : 'not-allowed', opacity: canJumpNext ? 1 : 0.55 }}
         >
           Next ]
+        </button>
+        <button
+          type="button"
+          className="pf-pill"
+          disabled={!hasItems}
+          aria-label="Jump to last section (End)"
+          title="Jump to last section (End)"
+          onClick={() => {
+            const lastItem = items[items.length - 1];
+            if (!lastItem) return;
+            setActiveKey('End');
+            setActiveAnchorId(lastItem.anchorId);
+            jumpToAnchor(lastItem.anchorId);
+            window.setTimeout(() => {
+              setActiveKey((current) => (current === 'End' ? null : current));
+            }, 1200);
+          }}
+          style={{ cursor: hasItems ? 'pointer' : 'not-allowed', opacity: hasItems ? 1 : 0.55 }}
+        >
+          End
         </button>
       </div>
       <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>
