@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import CopyUrlButton from '../../components/CopyUrlButton';
 import { db } from '../../lib/db';
 import { getLocale } from '../../lib/i18n';
 import { ensureWeeklySeason } from '../../lib/weekly';
@@ -150,6 +151,19 @@ export default async function ReplayIndexPage({
         <span style={{ opacity: 0.7 }}>
           {rankedAgents.length}/{computedAgents.length} shown
         </span>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <CopyUrlButton href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, profitableOnly, requestedLossOnly)} />
+        <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, true, false)} style={quickActionLink(profitableOnly && !requestedLossOnly)}>
+          winners only
+        </Link>
+        <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, false, true)} style={quickActionLink(lossOnly)}>
+          underwater only
+        </Link>
+        <Link href={buildReplayHref(sort, 0, 0, '', false, false)} style={quickActionLink(false)}>
+          reset view
+        </Link>
       </div>
 
       <form method="get" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -417,3 +431,16 @@ const activeFilterChip: React.CSSProperties = {
   textDecoration: 'none',
   fontWeight: 600,
 };
+
+function quickActionLink(active: boolean): React.CSSProperties {
+  return {
+    border: `1px solid ${active ? '#2a6b3f' : '#253042'}`,
+    borderRadius: 999,
+    padding: '6px 10px',
+    background: active ? '#10311d' : '#0b0f14',
+    color: active ? '#7ee787' : '#9ab',
+    textDecoration: 'none',
+    fontSize: 12,
+    fontWeight: 700,
+  };
+}
