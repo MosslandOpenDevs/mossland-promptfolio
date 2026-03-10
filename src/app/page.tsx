@@ -179,6 +179,37 @@ export default async function Page() {
     : 'No trade headlines yet';
   const recentAgents = Array.from(new Set(trades.map((tr) => String(tr.agent_name)).filter(Boolean))).slice(0, 4);
   const activeDeskCount = recentAgents.length;
+  const participationRatio = agentsCount > 0 ? activeDeskCount / agentsCount : 0;
+  const participationLabel =
+    agentsCount === 0
+      ? 'NO DESKS'
+      : activeDeskCount === 0
+        ? 'NO LIVE DESKS'
+        : participationRatio >= 0.75
+          ? 'BROAD COVERAGE'
+          : participationRatio >= 0.4
+            ? 'PARTIAL COVERAGE'
+            : 'CONCENTRATED';
+  const participationTone =
+    agentsCount === 0 || activeDeskCount === 0
+      ? 'var(--alert)'
+      : participationRatio >= 0.75
+        ? 'var(--primary)'
+        : participationRatio >= 0.4
+          ? '#b45309'
+          : 'var(--alert)';
+  const participationDetail =
+    agentsCount === 0
+      ? 'Create the first desk before trusting any operator signal.'
+      : activeDeskCount === 0
+        ? 'Recent tape has no active desk participation yet. Run a fresh tick or inspect prompts.'
+        : participationRatio >= 0.75
+          ? `${activeDeskCount} of ${agentsCount} desks are active in the recent tape.`
+          : participationRatio >= 0.4
+            ? `${activeDeskCount} of ${agentsCount} desks are active. One or two more desks would improve signal confidence.`
+            : `${activeDeskCount} of ${agentsCount} desks are driving the tape. Check concentration risk before acting.`;
+  const participationHref = activeDeskCount <= 1 ? '/agents' : '/replay';
+  const participationCta = activeDeskCount <= 1 ? 'Review desk mix' : 'Inspect replay';
   const isFeedStale = latestTickAgeMs !== null && latestTickAgeMs > 15 * 60 * 1000;
   const homeAlerts = getHomeAlerts({
     agentsCount,
@@ -786,6 +817,34 @@ export default async function Page() {
               ) : (
                 <span className="pf-pill">desk: waiting for agents</span>
               )}
+            </div>
+          </div>
+
+          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Desk participation</div>
+              <span className="pf-pill" style={{ color: participationTone, borderColor: participationTone }}>{participationLabel}</span>
+            </div>
+            <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}>
+              <div>
+                <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Active desks</div>
+                <div style={{ fontWeight: 900, fontSize: 22 }}>{activeDeskCount}</div>
+              </div>
+              <div>
+                <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Coverage</div>
+                <div style={{ fontWeight: 900, fontSize: 22 }}>{agentsCount > 0 ? `${Math.round(participationRatio * 100)}%` : '—'}</div>
+              </div>
+              <div>
+                <div className="pf-dim" style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '.12em' }}>Roster</div>
+                <div style={{ fontWeight: 900, fontSize: 22 }}>{agentsCount}</div>
+              </div>
+            </div>
+            <div className="pf-dim" style={{ fontSize: 11 }}>{participationDetail}</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <span className="pf-pill">recent desks: {activeDeskCount}/{agentsCount}</span>
+              <Link href={participationHref} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
+                {participationCta}
+              </Link>
             </div>
           </div>
 
