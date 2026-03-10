@@ -32,17 +32,19 @@ export default async function Page() {
   const locale = getLocale();
   const quickJumpItems = [
     { keyLabel: '0', anchorId: 'home-top', label: 'Top' },
-    { keyLabel: '1', anchorId: 'command-center', label: 'Command center' },
-    { keyLabel: '2', anchorId: 'market-freshness', label: 'Market freshness' },
-    { keyLabel: '3', anchorId: 'operator-brief', label: 'Operator brief' },
-    { keyLabel: '4', anchorId: 'operator-priority-queue', label: 'Priority queue' },
-    { keyLabel: '5', anchorId: 'operator-checklist', label: 'Checklist' },
-    { keyLabel: '6', anchorId: 'shift-handoff', label: 'Shift handoff' },
-    { keyLabel: '7', anchorId: 'operator-radar', label: 'Operator radar' },
-    { keyLabel: '8', anchorId: 'desk-watchlist', label: 'Desk watchlist' },
-    { keyLabel: '9', anchorId: 'leaderboard-top', label: 'Leaderboard' },
-    { keyLabel: 'd', anchorId: 'desk-participation', label: 'Desk participation' },
-    { keyLabel: 'p', anchorId: 'pulse-board', label: 'Pulse board' },
+    { keyLabel: '1', anchorId: 'season-status', label: 'Season status' },
+    { keyLabel: '2', anchorId: 'next-action', label: 'Next action' },
+    { keyLabel: '3', anchorId: 'command-center', label: 'Command center' },
+    { keyLabel: '4', anchorId: 'market-freshness', label: 'Market freshness' },
+    { keyLabel: '5', anchorId: 'operator-brief', label: 'Operator brief' },
+    { keyLabel: '6', anchorId: 'operator-priority-queue', label: 'Priority queue' },
+    { keyLabel: '7', anchorId: 'operator-checklist', label: 'Checklist' },
+    { keyLabel: '8', anchorId: 'shift-handoff', label: 'Shift handoff' },
+    { keyLabel: '9', anchorId: 'operator-radar', label: 'Operator radar' },
+    { keyLabel: 'd', anchorId: 'desk-watchlist', label: 'Desk watchlist' },
+    { keyLabel: 'l', anchorId: 'leaderboard-top', label: 'Leaderboard' },
+    { keyLabel: 'p', anchorId: 'desk-participation', label: 'Desk participation' },
+    { keyLabel: 'u', anchorId: 'pulse-board', label: 'Pulse board' },
     { keyLabel: 'r', anchorId: 'market-regime', label: 'Market regime' },
   ] as const;
   const d = db();
@@ -532,6 +534,8 @@ export default async function Page() {
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href="#home-top" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Top</a>
+          <a href="#season-status" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Season status</a>
+          <a href="#next-action" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Next action</a>
           <a href="#command-center" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Command center</a>
           <a href="#market-freshness" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market freshness</a>
           <a href="#operator-brief" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Operator brief</a>
@@ -546,16 +550,19 @@ export default async function Page() {
           <a href="#market-regime" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market regime</a>
         </div>
         <div className="pf-dim" style={{ fontSize: 11 }}>
-          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 plus Alt+D / Alt+P / Alt+R for the extra operator panels, Home / End to snap to the first or last section, [ / ] or J / K to step section-by-section, and C to copy the link for the section currently in view.
+          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 for the primary operator path, Alt+D for Desk watchlist, Alt+L for Leaderboard, Alt+P for Desk participation, Alt+U for Pulse board, and Alt+R for Market regime. Home / End snap to the first or last section, [ / ] or J / K step section-by-section, and C copies the link for the section currently in view.
         </div>
         <QuickJumpShortcuts items={quickJumpItems.map((item) => ({ ...item }))} />
       </div>
 
       <div className="pf-grid">
         <div style={{ display: 'grid', gap: 12 }}>
-          <div className="pf-card" style={{ position: 'relative', overflow: 'hidden' }}>
+          <div id="season-status" tabIndex={-1} className="pf-card" style={{ position: 'relative', overflow: 'hidden', scrollMarginTop: 24 }}>
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'var(--primary)' }} />
-            <div className="pf-h2">Season status</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="pf-h2">Season status</div>
+              <CopyAnchorLinkButton anchorId="season-status" title="Copy season status link" />
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', marginTop: 10 }}>
               <div style={{ fontFamily: 'Permanent Marker, cursive', fontSize: 20, color: 'var(--primary)', transform: 'rotate(-2deg)' }}>
                 “Sprouting”
@@ -579,10 +586,13 @@ export default async function Page() {
         </div>
 
         <div style={{ display: 'grid', gap: 12 }}>
-          <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
+          <div id="next-action" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
               <div className="pf-h2">Next action</div>
-              <span className="pf-pill">{nextAction.badge}</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <span className="pf-pill">{nextAction.badge}</span>
+                <CopyAnchorLinkButton anchorId="next-action" title="Copy next action link" />
+              </div>
             </div>
             <div style={{ fontWeight: 900, letterSpacing: '.04em' }}>{nextAction.title}</div>
             <div className="pf-dim" style={{ fontSize: 11 }}>{nextAction.note}</div>
