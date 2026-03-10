@@ -2,10 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
-async function copyAnchorLink(anchorId: string) {
+function buildAnchorUrl(anchorId: string) {
   const url = new URL(window.location.href);
   url.hash = anchorId;
-  await navigator.clipboard.writeText(url.toString());
+  return url.toString();
+}
+
+async function copyAnchorLink(anchorId: string) {
+  await navigator.clipboard.writeText(buildAnchorUrl(anchorId));
 }
 
 type ShortcutItem = {
@@ -207,6 +211,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const canJumpNext = activeIndex >= 0 && activeIndex < items.length - 1;
   const hasItems = items.length > 0;
   const sectionPosition = activeIndex >= 0 ? `${activeIndex + 1}/${items.length}` : hasItems ? `1/${items.length}` : '0/0';
+  const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
+  const activeHashHref = activeItem ? buildAnchorUrl(activeItem.anchorId) : null;
   const copyLabel =
     copyState === 'done'
       ? 'LINK COPIED'
@@ -264,6 +270,18 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         <span className="pf-pill" aria-live="polite">
           Section {sectionPosition}
         </span>
+        {activeHashHref ? (
+          <a
+            className="pf-pill"
+            href={activeHashHref}
+            title={`Open direct link for ${activeItem?.label ?? 'current section'}`}
+            style={{ textDecoration: 'none', color: 'inherit' }}
+          >
+            {activeHashLabel}
+          </a>
+        ) : (
+          <span className="pf-pill">{activeHashLabel}</span>
+        )}
         <button
           type="button"
           className="pf-pill"
