@@ -424,6 +424,22 @@ export default async function Page() {
     topTask: topPriorityTask,
     checklist: operatorChecklist,
   });
+  const operatorSnapshot = [
+    `PROMPTFOLIO SNAPSHOT`,
+    `Season: ${season?.name ?? '—'}`,
+    `Feed: ${feedState} · freshness ${freshnessLabel} · cadence ${cadenceLabel}`,
+    `Pulse: ${pulseLabel} · Regime: ${regime.label}`,
+    `Active desks: ${activeDeskCount}/${agentsCount}`,
+    '',
+    '[Operator brief]',
+    operatorBriefing,
+    '',
+    '[Priority queue]',
+    operatorActionPlan,
+    '',
+    '[Shift handoff]',
+    operatorHandoff,
+  ].join('\n');
 
   return (
     <main style={{ display: 'grid', gap: 14 }}>
@@ -455,7 +471,15 @@ export default async function Page() {
       <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="pf-h2">Quick jumps</div>
-          <span className="pf-pill">home navigation</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="pf-pill">home navigation</span>
+            <CopyBriefButton
+              text={operatorSnapshot}
+              idleLabel="COPY SNAPSHOT"
+              successLabel="SNAPSHOT COPIED"
+              title="Copy operator snapshot"
+            />
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href="#command-center" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Command center</a>
