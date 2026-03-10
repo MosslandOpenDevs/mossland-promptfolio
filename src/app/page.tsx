@@ -593,9 +593,12 @@ export default async function Page() {
           </div>
 
           <div id="command-center" tabIndex={-1} className="pf-card" style={{ display: 'grid', gap: 10, scrollMarginTop: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
               <div className="pf-h2">Command center</div>
-              <ZineStamp text="LIVE" />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <ZineStamp text="LIVE" />
+                <CopyAnchorLinkButton anchorId="command-center" title="Copy command center link" />
+              </div>
             </div>
 
             <ExecuteTickButton disabled={!season} />
@@ -883,6 +886,7 @@ export default async function Page() {
               <div className="pf-h2">Pulse board</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill" style={{ color: pulseTone, borderColor: pulseTone }}>{pulseLabel}</span>
+                <CopyAnchorLinkButton anchorId="pulse-board" title="Copy pulse board link" />
                 <CopyBriefButton
                   text={pulseBoardBrief}
                   idleLabel="COPY PULSE"
@@ -916,6 +920,7 @@ export default async function Page() {
               <div className="pf-h2">Desk participation</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill" style={{ color: participationTone, borderColor: participationTone }}>{participationLabel}</span>
+                <CopyAnchorLinkButton anchorId="desk-participation" title="Copy desk participation link" />
                 <CopyBriefButton
                   text={participationBrief}
                   idleLabel="COPY DESKS"
@@ -952,6 +957,7 @@ export default async function Page() {
               <div className="pf-h2">Market regime</div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className="pf-pill" style={{ color: regime.tone, borderColor: regime.tone }}>{regime.label}</span>
+                <CopyAnchorLinkButton anchorId="market-regime" title="Copy market regime link" />
                 <CopyBriefButton
                   text={regimeBrief}
                   idleLabel="COPY REGIME"
@@ -1038,7 +1044,10 @@ export default async function Page() {
           </div>
 
           <div id="leaderboard-top" tabIndex={-1} className="pf-card" style={{ scrollMarginTop: 24 }}>
-            <div className="pf-h2" style={{ marginBottom: 10 }}>Leaderboard (top)</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
+              <div className="pf-h2">Leaderboard (top)</div>
+              <CopyAnchorLinkButton anchorId="leaderboard-top" title="Copy leaderboard link" />
+            </div>
             <div style={{ display: 'grid', gap: 10 }}>
               {top.map((a: any, idx: number) => (
                 <div key={a.id} style={{ display: 'grid', gridTemplateColumns: '54px 1fr', gap: 10, alignItems: 'center' }}>
