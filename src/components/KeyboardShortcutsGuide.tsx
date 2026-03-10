@@ -188,10 +188,12 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
                 textAlign: 'left',
               }}
               aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
-              title={`Jump to ${item.label} (Alt+${item.keyLabel})`}
+              title={`Jump to ${item.label} (Alt+${item.keyLabel}) · copy direct link with Alt+Shift+${item.keyLabel}`}
             >
               <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Alt+{item.keyLabel}</span>
               <span className="pf-dim" style={{ fontSize: 11 }}>{item.label}</span>
+              <span className="pf-pill" style={{ minWidth: 108, justifyContent: 'center' }}>Alt+Shift+{item.keyLabel}</span>
+              <span className="pf-dim" style={{ fontSize: 11 }}>Copy direct link</span>
             </button>
           ))}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

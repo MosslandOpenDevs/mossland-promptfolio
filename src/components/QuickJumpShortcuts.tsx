@@ -53,6 +53,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
@@ -112,18 +113,27 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
-      clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), nextState === 'done' ? 1600 : 2200);
+      clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+        setCopyState('idle');
+        setCopiedAnchorId(null);
+      }, nextState === 'done' ? 1600 : 2200);
     };
 
-    const copyCurrentSection = async () => {
+    const copySectionLink = async (anchorId: string) => {
       try {
-        await copyAnchorLink(activeAnchorForCopy);
+        await copyAnchorLink(anchorId);
+        setCopiedAnchorId(anchorId);
         setCopyState('done');
         clearCopyState('done');
       } catch {
+        setCopiedAnchorId(anchorId);
         setCopyState('error');
         clearCopyState('error');
       }
+    };
+
+    const copyCurrentSection = async () => {
+      await copySectionLink(activeAnchorForCopy);
     };
 
     const moveByOffset = (offset: number, visualKey: string) => {
@@ -155,11 +165,20 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
-      if (event.altKey && !event.shiftKey) {
-        const matched = items.find((item) => item.keyLabel === event.key);
+      if (event.altKey) {
+        const matched = items.find((item) => item.keyLabel.toLowerCase() === event.key.toLowerCase());
         if (!matched) return;
 
         event.preventDefault();
+
+        if (event.shiftKey) {
+          void copySectionLink(matched.anchorId);
+          setActiveKey(`copy:${matched.keyLabel}`);
+          setActiveAnchorId(matched.anchorId);
+          clearActiveKey();
+          return;
+        }
+
         if (!jumpToAnchor(matched.anchorId)) return;
 
         setActiveKey(matched.keyLabel);
@@ -168,7 +187,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
-      if (event.altKey || event.shiftKey) {
+      if (event.shiftKey) {
         return;
       }
 
@@ -233,11 +252,16 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const sectionPosition = activeIndex >= 0 ? `${activeIndex + 1}/${items.length}` : hasItems ? `1/${items.length}` : '0/0';
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
   const activeHashHref = activeItem ? buildAnchorUrl(activeItem.anchorId) : null;
+  const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
   const copyLabel =
     copyState === 'done'
-      ? 'LINK COPIED'
+      ? copiedItem
+        ? `COPIED ${copiedItem.label.toUpperCase()} LINK`
+        : 'LINK COPIED'
       : copyState === 'error'
-        ? 'COPY FAILED'
+        ? copiedItem
+          ? `COPY FAILED · ${copiedItem.label.toUpperCase()}`
+          : 'COPY FAILED'
         : activeItem
           ? `COPY ${activeItem.label.toUpperCase()} LINK`
           : 'COPY CURRENT LINK';
@@ -315,18 +339,26 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           onClick={() => {
             void copyAnchorLink(activeAnchorForCopy)
               .then(() => {
+                setCopiedAnchorId(activeAnchorForCopy);
                 setCopyState('done');
                 if (clearCopyStateTimeoutRef.current !== null) {
                   window.clearTimeout(clearCopyStateTimeoutRef.current);
                 }
-                clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), 1600);
+                clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                  setCopyState('idle');
+                  setCopiedAnchorId(null);
+                }, 1600);
               })
               .catch(() => {
+                setCopiedAnchorId(activeAnchorForCopy);
                 setCopyState('error');
                 if (clearCopyStateTimeoutRef.current !== null) {
                   window.clearTimeout(clearCopyStateTimeoutRef.current);
                 }
-                clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), 2200);
+                clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                  setCopyState('idle');
+                  setCopiedAnchorId(null);
+                }, 2200);
               });
           }}
           style={{ cursor: 'pointer' }}
@@ -393,7 +425,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               className="pf-pill"
               aria-current={isActive ? 'true' : undefined}
               aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
-              title={`Jump to ${item.label} (Alt+${item.keyLabel}) · use [ ] or J/K for previous/next section`}
+              title={`Jump to ${item.label} (Alt+${item.keyLabel}) · copy direct link with Alt+Shift+${item.keyLabel} · use [ ] or J/K for previous/next section`}
               onClick={() => {
                 setActiveKey(item.keyLabel);
                 setActiveAnchorId(item.anchorId);
