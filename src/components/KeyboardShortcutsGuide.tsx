@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 
+const SHORTCUT_GUIDE_STORAGE_KEY = 'promptfolio-keyboard-shortcuts-open';
+
 type ShortcutItem = {
   keyLabel: string;
   anchorId: string;
@@ -42,6 +44,29 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
   const [isOpen, setIsOpen] = useState(false);
   const panelId = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const storedPreference = window.localStorage.getItem(SHORTCUT_GUIDE_STORAGE_KEY);
+      if (storedPreference === 'open') {
+        setIsOpen(true);
+      }
+    } catch {
+      // Ignore storage read failures and fall back to closed-by-default.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      window.localStorage.setItem(SHORTCUT_GUIDE_STORAGE_KEY, isOpen ? 'open' : 'closed');
+    } catch {
+      // Ignore storage write failures so the guide still works normally.
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
