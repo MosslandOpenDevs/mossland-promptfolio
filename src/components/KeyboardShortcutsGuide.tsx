@@ -140,6 +140,10 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>C</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Copy the link for the section you are currently viewing</span>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>O</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Open the direct link for the section you are currently viewing in a new tab</span>
+          </div>
           {items.map((item) => (
             <button
               key={item.anchorId}

@@ -16,6 +16,16 @@ async function copyAnchorLink(anchorId: string) {
   await navigator.clipboard.writeText(buildAnchorUrl(anchorId));
 }
 
+function openAnchorLink(anchorId: string) {
+  const href = buildAnchorUrl(anchorId);
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  window.open(href, '_blank', 'noopener,noreferrer');
+  return true;
+}
+
 type ShortcutItem = {
   keyLabel: string;
   anchorId: string;
@@ -196,6 +206,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (event.key.toLowerCase() === 'c') {
         event.preventDefault();
         void copyCurrentSection();
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'o') {
+        event.preventDefault();
+        openAnchorLink(activeAnchorForCopy);
       }
     };
 
@@ -275,14 +291,18 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           Section {sectionPosition}
         </span>
         {activeHashHref ? (
-          <a
+          <button
+            type="button"
             className="pf-pill"
-            href={activeHashHref}
-            title={`Open direct link for ${activeItem?.label ?? 'current section'}`}
-            style={{ textDecoration: 'none', color: 'inherit' }}
+            aria-label={activeItem ? `Open ${activeItem.label} link in a new tab (O)` : 'Open current section link in a new tab (O)'}
+            title={activeItem ? `Open ${activeItem.label} link in a new tab (O)` : 'Open current section link in a new tab (O)'}
+            onClick={() => {
+              openAnchorLink(activeAnchorForCopy);
+            }}
+            style={{ cursor: 'pointer' }}
           >
             {activeHashLabel}
-          </a>
+          </button>
         ) : (
           <span className="pf-pill">{activeHashLabel}</span>
         )}
