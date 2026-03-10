@@ -540,7 +540,7 @@ export default async function Page() {
           <a href="#leaderboard-top" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Leaderboard</a>
         </div>
         <div className="pf-dim" style={{ fontSize: 11 }}>
-          Jump straight to the live action blocks instead of scanning the whole dashboard.
+          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 for direct jumps and [ / ] to step section-by-section.
         </div>
         <QuickJumpShortcuts items={quickJumpItems.map((item) => ({ ...item }))} />
       </div>

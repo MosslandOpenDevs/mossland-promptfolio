@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 type ShortcutItem = {
   keyLabel: string;
@@ -28,6 +28,7 @@ function jumpToAnchor(anchorId: string) {
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
+  const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
 
   useEffect(() => {
@@ -71,7 +72,28 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   }, [items]);
 
   useEffect(() => {
-    let resetTimer: number | undefined;
+    const clearActiveKey = () => {
+      if (clearActiveKeyTimeoutRef.current !== null) {
+        window.clearTimeout(clearActiveKeyTimeoutRef.current);
+      }
+      clearActiveKeyTimeoutRef.current = window.setTimeout(() => setActiveKey(null), 1200);
+    };
+
+    const moveByOffset = (offset: number, visualKey: string) => {
+      if (items.length === 0) return false;
+
+      const currentIndex = items.findIndex((item) => item.anchorId === activeAnchorId);
+      const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+      const nextIndex = Math.min(items.length - 1, Math.max(0, baseIndex + offset));
+      const nextItem = items[nextIndex];
+      if (!nextItem || nextItem.anchorId === activeAnchorId) return false;
+      if (!jumpToAnchor(nextItem.anchorId)) return false;
+
+      setActiveKey(visualKey);
+      setActiveAnchorId(nextItem.anchorId);
+      clearActiveKey();
+      return true;
+    };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -82,28 +104,47 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         tagName === 'TEXTAREA' ||
         tagName === 'SELECT';
 
-      if (isTypingTarget || !event.altKey || event.metaKey || event.ctrlKey || event.shiftKey) {
+      if (isTypingTarget || event.metaKey || event.ctrlKey) {
         return;
       }
 
-      const matched = items.find((item) => item.keyLabel === event.key);
-      if (!matched) return;
+      if (event.altKey && !event.shiftKey) {
+        const matched = items.find((item) => item.keyLabel === event.key);
+        if (!matched) return;
 
-      event.preventDefault();
-      if (!jumpToAnchor(matched.anchorId)) return;
+        event.preventDefault();
+        if (!jumpToAnchor(matched.anchorId)) return;
 
-      setActiveKey(matched.keyLabel);
-      setActiveAnchorId(matched.anchorId);
-      window.clearTimeout(resetTimer);
-      resetTimer = window.setTimeout(() => setActiveKey((current) => (current === matched.keyLabel ? null : current)), 1200);
+        setActiveKey(matched.keyLabel);
+        setActiveAnchorId(matched.anchorId);
+        clearActiveKey();
+        return;
+      }
+
+      if (event.altKey || event.shiftKey) {
+        return;
+      }
+
+      if (event.key === '[') {
+        event.preventDefault();
+        moveByOffset(-1, '[ ]');
+        return;
+      }
+
+      if (event.key === ']') {
+        event.preventDefault();
+        moveByOffset(1, '[ ]');
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.clearTimeout(resetTimer);
+      if (clearActiveKeyTimeoutRef.current !== null) {
+        window.clearTimeout(clearActiveKeyTimeoutRef.current);
+      }
     };
-  }, [items]);
+  }, [activeAnchorId, items]);
 
   return (
     <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>
@@ -125,7 +166,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             className="pf-pill"
             aria-current={isActive ? 'true' : undefined}
             aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
-            title={`Jump to ${item.label} (Alt+${item.keyLabel})`}
+            title={`Jump to ${item.label} (Alt+${item.keyLabel}) · use [ and ] for previous/next section`}
             onClick={() => {
               setActiveKey(item.keyLabel);
               setActiveAnchorId(item.anchorId);
