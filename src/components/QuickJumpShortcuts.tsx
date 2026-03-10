@@ -30,6 +30,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
+  const activeIndex = useMemo(() => items.findIndex((item) => item.anchorId === activeAnchorId), [activeAnchorId, items]);
+  const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0] ?? null;
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -146,41 +148,91 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     };
   }, [activeAnchorId, items]);
 
-  return (
-    <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>
-      {items.map((item) => {
-        const isActive = activeAnchorId === item.anchorId;
-        const isPressed = activeKey === item.keyLabel;
-        const interactiveStyle: CSSProperties = {
-          borderColor: isPressed || isActive ? 'var(--primary)' : undefined,
-          color: isPressed || isActive ? 'var(--primary)' : undefined,
-          background: isActive ? 'rgba(255, 255, 255, 0.92)' : undefined,
-          boxShadow: isActive ? '0 0 0 2px rgba(17, 153, 68, 0.12)' : undefined,
-          cursor: 'pointer',
-        };
+  const canJumpPrev = activeIndex > 0;
+  const canJumpNext = activeIndex >= 0 && activeIndex < items.length - 1;
 
-        return (
-          <button
-            key={item.anchorId}
-            type="button"
-            className="pf-pill"
-            aria-current={isActive ? 'true' : undefined}
-            aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
-            title={`Jump to ${item.label} (Alt+${item.keyLabel}) · use [ and ] for previous/next section`}
-            onClick={() => {
-              setActiveKey(item.keyLabel);
-              setActiveAnchorId(item.anchorId);
-              jumpToAnchor(item.anchorId);
-              window.setTimeout(() => {
-                setActiveKey((current) => (current === item.keyLabel ? null : current));
-              }, 1200);
-            }}
-            style={interactiveStyle}
-          >
-            Alt+{item.keyLabel} {item.label}
-          </button>
-        );
-      })}
+  return (
+    <div style={{ display: 'grid', gap: 8 }}>
+      <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11, alignItems: 'center' }}>
+        <button
+          type="button"
+          className="pf-pill"
+          disabled={!canJumpPrev}
+          aria-label="Jump to previous section ([)"
+          title="Jump to previous section ([)"
+          onClick={() => {
+            if (!canJumpPrev || !items[activeIndex - 1]) return;
+            const previousItem = items[activeIndex - 1];
+            setActiveKey('[ ]');
+            setActiveAnchorId(previousItem.anchorId);
+            jumpToAnchor(previousItem.anchorId);
+            window.setTimeout(() => {
+              setActiveKey((current) => (current === '[ ]' ? null : current));
+            }, 1200);
+          }}
+          style={{ cursor: canJumpPrev ? 'pointer' : 'not-allowed', opacity: canJumpPrev ? 1 : 0.55 }}
+        >
+          [ Prev
+        </button>
+        <span className="pf-pill" aria-live="polite" style={{ borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}>
+          {activeItem ? `Now viewing · ${activeItem.label}` : 'Now viewing · Top'}
+        </span>
+        <button
+          type="button"
+          className="pf-pill"
+          disabled={!canJumpNext}
+          aria-label="Jump to next section (])"
+          title="Jump to next section (])"
+          onClick={() => {
+            if (!canJumpNext || !items[activeIndex + 1]) return;
+            const nextItem = items[activeIndex + 1];
+            setActiveKey('[ ]');
+            setActiveAnchorId(nextItem.anchorId);
+            jumpToAnchor(nextItem.anchorId);
+            window.setTimeout(() => {
+              setActiveKey((current) => (current === '[ ]' ? null : current));
+            }, 1200);
+          }}
+          style={{ cursor: canJumpNext ? 'pointer' : 'not-allowed', opacity: canJumpNext ? 1 : 0.55 }}
+        >
+          Next ]
+        </button>
+      </div>
+      <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>
+        {items.map((item) => {
+          const isActive = activeAnchorId === item.anchorId;
+          const isPressed = activeKey === item.keyLabel;
+          const interactiveStyle: CSSProperties = {
+            borderColor: isPressed || isActive ? 'var(--primary)' : undefined,
+            color: isPressed || isActive ? 'var(--primary)' : undefined,
+            background: isActive ? 'rgba(255, 255, 255, 0.92)' : undefined,
+            boxShadow: isActive ? '0 0 0 2px rgba(17, 153, 68, 0.12)' : undefined,
+            cursor: 'pointer',
+          };
+
+          return (
+            <button
+              key={item.anchorId}
+              type="button"
+              className="pf-pill"
+              aria-current={isActive ? 'true' : undefined}
+              aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
+              title={`Jump to ${item.label} (Alt+${item.keyLabel}) · use [ and ] for previous/next section`}
+              onClick={() => {
+                setActiveKey(item.keyLabel);
+                setActiveAnchorId(item.anchorId);
+                jumpToAnchor(item.anchorId);
+                window.setTimeout(() => {
+                  setActiveKey((current) => (current === item.keyLabel ? null : current));
+                }, 1200);
+              }}
+              style={interactiveStyle}
+            >
+              Alt+{item.keyLabel} {item.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
