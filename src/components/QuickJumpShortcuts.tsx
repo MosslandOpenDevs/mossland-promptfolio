@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 type ShortcutItem = {
   keyLabel: string;
@@ -10,6 +10,19 @@ type ShortcutItem = {
 
 function getHashAnchor() {
   return typeof window === 'undefined' ? null : window.location.hash.replace(/^#/, '') || null;
+}
+
+function jumpToAnchor(anchorId: string) {
+  const nextSection = document.getElementById(anchorId);
+  if (!nextSection) return false;
+
+  nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  window.history.replaceState(null, '', `#${anchorId}`);
+  setTimeout(() => {
+    nextSection.focus({ preventScroll: true });
+  }, 220);
+
+  return true;
 }
 
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
@@ -76,14 +89,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       const matched = items.find((item) => item.keyLabel === event.key);
       if (!matched) return;
 
-      const nextSection = document.getElementById(matched.anchorId);
-      if (!nextSection) return;
-
       event.preventDefault();
+      if (!jumpToAnchor(matched.anchorId)) return;
+
       setActiveKey(matched.keyLabel);
       setActiveAnchorId(matched.anchorId);
-      nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      window.history.replaceState(null, '', `#${matched.anchorId}`);
       window.clearTimeout(resetTimer);
       resetTimer = window.setTimeout(() => setActiveKey((current) => (current === matched.keyLabel ? null : current)), 1200);
     };
@@ -100,21 +110,34 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       {items.map((item) => {
         const isActive = activeAnchorId === item.anchorId;
         const isPressed = activeKey === item.keyLabel;
+        const interactiveStyle: CSSProperties = {
+          borderColor: isPressed || isActive ? 'var(--primary)' : undefined,
+          color: isPressed || isActive ? 'var(--primary)' : undefined,
+          background: isActive ? 'rgba(255, 255, 255, 0.92)' : undefined,
+          boxShadow: isActive ? '0 0 0 2px rgba(17, 153, 68, 0.12)' : undefined,
+          cursor: 'pointer',
+        };
 
         return (
-          <span
+          <button
             key={item.anchorId}
+            type="button"
             className="pf-pill"
             aria-current={isActive ? 'true' : undefined}
-            style={{
-              borderColor: isPressed || isActive ? 'var(--primary)' : undefined,
-              color: isPressed || isActive ? 'var(--primary)' : undefined,
-              background: isActive ? 'rgba(255, 255, 255, 0.92)' : undefined,
-              boxShadow: isActive ? '0 0 0 2px rgba(17, 153, 68, 0.12)' : undefined,
+            aria-label={`Jump to ${item.label} (Alt+${item.keyLabel})`}
+            title={`Jump to ${item.label} (Alt+${item.keyLabel})`}
+            onClick={() => {
+              setActiveKey(item.keyLabel);
+              setActiveAnchorId(item.anchorId);
+              jumpToAnchor(item.anchorId);
+              window.setTimeout(() => {
+                setActiveKey((current) => (current === item.keyLabel ? null : current));
+              }, 1200);
             }}
+            style={interactiveStyle}
           >
             Alt+{item.keyLabel} {item.label}
-          </span>
+          </button>
         );
       })}
     </div>
