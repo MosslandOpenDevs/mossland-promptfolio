@@ -35,10 +35,14 @@ export default async function LeaderboardPage() {
 
   const leader = scored[0] ?? null;
   const runnerUp = scored[1] ?? null;
+  const trailingDesk = scored.length > 0 ? scored[scored.length - 1]! : null;
   const leaderGap = leader && runnerUp ? leader.equity - runnerUp.equity : null;
   const averageEquity = scored.length > 0 ? scored.reduce((sum, row) => sum + row.equity, 0) / scored.length : null;
   const latestPortfolioUpdate = scored[0]?.updated_at ?? null;
   const spread = leader && scored.length > 0 ? leader.equity - scored[scored.length - 1]!.equity : null;
+  const aboveAverageCount = averageEquity !== null ? scored.filter((row) => row.equity >= averageEquity).length : 0;
+  const belowAverageCount = averageEquity !== null ? scored.filter((row) => row.equity < averageEquity).length : 0;
+  const catchUpGap = averageEquity !== null && trailingDesk ? averageEquity - trailingDesk.equity : null;
   const leaderboardBrief = buildLeaderboardBriefing({
     seasonName: season.name,
     mocUsd: mocUsd ? Number(mocUsd) : null,
@@ -112,6 +116,40 @@ export default async function LeaderboardPage() {
           <div style={dimLabel}>Field spread</div>
           <div style={metricValue}>{spread !== null ? `$${spread.toFixed(2)}` : '—'}</div>
           <div style={metricHint}>Gap between the top desk and the last ranked desk.</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <div style={card}>
+          <div style={dimLabel}>Leader pulse</div>
+          <div style={{ ...metricValue, fontSize: 24 }}>{leader ? leader.name : '—'}</div>
+          <div style={metricHint}>
+            {leader && runnerUp
+              ? `Holding ${leaderGap?.toFixed(2) ?? '0.00'} above ${runnerUp.name}.`
+              : leader
+                ? 'Only one active desk on the board right now.'
+                : 'Run a tick to establish the first leader.'}
+          </div>
+        </div>
+        <div style={card}>
+          <div style={dimLabel}>Field balance</div>
+          <div style={{ ...metricValue, fontSize: 24 }}>{averageEquity !== null ? `${aboveAverageCount}:${belowAverageCount}` : '—'}</div>
+          <div style={metricHint}>
+            {averageEquity !== null
+              ? `${aboveAverageCount} desks at/above average, ${belowAverageCount} desks chasing the pack.`
+              : 'Need ranked desks to measure balance across the field.'}
+          </div>
+        </div>
+        <div style={card}>
+          <div style={dimLabel}>Underdog watch</div>
+          <div style={{ ...metricValue, fontSize: 24 }}>{catchUpGap !== null && catchUpGap > 0 ? `$${catchUpGap.toFixed(2)}` : '—'}</div>
+          <div style={metricHint}>
+            {trailingDesk && catchUpGap !== null
+              ? catchUpGap > 0
+                ? `${trailingDesk.name} needs ${catchUpGap.toFixed(2)} to get back to field average.`
+                : `${trailingDesk.name} is already holding the field average line.`
+              : 'Need a populated board to track the underdog catch-up gap.'}
+          </div>
         </div>
       </div>
 
