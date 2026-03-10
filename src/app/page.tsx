@@ -8,6 +8,7 @@ import ExecuteTickButton from '../components/ExecuteTickButton';
 import CopyBriefButton from '../components/CopyBriefButton';
 import CopyAnchorLinkButton from '../components/CopyAnchorLinkButton';
 import QuickJumpShortcuts from '../components/QuickJumpShortcuts';
+import KeyboardShortcutsGuide from '../components/KeyboardShortcutsGuide';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
@@ -482,6 +483,7 @@ export default async function Page() {
           <div className="pf-h2">Quick jumps</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span className="pf-pill">home navigation</span>
+            <KeyboardShortcutsGuide items={quickJumpItems.map((item) => ({ ...item }))} />
             <CopyBriefButton
               text={operatorSnapshot}
               idleLabel="COPY SNAPSHOT"
