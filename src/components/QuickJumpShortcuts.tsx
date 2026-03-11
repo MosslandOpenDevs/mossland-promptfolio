@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
+const PINNED_SECTION_STORAGE_KEY = 'promptfolio-pinned-sections';
 const MAX_RECENT_SECTION_TRAIL = 3;
+const MAX_PINNED_SECTIONS = 4;
 
 function buildAnchorUrl(anchorId: string) {
   if (typeof window === 'undefined') {
@@ -119,11 +121,42 @@ function saveRecentSectionTrail(anchorIds: string[]) {
   }
 }
 
+function loadPinnedSections() {
+  if (typeof window === 'undefined') {
+    return [] as string[];
+  }
+
+  try {
+    const storedPinned = window.localStorage.getItem(PINNED_SECTION_STORAGE_KEY);
+    if (!storedPinned) return [] as string[];
+
+    const parsedPinned = JSON.parse(storedPinned);
+    if (!Array.isArray(parsedPinned)) return [] as string[];
+
+    return parsedPinned.filter((value): value is string => typeof value === 'string');
+  } catch {
+    return [] as string[];
+  }
+}
+
+function savePinnedSections(anchorIds: string[]) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(PINNED_SECTION_STORAGE_KEY, JSON.stringify(anchorIds.slice(0, MAX_PINNED_SECTIONS)));
+  } catch {
+    // Ignore storage write failures so the pinboard stays optional.
+  }
+}
+
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
   const [resumeAnchorId, setResumeAnchorId] = useState<string | null>(null);
   const [recentAnchorTrail, setRecentAnchorTrail] = useState<string[]>([]);
+  const [pinnedAnchorIds, setPinnedAnchorIds] = useState<string[]>([]);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -166,6 +199,10 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     setRecentAnchorTrail((current) => {
       const nextTrail = loadRecentSectionTrail().filter((anchorId) => itemIds.has(anchorId)).slice(0, MAX_RECENT_SECTION_TRAIL);
       return JSON.stringify(current) === JSON.stringify(nextTrail) ? current : nextTrail;
+    });
+    setPinnedAnchorIds((current) => {
+      const nextPinned = loadPinnedSections().filter((anchorId) => itemIds.has(anchorId)).slice(0, MAX_PINNED_SECTIONS);
+      return JSON.stringify(current) === JSON.stringify(nextPinned) ? current : nextPinned;
     });
 
     const syncFromHash = () => {
@@ -215,6 +252,16 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       return nextTrail;
     });
   }, [activeAnchorId]);
+
+  const togglePinnedSection = useCallback((anchorId: string) => {
+    setPinnedAnchorIds((current) => {
+      const nextPinned = current.includes(anchorId)
+        ? current.filter((value) => value !== anchorId)
+        : [anchorId, ...current.filter((value) => value !== anchorId)].slice(0, MAX_PINNED_SECTIONS);
+      savePinnedSections(nextPinned);
+      return nextPinned;
+    });
+  }, []);
 
   useEffect(() => {
     const sections = items
@@ -415,6 +462,14 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         setActiveKey('Resume');
         setActiveAnchorId(resumeAnchorId);
         clearActiveKey();
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'f' && activeAnchorForCopy) {
+        event.preventDefault();
+        togglePinnedSection(activeAnchorForCopy);
+        setActiveKey('Pin');
+        clearActiveKey();
       }
     };
 
@@ -428,7 +483,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, resumeAnchorId, searchQuery]);
+  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, resumeAnchorId, searchQuery, togglePinnedSection]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
@@ -447,6 +502,10 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const recentTrailItems = recentAnchorTrail
     .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
     .filter((item): item is ShortcutItem => Boolean(item));
+  const pinnedItems = pinnedAnchorIds
+    .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
+    .filter((item): item is ShortcutItem => Boolean(item));
+  const isActiveSectionPinned = activeAnchorForCopy ? pinnedAnchorIds.includes(activeAnchorForCopy) : false;
   const copyLabel =
     copyState === 'done'
       ? copiedItem
@@ -573,6 +632,24 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           style={{ cursor: 'pointer' }}
         >
           {copyLabel}
+        </button>
+        <button
+          type="button"
+          className="pf-pill"
+          aria-live="polite"
+          aria-label={activeItem ? `${isActiveSectionPinned ? 'Unpin' : 'Pin'} ${activeItem.label} (F)` : 'Pin current section (F)'}
+          title={activeItem ? `${isActiveSectionPinned ? 'Unpin' : 'Pin'} ${activeItem.label} (F)` : 'Pin current section (F)'}
+          onClick={() => {
+            togglePinnedSection(activeAnchorForCopy);
+          }}
+          style={{
+            cursor: 'pointer',
+            borderColor: isActiveSectionPinned ? 'var(--primary)' : undefined,
+            color: isActiveSectionPinned ? 'var(--primary)' : undefined,
+            background: isActiveSectionPinned ? 'rgba(255,255,255,.92)' : undefined,
+          }}
+        >
+          {isActiveSectionPinned ? `Pinned · ${activeItem?.label ?? 'Current'}` : `Pin current · ${activeItem?.label ?? 'Section'}`}
         </button>
         <button
           type="button"
@@ -705,6 +782,56 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         </div>
       </div>
       <div style={{ display: 'grid', gap: 8 }}>
+        {pinnedItems.length > 0 ? (
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              Pinboard: keep up to four favorite sections ready for one-tap jumps. Press F to pin or unpin the section currently in view.
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {pinnedItems.map((item, index) => {
+                const isActive = activeAnchorId === item.anchorId;
+                return (
+                  <button
+                    key={`pinned-${item.anchorId}`}
+                    type="button"
+                    className="pf-pill"
+                    aria-label={`Jump to pinned section ${item.label}`}
+                    title={`Jump to pinned section ${item.label}`}
+                    onClick={() => {
+                      setActiveKey(`pin:${index + 1}`);
+                      setActiveAnchorId(item.anchorId);
+                      jumpToAnchor(item.anchorId);
+                      window.setTimeout(() => {
+                        setActiveKey((current) => (current === `pin:${index + 1}` ? null : current));
+                      }, 1200);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      borderColor: isActive ? 'var(--primary)' : undefined,
+                      color: isActive ? 'var(--primary)' : undefined,
+                      background: isActive ? 'rgba(255,255,255,.92)' : undefined,
+                    }}
+                  >
+                    Pin {index + 1} · {item.label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label="Clear pinned sections"
+                title="Clear pinned sections"
+                onClick={() => {
+                  setPinnedAnchorIds([]);
+                  savePinnedSections([]);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Clear pinboard
+              </button>
+            </div>
+          </div>
+        ) : null}
         {recentTrailItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
@@ -937,6 +1064,23 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                         style={{ cursor: 'pointer' }}
                       >
                         Open
+                      </button>
+                      <button
+                        type="button"
+                        className="pf-pill"
+                        aria-label={`${pinnedAnchorIds.includes(item.anchorId) ? 'Unpin' : 'Pin'} filtered result ${item.label}`}
+                        title={`${pinnedAnchorIds.includes(item.anchorId) ? 'Unpin' : 'Pin'} filtered result ${item.label}`}
+                        onClick={() => {
+                          setSelectedFilteredIndex(index);
+                          togglePinnedSection(item.anchorId);
+                        }}
+                        style={{
+                          cursor: 'pointer',
+                          borderColor: pinnedAnchorIds.includes(item.anchorId) ? 'var(--primary)' : undefined,
+                          color: pinnedAnchorIds.includes(item.anchorId) ? 'var(--primary)' : undefined,
+                        }}
+                      >
+                        {pinnedAnchorIds.includes(item.anchorId) ? 'Unpin' : 'Pin'}
                       </button>
                       <button
                         type="button"
