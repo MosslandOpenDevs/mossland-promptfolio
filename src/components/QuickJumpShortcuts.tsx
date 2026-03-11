@@ -265,6 +265,15 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (event.key.toLowerCase() === 'o') {
         event.preventDefault();
         openAnchorLink(activeAnchorForCopy);
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'r' && resumeAnchorId) {
+        event.preventDefault();
+        if (!jumpToAnchor(resumeAnchorId)) return;
+        setActiveKey('Resume');
+        setActiveAnchorId(resumeAnchorId);
+        clearActiveKey();
       }
     };
 
@@ -278,7 +287,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, items]);
+  }, [activeAnchorForCopy, activeAnchorId, items, resumeAnchorId]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;

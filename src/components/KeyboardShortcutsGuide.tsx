@@ -170,7 +170,7 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-dim" style={{ fontSize: 11 }}>Open the direct link for the section you are currently viewing in a new tab</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Resume</span>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>R / Resume</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Jump back to the last section you were viewing on your previous visit</span>
           </div>
           {items.map((item) => (
