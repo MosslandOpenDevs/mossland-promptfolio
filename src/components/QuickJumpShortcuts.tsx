@@ -34,6 +34,30 @@ type ShortcutItem = {
   label: string;
 };
 
+type ShortcutItemMatchMeta = {
+  item: ShortcutItem;
+  matchedFields: string[];
+};
+
+function getShortcutItemMatchMeta(item: ShortcutItem, normalizedSearchQuery: string): ShortcutItemMatchMeta | null {
+  if (!normalizedSearchQuery) {
+    return { item, matchedFields: [] };
+  }
+
+  const matchedFields: string[] = [];
+  if (item.label.toLowerCase().includes(normalizedSearchQuery)) {
+    matchedFields.push('label');
+  }
+  if (item.anchorId.toLowerCase().includes(normalizedSearchQuery)) {
+    matchedFields.push('section id');
+  }
+  if (item.keyLabel.toLowerCase().includes(normalizedSearchQuery)) {
+    matchedFields.push('shortcut');
+  }
+
+  return matchedFields.length > 0 ? { item, matchedFields } : null;
+}
+
 function getHashAnchor() {
   return typeof window === 'undefined' ? null : window.location.hash.replace(/^#/, '') || null;
 }
@@ -79,17 +103,18 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0] ?? null;
   const activeAnchorForCopy = activeItem?.anchorId ?? 'home-top';
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
-  const filteredItems = useMemo(() => {
+  const filteredItemMatches = useMemo(() => {
     if (!normalizedSearchQuery) {
-      return items;
+      return items.map((item) => ({ item, matchedFields: [] }));
     }
 
-    return items.filter((item) => {
-      const haystacks = [item.label, item.anchorId, item.keyLabel].map((value) => value.toLowerCase());
-      return haystacks.some((value) => value.includes(normalizedSearchQuery));
-    });
+    return items
+      .map((item) => getShortcutItemMatchMeta(item, normalizedSearchQuery))
+      .filter((match): match is ShortcutItemMatchMeta => Boolean(match));
   }, [items, normalizedSearchQuery]);
+  const filteredItems = filteredItemMatches.map((match) => match.item);
   const selectedFilteredItem = filteredItems[Math.min(selectedFilteredIndex, Math.max(filteredItems.length - 1, 0))] ?? null;
+  const selectedFilteredMatch = filteredItemMatches[Math.min(selectedFilteredIndex, Math.max(filteredItemMatches.length - 1, 0))] ?? null;
 
   useEffect(() => {
     setSelectedFilteredIndex(0);
@@ -661,6 +686,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             <>
               <span className="pf-pill" aria-live="polite" style={{ borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}>
                 Selected match {selectedFilteredIndex + 1}/{filteredItems.length} · {selectedFilteredItem.label}
+                {selectedFilteredMatch?.matchedFields.length ? ` · via ${selectedFilteredMatch.matchedFields.join(', ')}` : ''}
               </span>
               <button
                 type="button"
@@ -747,7 +773,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               Filtered route: click any result to jump, or use the side actions to open/copy the direct section link.
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
-              {filteredItems.slice(0, 5).map((item, index) => {
+              {filteredItemMatches.slice(0, 5).map((match, index) => {
+                const { item, matchedFields } = match;
                 const isSelected = selectedFilteredItem?.anchorId === item.anchorId;
                 const isActive = activeAnchorId === item.anchorId;
                 return (
@@ -790,6 +817,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                     <span className="pf-pill" aria-live="polite">
                       #{item.anchorId}
                     </span>
+                    {matchedFields.map((field) => (
+                      <span key={`${item.anchorId}-${field}`} className="pf-pill" aria-live="polite">
+                        match {field}
+                      </span>
+                    ))}
                     {isActive ? (
                       <span className="pf-pill" style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>
                         live section
