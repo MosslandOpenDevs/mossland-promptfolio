@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
+const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
+const MAX_RECENT_SECTION_TRAIL = 3;
 
 function buildAnchorUrl(anchorId: string) {
   if (typeof window === 'undefined') {
@@ -87,10 +89,41 @@ function clearStoredLastStop() {
   }
 }
 
+function loadRecentSectionTrail() {
+  if (typeof window === 'undefined') {
+    return [] as string[];
+  }
+
+  try {
+    const storedTrail = window.localStorage.getItem(RECENT_SECTION_TRAIL_STORAGE_KEY);
+    if (!storedTrail) return [] as string[];
+
+    const parsedTrail = JSON.parse(storedTrail);
+    if (!Array.isArray(parsedTrail)) return [] as string[];
+
+    return parsedTrail.filter((value): value is string => typeof value === 'string');
+  } catch {
+    return [] as string[];
+  }
+}
+
+function saveRecentSectionTrail(anchorIds: string[]) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(RECENT_SECTION_TRAIL_STORAGE_KEY, JSON.stringify(anchorIds.slice(0, MAX_RECENT_SECTION_TRAIL)));
+  } catch {
+    // Ignore storage write failures so the jump rail still works.
+  }
+}
+
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
   const [resumeAnchorId, setResumeAnchorId] = useState<string | null>(null);
+  const [recentAnchorTrail, setRecentAnchorTrail] = useState<string[]>([]);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -130,6 +163,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   }, [filteredItems]);
 
   useEffect(() => {
+    setRecentAnchorTrail((current) => {
+      const nextTrail = loadRecentSectionTrail().filter((anchorId) => itemIds.has(anchorId)).slice(0, MAX_RECENT_SECTION_TRAIL);
+      return JSON.stringify(current) === JSON.stringify(nextTrail) ? current : nextTrail;
+    });
+
     const syncFromHash = () => {
       const hashAnchor = getHashAnchor();
       if (hashAnchor && itemIds.has(hashAnchor)) {
@@ -170,6 +208,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     } catch {
       // Ignore storage write failures and keep navigation interactive.
     }
+
+    setRecentAnchorTrail((current) => {
+      const nextTrail = [activeAnchorId, ...current.filter((anchorId) => anchorId !== activeAnchorId)].slice(0, MAX_RECENT_SECTION_TRAIL);
+      saveRecentSectionTrail(nextTrail);
+      return nextTrail;
+    });
   }, [activeAnchorId]);
 
   useEffect(() => {
@@ -400,6 +444,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const lastStopLabel = resumeItem ? `#${resumeItem.anchorId}` : null;
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
   const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
+  const recentTrailItems = recentAnchorTrail
+    .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
+    .filter((item): item is ShortcutItem => Boolean(item));
   const copyLabel =
     copyState === 'done'
       ? copiedItem
@@ -658,6 +705,56 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         </div>
       </div>
       <div style={{ display: 'grid', gap: 8 }}>
+        {recentTrailItems.length > 0 ? (
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              Recent trail: jump back into the last few sections you touched without losing the filtered route.
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {recentTrailItems.map((item, index) => {
+                const isActive = activeAnchorId === item.anchorId;
+                return (
+                  <button
+                    key={`trail-${item.anchorId}`}
+                    type="button"
+                    className="pf-pill"
+                    aria-label={`Jump to recent section ${item.label}`}
+                    title={`Jump to recent section ${item.label}`}
+                    onClick={() => {
+                      setActiveKey(`trail:${index + 1}`);
+                      setActiveAnchorId(item.anchorId);
+                      jumpToAnchor(item.anchorId);
+                      window.setTimeout(() => {
+                        setActiveKey((current) => (current === `trail:${index + 1}` ? null : current));
+                      }, 1200);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      borderColor: isActive ? 'var(--primary)' : undefined,
+                      color: isActive ? 'var(--primary)' : undefined,
+                      background: isActive ? 'rgba(255,255,255,.92)' : undefined,
+                    }}
+                  >
+                    Trail {index + 1} · {item.label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label="Clear recent section trail"
+                title="Clear recent section trail"
+                onClick={() => {
+                  setRecentAnchorTrail([]);
+                  saveRecentSectionTrail([]);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Clear trail
+              </button>
+            </div>
+          </div>
+        ) : null}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             ref={searchInputRef}
