@@ -51,6 +51,18 @@ function jumpToAnchor(anchorId: string) {
   return true;
 }
 
+function clearStoredLastStop() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(LAST_ACTIVE_SECTION_STORAGE_KEY);
+  } catch {
+    // Ignore storage write failures and keep the reset action non-blocking.
+  }
+}
+
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
@@ -501,40 +513,55 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             Last stop {resumeItem ? resumeItem.label : '—'}
           </span>
           {resumeItem ? (
-            <button
-              type="button"
-              className="pf-pill"
-              aria-label={`Copy last stop link for ${resumeItem.label}`}
-              title={`Copy last stop link for ${resumeItem.label}`}
-              onClick={() => {
-                void copyAnchorLink(resumeItem.anchorId)
-                  .then(() => {
-                    setCopiedAnchorId(resumeItem.anchorId);
-                    setCopyState('done');
-                    if (clearCopyStateTimeoutRef.current !== null) {
-                      window.clearTimeout(clearCopyStateTimeoutRef.current);
-                    }
-                    clearCopyStateTimeoutRef.current = window.setTimeout(() => {
-                      setCopyState('idle');
-                      setCopiedAnchorId(null);
-                    }, 1600);
-                  })
-                  .catch(() => {
-                    setCopiedAnchorId(resumeItem.anchorId);
-                    setCopyState('error');
-                    if (clearCopyStateTimeoutRef.current !== null) {
-                      window.clearTimeout(clearCopyStateTimeoutRef.current);
-                    }
-                    clearCopyStateTimeoutRef.current = window.setTimeout(() => {
-                      setCopyState('idle');
-                      setCopiedAnchorId(null);
-                    }, 2200);
-                  });
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              Copy last stop {lastStopLabel}
-            </button>
+            <>
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`Copy last stop link for ${resumeItem.label}`}
+                title={`Copy last stop link for ${resumeItem.label}`}
+                onClick={() => {
+                  void copyAnchorLink(resumeItem.anchorId)
+                    .then(() => {
+                      setCopiedAnchorId(resumeItem.anchorId);
+                      setCopyState('done');
+                      if (clearCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearCopyStateTimeoutRef.current);
+                      }
+                      clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setCopyState('idle');
+                        setCopiedAnchorId(null);
+                      }, 1600);
+                    })
+                    .catch(() => {
+                      setCopiedAnchorId(resumeItem.anchorId);
+                      setCopyState('error');
+                      if (clearCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearCopyStateTimeoutRef.current);
+                      }
+                      clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setCopyState('idle');
+                        setCopiedAnchorId(null);
+                      }, 2200);
+                    });
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Copy last stop {lastStopLabel}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`Forget saved last stop ${resumeItem.label}`}
+                title={`Forget saved last stop ${resumeItem.label}`}
+                onClick={() => {
+                  clearStoredLastStop();
+                  setResumeAnchorId(null);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Forget last stop
+              </button>
+            </>
           ) : null}
         </div>
       </div>
