@@ -88,6 +88,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       return haystacks.some((value) => value.includes(normalizedSearchQuery));
     });
   }, [items, normalizedSearchQuery]);
+  const topFilteredItem = filteredItems[0] ?? null;
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -626,6 +627,61 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           <span className="pf-pill" aria-live="polite">
             Matches {filteredItems.length}/{items.length}
           </span>
+          {searchQuery && topFilteredItem ? (
+            <>
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`Jump to top match ${topFilteredItem.label}`}
+                title={`Jump to top match ${topFilteredItem.label}`}
+                onClick={() => {
+                  setActiveKey('/');
+                  setActiveAnchorId(topFilteredItem.anchorId);
+                  jumpToAnchor(topFilteredItem.anchorId);
+                  window.setTimeout(() => {
+                    setActiveKey((current) => (current === '/' ? null : current));
+                  }, 1200);
+                }}
+                style={{ cursor: 'pointer', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}
+              >
+                Jump top match → {topFilteredItem.label}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`Copy top match link for ${topFilteredItem.label}`}
+                title={`Copy top match link for ${topFilteredItem.label}`}
+                onClick={() => {
+                  void copyAnchorLink(topFilteredItem.anchorId)
+                    .then(() => {
+                      setCopiedAnchorId(topFilteredItem.anchorId);
+                      setCopyState('done');
+                      if (clearCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearCopyStateTimeoutRef.current);
+                      }
+                      clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setCopyState('idle');
+                        setCopiedAnchorId(null);
+                      }, 1600);
+                    })
+                    .catch(() => {
+                      setCopiedAnchorId(topFilteredItem.anchorId);
+                      setCopyState('error');
+                      if (clearCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearCopyStateTimeoutRef.current);
+                      }
+                      clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setCopyState('idle');
+                        setCopiedAnchorId(null);
+                      }, 2200);
+                    });
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Copy top match #{topFilteredItem.anchorId}
+              </button>
+            </>
+          ) : null}
           {searchQuery ? (
             <button
               type="button"
