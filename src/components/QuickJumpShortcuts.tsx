@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 
@@ -69,12 +69,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [resumeAnchorId, setResumeAnchorId] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
   const activeIndex = useMemo(() => items.findIndex((item) => item.anchorId === activeAnchorId), [activeAnchorId, items]);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0] ?? null;
   const activeAnchorForCopy = activeItem?.anchorId ?? 'home-top';
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const filteredItems = useMemo(() => {
+    if (!normalizedSearchQuery) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      const haystacks = [item.label, item.anchorId, item.keyLabel].map((value) => value.toLowerCase());
+      return haystacks.some((value) => value.includes(normalizedSearchQuery));
+    });
+  }, [items, normalizedSearchQuery]);
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -207,6 +220,22 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         tagName === 'TEXTAREA' ||
         tagName === 'SELECT';
 
+      if ((event.key === '/' || event.key === '?') && !event.altKey) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
+      if (event.key === 'Escape' && !event.altKey && !event.metaKey && !event.ctrlKey) {
+        if (document.activeElement === searchInputRef.current || searchQuery) {
+          event.preventDefault();
+          setSearchQuery('');
+          searchInputRef.current?.blur();
+        }
+        return;
+      }
+
       if (isTypingTarget || event.metaKey || event.ctrlKey) {
         return;
       }
@@ -299,7 +328,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, items, resumeAnchorId]);
+  }, [activeAnchorForCopy, activeAnchorId, items, resumeAnchorId, searchQuery]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
@@ -577,8 +606,53 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           ) : null}
         </div>
       </div>
+      <div style={{ display: 'grid', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            onKeyDown={(event: ReactKeyboardEvent<HTMLInputElement>) => {
+              if (event.key === 'Enter' && filteredItems[0]) {
+                event.preventDefault();
+                setActiveKey('/');
+                setActiveAnchorId(filteredItems[0].anchorId);
+                jumpToAnchor(filteredItems[0].anchorId);
+                window.setTimeout(() => {
+                  setActiveKey((current) => (current === '/' ? null : current));
+                }, 1200);
+              }
+            }}
+            placeholder="Filter sections (/ to focus, Enter to jump first match)"
+            aria-label="Filter quick jump sections"
+            className="pf-pill"
+            style={{ minWidth: 240, flex: '1 1 280px', textAlign: 'left', background: 'rgba(255,255,255,.92)' }}
+          />
+          <span className="pf-pill" aria-live="polite">
+            Matches {filteredItems.length}/{items.length}
+          </span>
+          {searchQuery ? (
+            <button
+              type="button"
+              className="pf-pill"
+              onClick={() => {
+                setSearchQuery('');
+                searchInputRef.current?.focus();
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              Clear filter
+            </button>
+          ) : null}
+        </div>
+        {normalizedSearchQuery && filteredItems.length === 0 ? (
+          <div className="pf-dim" style={{ fontSize: 11 }}>
+            No section matches that filter yet. Try label words like market, desk, operator, or leaderboard.
+          </div>
+        ) : null}
+      </div>
       <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>
-        {items.map((item) => {
+        {filteredItems.map((item) => {
           const isActive = activeAnchorId === item.anchorId;
           const isPressed = activeKey === item.keyLabel;
           const interactiveStyle: CSSProperties = {
