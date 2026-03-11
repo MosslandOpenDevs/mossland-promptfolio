@@ -300,6 +300,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     items.length > 1 && effectiveActiveIndex >= 0 ? Math.round((effectiveActiveIndex / (items.length - 1)) * 100) : hasItems ? 100 : 0;
   const previousItem = canJumpPrev ? items[effectiveActiveIndex - 1] : null;
   const nextItem = canJumpNext ? items[effectiveActiveIndex + 1] : null;
+  const lastStopLabel = resumeItem ? `#${resumeItem.anchorId}` : null;
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
   const activeHashHref = activeItem ? buildAnchorUrl(activeItem.anchorId) : null;
   const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
@@ -496,6 +497,45 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           <span className="pf-pill" aria-live="polite">
             Next {nextItem ? nextItem.label : '—'}
           </span>
+          <span className="pf-pill" aria-live="polite">
+            Last stop {resumeItem ? resumeItem.label : '—'}
+          </span>
+          {resumeItem ? (
+            <button
+              type="button"
+              className="pf-pill"
+              aria-label={`Copy last stop link for ${resumeItem.label}`}
+              title={`Copy last stop link for ${resumeItem.label}`}
+              onClick={() => {
+                void copyAnchorLink(resumeItem.anchorId)
+                  .then(() => {
+                    setCopiedAnchorId(resumeItem.anchorId);
+                    setCopyState('done');
+                    if (clearCopyStateTimeoutRef.current !== null) {
+                      window.clearTimeout(clearCopyStateTimeoutRef.current);
+                    }
+                    clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                      setCopyState('idle');
+                      setCopiedAnchorId(null);
+                    }, 1600);
+                  })
+                  .catch(() => {
+                    setCopiedAnchorId(resumeItem.anchorId);
+                    setCopyState('error');
+                    if (clearCopyStateTimeoutRef.current !== null) {
+                      window.clearTimeout(clearCopyStateTimeoutRef.current);
+                    }
+                    clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                      setCopyState('idle');
+                      setCopiedAnchorId(null);
+                    }, 2200);
+                  });
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              Copy last stop {lastStopLabel}
+            </button>
+          ) : null}
         </div>
       </div>
       <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>

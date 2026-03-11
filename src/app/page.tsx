@@ -550,7 +550,7 @@ export default async function Page() {
           <a href="#market-regime" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market regime</a>
         </div>
         <div className="pf-dim" style={{ fontSize: 11 }}>
-          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 for the primary operator path, Alt+D for Desk watchlist, Alt+L for Leaderboard, Alt+P for Desk participation, Alt+U for Pulse board, and Alt+R for Market regime. Home / End snap to the first or last section, [ / ] or J / K step section-by-section, C copies the link for the section currently in view, O opens that direct link in a new tab, and R or Resume jumps back to the last section you were reading.
+          Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 for the primary operator path, Alt+D for Desk watchlist, Alt+L for Leaderboard, Alt+P for Desk participation, Alt+U for Pulse board, and Alt+R for Market regime. Home / End snap to the first or last section, [ / ] or J / K step section-by-section, C copies the link for the section currently in view, O opens that direct link in a new tab, and R or Resume jumps back to the last section you were reading. The progress rail now also keeps the last stop visible so you can copy and share where you left off.
         </div>
         <QuickJumpShortcuts items={quickJumpItems.map((item) => ({ ...item }))} />
       </div>
