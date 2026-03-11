@@ -741,6 +741,121 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             </button>
           ) : null}
         </div>
+        {normalizedSearchQuery && filteredItems.length > 0 ? (
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link.
+            </div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {filteredItems.slice(0, 5).map((item, index) => {
+                const isSelected = selectedFilteredItem?.anchorId === item.anchorId;
+                const isActive = activeAnchorId === item.anchorId;
+                return (
+                  <div
+                    key={`filtered-${item.anchorId}`}
+                    style={{
+                      display: 'flex',
+                      gap: 8,
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      padding: '8px 10px',
+                      borderRadius: 14,
+                      border: `2px solid ${isSelected ? 'var(--primary)' : 'rgba(15,23,42,0.12)'}`,
+                      background: isSelected ? 'rgba(255,255,255,.96)' : 'rgba(255,255,255,.78)',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Jump to filtered result ${item.label}`}
+                      title={`Jump to filtered result ${item.label}`}
+                      onClick={() => {
+                        setSelectedFilteredIndex(index);
+                        setActiveKey('/');
+                        setActiveAnchorId(item.anchorId);
+                        jumpToAnchor(item.anchorId);
+                        window.setTimeout(() => {
+                          setActiveKey((current) => (current === '/' ? null : current));
+                        }, 1200);
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        borderColor: isSelected ? 'var(--primary)' : undefined,
+                        color: isSelected ? 'var(--primary)' : undefined,
+                        background: isSelected ? 'rgba(255,255,255,.92)' : undefined,
+                      }}
+                    >
+                      #{index + 1} Alt+{item.keyLabel} · {item.label}
+                    </button>
+                    <span className="pf-pill" aria-live="polite">
+                      #{item.anchorId}
+                    </span>
+                    {isActive ? (
+                      <span className="pf-pill" style={{ borderColor: 'var(--primary)', color: 'var(--primary)' }}>
+                        live section
+                      </span>
+                    ) : null}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginLeft: 'auto' }}>
+                      <button
+                        type="button"
+                        className="pf-pill"
+                        aria-label={`Open filtered result ${item.label}`}
+                        title={`Open filtered result ${item.label}`}
+                        onClick={() => {
+                          setSelectedFilteredIndex(index);
+                          openAnchorLink(item.anchorId);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        Open
+                      </button>
+                      <button
+                        type="button"
+                        className="pf-pill"
+                        aria-label={`Copy filtered result link for ${item.label}`}
+                        title={`Copy filtered result link for ${item.label}`}
+                        onClick={() => {
+                          setSelectedFilteredIndex(index);
+                          void copyAnchorLink(item.anchorId)
+                            .then(() => {
+                              setCopiedAnchorId(item.anchorId);
+                              setCopyState('done');
+                              if (clearCopyStateTimeoutRef.current !== null) {
+                                window.clearTimeout(clearCopyStateTimeoutRef.current);
+                              }
+                              clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                                setCopyState('idle');
+                                setCopiedAnchorId(null);
+                              }, 1600);
+                            })
+                            .catch(() => {
+                              setCopiedAnchorId(item.anchorId);
+                              setCopyState('error');
+                              if (clearCopyStateTimeoutRef.current !== null) {
+                                window.clearTimeout(clearCopyStateTimeoutRef.current);
+                              }
+                              clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                                setCopyState('idle');
+                                setCopiedAnchorId(null);
+                              }, 2200);
+                            });
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        Copy link
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {filteredItems.length > 5 ? (
+              <div className="pf-dim" style={{ fontSize: 11 }}>
+                Showing top 5 matches. Use ↑ / ↓ to move through the full result set, then Enter to jump.
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {normalizedSearchQuery && filteredItems.length === 0 ? (
           <div className="pf-dim" style={{ fontSize: 11 }}>
             No section matches that filter yet. Try label words like market, desk, operator, or leaderboard.
