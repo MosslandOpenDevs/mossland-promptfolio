@@ -70,6 +70,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilteredIndex, setSelectedFilteredIndex] = useState(0);
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -88,7 +89,20 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       return haystacks.some((value) => value.includes(normalizedSearchQuery));
     });
   }, [items, normalizedSearchQuery]);
-  const topFilteredItem = filteredItems[0] ?? null;
+  const selectedFilteredItem = filteredItems[Math.min(selectedFilteredIndex, Math.max(filteredItems.length - 1, 0))] ?? null;
+
+  useEffect(() => {
+    setSelectedFilteredIndex(0);
+  }, [normalizedSearchQuery]);
+
+  useEffect(() => {
+    if (!filteredItems.length) {
+      setSelectedFilteredIndex(0);
+      return;
+    }
+
+    setSelectedFilteredIndex((current) => Math.min(current, filteredItems.length - 1));
+  }, [filteredItems]);
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -232,9 +246,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         if (document.activeElement === searchInputRef.current || searchQuery) {
           event.preventDefault();
           setSearchQuery('');
+          setSelectedFilteredIndex(0);
           searchInputRef.current?.blur();
         }
         return;
+      }
+
+      const isSearchFocused = document.activeElement === searchInputRef.current;
+      if (isSearchFocused && filteredItems.length > 0) {
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          setSelectedFilteredIndex((current) => (current + 1) % filteredItems.length);
+          return;
+        }
+
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          setSelectedFilteredIndex((current) => (current - 1 + filteredItems.length) % filteredItems.length);
+          return;
+        }
       }
 
       if (isTypingTarget || event.metaKey || event.ctrlKey) {
@@ -329,7 +359,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, items, resumeAnchorId, searchQuery]);
+  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, resumeAnchorId, searchQuery]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
@@ -609,17 +639,17 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             onKeyDown={(event: ReactKeyboardEvent<HTMLInputElement>) => {
-              if (event.key === 'Enter' && filteredItems[0]) {
+              if (event.key === 'Enter' && selectedFilteredItem) {
                 event.preventDefault();
                 setActiveKey('/');
-                setActiveAnchorId(filteredItems[0].anchorId);
-                jumpToAnchor(filteredItems[0].anchorId);
+                setActiveAnchorId(selectedFilteredItem.anchorId);
+                jumpToAnchor(selectedFilteredItem.anchorId);
                 window.setTimeout(() => {
                   setActiveKey((current) => (current === '/' ? null : current));
                 }, 1200);
               }
             }}
-            placeholder="Filter sections (/ to focus, Enter to jump first match)"
+            placeholder="Filter sections (/ to focus, ↑/↓ choose, Enter to jump)"
             aria-label="Filter quick jump sections"
             className="pf-pill"
             style={{ minWidth: 240, flex: '1 1 280px', textAlign: 'left', background: 'rgba(255,255,255,.92)' }}
@@ -627,34 +657,49 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           <span className="pf-pill" aria-live="polite">
             Matches {filteredItems.length}/{items.length}
           </span>
-          {searchQuery && topFilteredItem ? (
+          {searchQuery && selectedFilteredItem ? (
             <>
+              <span className="pf-pill" aria-live="polite" style={{ borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}>
+                Selected match {selectedFilteredIndex + 1}/{filteredItems.length} · {selectedFilteredItem.label}
+              </span>
               <button
                 type="button"
                 className="pf-pill"
-                aria-label={`Jump to top match ${topFilteredItem.label}`}
-                title={`Jump to top match ${topFilteredItem.label}`}
+                aria-label={`Jump to selected match ${selectedFilteredItem.label}`}
+                title={`Jump to selected match ${selectedFilteredItem.label}`}
                 onClick={() => {
                   setActiveKey('/');
-                  setActiveAnchorId(topFilteredItem.anchorId);
-                  jumpToAnchor(topFilteredItem.anchorId);
+                  setActiveAnchorId(selectedFilteredItem.anchorId);
+                  jumpToAnchor(selectedFilteredItem.anchorId);
                   window.setTimeout(() => {
                     setActiveKey((current) => (current === '/' ? null : current));
                   }, 1200);
                 }}
                 style={{ cursor: 'pointer', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}
               >
-                Jump top match → {topFilteredItem.label}
+                Jump selected → {selectedFilteredItem.label}
               </button>
               <button
                 type="button"
                 className="pf-pill"
-                aria-label={`Copy top match link for ${topFilteredItem.label}`}
-                title={`Copy top match link for ${topFilteredItem.label}`}
+                aria-label={`Open selected match ${selectedFilteredItem.label}`}
+                title={`Open selected match ${selectedFilteredItem.label}`}
                 onClick={() => {
-                  void copyAnchorLink(topFilteredItem.anchorId)
+                  openAnchorLink(selectedFilteredItem.anchorId);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Open selected #{selectedFilteredItem.anchorId}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`Copy selected match link for ${selectedFilteredItem.label}`}
+                title={`Copy selected match link for ${selectedFilteredItem.label}`}
+                onClick={() => {
+                  void copyAnchorLink(selectedFilteredItem.anchorId)
                     .then(() => {
-                      setCopiedAnchorId(topFilteredItem.anchorId);
+                      setCopiedAnchorId(selectedFilteredItem.anchorId);
                       setCopyState('done');
                       if (clearCopyStateTimeoutRef.current !== null) {
                         window.clearTimeout(clearCopyStateTimeoutRef.current);
@@ -665,7 +710,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                       }, 1600);
                     })
                     .catch(() => {
-                      setCopiedAnchorId(topFilteredItem.anchorId);
+                      setCopiedAnchorId(selectedFilteredItem.anchorId);
                       setCopyState('error');
                       if (clearCopyStateTimeoutRef.current !== null) {
                         window.clearTimeout(clearCopyStateTimeoutRef.current);
@@ -678,7 +723,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 }}
                 style={{ cursor: 'pointer' }}
               >
-                Copy top match #{topFilteredItem.anchorId}
+                Copy selected #{selectedFilteredItem.anchorId}
               </button>
             </>
           ) : null}
