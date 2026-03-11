@@ -517,6 +517,18 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               <button
                 type="button"
                 className="pf-pill"
+                aria-label={`Open last stop ${resumeItem.label} in a new tab`}
+                title={`Open last stop ${resumeItem.label} in a new tab`}
+                onClick={() => {
+                  openAnchorLink(resumeItem.anchorId);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Open last stop {lastStopLabel}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
                 aria-label={`Copy last stop link for ${resumeItem.label}`}
                 title={`Copy last stop link for ${resumeItem.label}`}
                 onClick={() => {
