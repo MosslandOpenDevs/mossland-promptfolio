@@ -4,6 +4,38 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 const SHORTCUT_GUIDE_STORAGE_KEY = 'promptfolio-keyboard-shortcuts-open';
 
+function buildAnchorUrl(anchorId: string) {
+  if (typeof window === 'undefined') {
+    return `#${anchorId}`;
+  }
+
+  const url = new URL(window.location.href);
+  url.hash = anchorId;
+  return url.toString();
+}
+
+async function copyShortcutMap(items: ShortcutItem[]) {
+  const lines = [
+    'Promptfolio quick-jump map',
+    '',
+    '? → Open or close the keyboard shortcuts guide',
+    'Home / End → Jump to the first or last operator section',
+    '[ / ] → Move to previous or next section',
+    'J / K → Vim-style next or previous section jump',
+    'C → Copy the link for the current section',
+    'O → Open the direct link for the current section in a new tab',
+    'R / Resume → Jump back to the last saved section',
+    '',
+    ...items.flatMap((item) => [
+      `Alt+${item.keyLabel} → ${item.label}`,
+      `Alt+Shift+${item.keyLabel} → Copy direct link`,
+      `  ${buildAnchorUrl(item.anchorId)}`,
+    ]),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
+}
+
 type ShortcutItem = {
   keyLabel: string;
   anchorId: string;
@@ -42,8 +74,10 @@ function jumpToAnchor(anchorId: string) {
 
 export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[] }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const panelId = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const clearCopyStateTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -84,7 +118,12 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (clearCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearCopyStateTimeoutRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -145,9 +184,37 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
               Close (Esc)
             </button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>?</span>
-            <span className="pf-dim" style={{ fontSize: 11 }}>Open or close this guide</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>?</span>
+              <span className="pf-dim" style={{ fontSize: 11 }}>Open or close this guide</span>
+            </div>
+            <button
+              type="button"
+              className="pf-pill"
+              onClick={() => {
+                void copyShortcutMap(items)
+                  .then(() => {
+                    setCopyState('done');
+                    if (clearCopyStateTimeoutRef.current !== null) {
+                      window.clearTimeout(clearCopyStateTimeoutRef.current);
+                    }
+                    clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), 1800);
+                  })
+                  .catch(() => {
+                    setCopyState('error');
+                    if (clearCopyStateTimeoutRef.current !== null) {
+                      window.clearTimeout(clearCopyStateTimeoutRef.current);
+                    }
+                    clearCopyStateTimeoutRef.current = window.setTimeout(() => setCopyState('idle'), 2200);
+                  });
+              }}
+              style={{ cursor: 'pointer', fontWeight: 800 }}
+              aria-label="Copy the full quick-jump map"
+              title="Copy the full quick-jump map"
+            >
+              {copyState === 'done' ? 'Jump map copied' : copyState === 'error' ? 'Copy failed' : 'Copy jump map'}
+            </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Home / End</span>
