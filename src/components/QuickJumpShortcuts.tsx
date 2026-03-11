@@ -287,6 +287,10 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const canJumpPrev = effectiveActiveIndex > 0;
   const canJumpNext = effectiveActiveIndex >= 0 && effectiveActiveIndex < items.length - 1;
   const sectionPosition = effectiveActiveIndex >= 0 ? `${effectiveActiveIndex + 1}/${items.length}` : '0/0';
+  const progressPercent =
+    items.length > 1 && effectiveActiveIndex >= 0 ? Math.round((effectiveActiveIndex / (items.length - 1)) * 100) : hasItems ? 100 : 0;
+  const previousItem = canJumpPrev ? items[effectiveActiveIndex - 1] : null;
+  const nextItem = canJumpNext ? items[effectiveActiveIndex + 1] : null;
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
   const activeHashHref = activeItem ? buildAnchorUrl(activeItem.anchorId) : null;
   const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
@@ -381,10 +385,10 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             }}
             style={{ cursor: 'pointer' }}
           >
-            {activeHashLabel}
+            Open link {activeHashLabel}
           </button>
         ) : (
-          <span className="pf-pill">{activeHashLabel}</span>
+          <span className="pf-pill">Open link {activeHashLabel}</span>
         )}
         <button
           type="button"
@@ -461,6 +465,29 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         >
           End
         </button>
+      </div>
+      <div className="pf-dim" style={{ display: 'grid', gap: 6, fontSize: 11 }}>
+        <div style={{ height: 6, borderRadius: 999, background: 'rgba(15,23,42,0.12)', overflow: 'hidden' }} aria-hidden="true">
+          <div
+            style={{
+              width: `${progressPercent}%`,
+              height: '100%',
+              background: 'var(--primary)',
+              transition: 'width 220ms ease',
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="pf-pill" aria-live="polite">
+            Progress {progressPercent}%
+          </span>
+          <span className="pf-pill" aria-live="polite">
+            Prev {previousItem ? previousItem.label : '—'}
+          </span>
+          <span className="pf-pill" aria-live="polite">
+            Next {nextItem ? nextItem.label : '—'}
+          </span>
+        </div>
       </div>
       <div className="pf-dim" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', fontSize: 11 }}>
         {items.map((item) => {
