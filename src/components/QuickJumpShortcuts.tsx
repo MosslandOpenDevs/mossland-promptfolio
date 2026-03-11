@@ -351,7 +351,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         tagName === 'TEXTAREA' ||
         tagName === 'SELECT';
 
-      if ((event.key === '/' || event.key === '?') && !event.altKey) {
+      if (event.key === '/' && !event.altKey && !event.shiftKey) {
         event.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
