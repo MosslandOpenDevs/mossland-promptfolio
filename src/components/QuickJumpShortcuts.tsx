@@ -343,7 +343,6 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const nextItem = canJumpNext ? items[effectiveActiveIndex + 1] : null;
   const lastStopLabel = resumeItem ? `#${resumeItem.anchorId}` : null;
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
-  const activeHashHref = activeItem ? buildAnchorUrl(activeItem.anchorId) : null;
   const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
   const copyLabel =
     copyState === 'done'
@@ -425,22 +424,18 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         <span className="pf-pill" aria-live="polite">
           Section {sectionPosition}
         </span>
-        {activeHashHref ? (
-          <button
-            type="button"
-            className="pf-pill"
-            aria-label={activeItem ? `Open ${activeItem.label} link in a new tab (O)` : 'Open current section link in a new tab (O)'}
-            title={activeItem ? `Open ${activeItem.label} link in a new tab (O)` : 'Open current section link in a new tab (O)'}
-            onClick={() => {
-              openAnchorLink(activeAnchorForCopy);
-            }}
-            style={{ cursor: 'pointer' }}
-          >
-            Open link {activeHashLabel}
-          </button>
-        ) : (
-          <span className="pf-pill">Open link {activeHashLabel}</span>
-        )}
+        <button
+          type="button"
+          className="pf-pill"
+          aria-label={activeItem ? `Open ${activeItem.label} link in a new tab (O)` : 'Open current section link in a new tab (O)'}
+          title={activeItem ? `Open ${activeItem.label} link in a new tab (O)` : 'Open current section link in a new tab (O)'}
+          onClick={() => {
+            openAnchorLink(activeAnchorForCopy);
+          }}
+          style={{ cursor: 'pointer' }}
+        >
+          Open link {activeHashLabel}
+        </button>
         <button
           type="button"
           className="pf-pill"
