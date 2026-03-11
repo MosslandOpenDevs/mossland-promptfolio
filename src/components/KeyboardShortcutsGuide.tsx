@@ -25,6 +25,7 @@ async function copyShortcutMap(items: ShortcutItem[]) {
     'C → Copy the link for the current section',
     'O → Open the direct link for the current section in a new tab',
     'R / Resume → Jump back to the last saved section',
+    '1-4 → Jump to the matching pinned section from the pinboard',
     'Recent trail → Re-open one of the last few sections you touched from the jump rail',
     '',
     ...items.flatMap((item) => [
@@ -240,6 +241,10 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>R / Resume</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Jump back to the last section you were viewing on your previous visit</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>1-4</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Jump directly to the matching pinned section from the pinboard</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Trail 1-3</span>

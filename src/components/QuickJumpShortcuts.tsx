@@ -409,6 +409,21 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
+      if (!event.shiftKey && /^[1-4]$/.test(event.key)) {
+        const pinnedIndex = Number(event.key) - 1;
+        const pinnedAnchorId = pinnedAnchorIds[pinnedIndex];
+        const pinnedItem = pinnedAnchorId ? items.find((item) => item.anchorId === pinnedAnchorId) ?? null : null;
+        if (!pinnedItem) return;
+
+        event.preventDefault();
+        if (!jumpToAnchor(pinnedItem.anchorId)) return;
+
+        setActiveKey(`pin:${pinnedIndex + 1}`);
+        setActiveAnchorId(pinnedItem.anchorId);
+        clearActiveKey();
+        return;
+      }
+
       if (event.shiftKey) {
         return;
       }
@@ -483,7 +498,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, resumeAnchorId, searchQuery, togglePinnedSection]);
+  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, pinnedAnchorIds, resumeAnchorId, searchQuery, togglePinnedSection]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
@@ -795,8 +810,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                     key={`pinned-${item.anchorId}`}
                     type="button"
                     className="pf-pill"
-                    aria-label={`Jump to pinned section ${item.label}`}
-                    title={`Jump to pinned section ${item.label}`}
+                    aria-label={`Jump to pinned section ${item.label} (${index + 1})`}
+                    title={`Jump to pinned section ${item.label} (${index + 1})`}
                     onClick={() => {
                       setActiveKey(`pin:${index + 1}`);
                       setActiveAnchorId(item.anchorId);
@@ -812,7 +827,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                       background: isActive ? 'rgba(255,255,255,.92)' : undefined,
                     }}
                   >
-                    Pin {index + 1} · {item.label}
+                    {index + 1} · {item.label}
                   </button>
                 );
               })}
