@@ -127,6 +127,27 @@ test('getHomeAlerts flags when a single desk dominates recent tape', () => {
   );
 });
 
+test('getHomeAlerts flags thin desk coverage before the signal looks broad', () => {
+  assert.deepEqual(
+    getHomeAlerts({
+      agentsCount: 6,
+      ticksCount: 7,
+      tradesCount: 5,
+      activeDeskCount: 2,
+      latestTickAgeMs: 4 * 60 * 1000,
+      averageTickIntervalMs: 4 * 60 * 1000,
+      directionStreak: 0,
+      streakDirection: null,
+      buyCount: 3,
+      sellCount: 2,
+    }).map((alert) => ({ id: alert.id, cta: alert.cta })),
+    [
+      { id: 'feed-fresh', cta: 'Review leaderboard' },
+      { id: 'desk-coverage-thin', cta: 'Broaden desk coverage' },
+    ]
+  );
+});
+
 test('getHomeBrief promotes the top alert and keeps follow-up actions', () => {
   const brief = getHomeBrief([
     {

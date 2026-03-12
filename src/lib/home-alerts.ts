@@ -94,6 +94,20 @@ export function getHomeAlerts(params: {
       href: '/agents',
       cta: 'Review desk mix',
     });
+  } else if (
+    params.agentsCount >= 3 &&
+    params.tradesCount >= 4 &&
+    params.activeDeskCount > 1 &&
+    params.activeDeskCount / params.agentsCount < 0.5
+  ) {
+    alerts.push({
+      id: 'desk-coverage-thin',
+      tone: 'warning',
+      label: 'coverage',
+      message: 'Less than half of the desk roster is active in the recent tape. Add one more desk before acting on the signal.',
+      href: '/agents',
+      cta: 'Broaden desk coverage',
+    });
   }
 
   if (
