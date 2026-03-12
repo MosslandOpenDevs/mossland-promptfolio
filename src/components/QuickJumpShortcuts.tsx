@@ -60,6 +60,42 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
   await navigator.clipboard.writeText(lines.join('\n'));
 }
 
+async function copyNavigationBundle({
+  items,
+  activeItem,
+  resumeItem,
+  pinnedItems,
+  recentTrailItems,
+}: {
+  items: ShortcutItem[];
+  activeItem: ShortcutItem | null;
+  resumeItem: ShortcutItem | null;
+  pinnedItems: ShortcutItem[];
+  recentTrailItems: ShortcutItem[];
+}) {
+  const lines = [
+    'Promptfolio navigation bundle',
+    '',
+    `Current section: ${activeItem ? `${activeItem.label} (${buildAnchorUrl(activeItem.anchorId)})` : 'Top'}`,
+    `Last stop: ${resumeItem ? `${resumeItem.label} (${buildAnchorUrl(resumeItem.anchorId)})` : '—'}`,
+    '',
+    'Pinned sections:',
+    ...(pinnedItems.length
+      ? pinnedItems.map((item, index) => `${index + 1}. ${item.label} (${buildAnchorUrl(item.anchorId)})`)
+      : ['—']),
+    '',
+    'Recent trail:',
+    ...(recentTrailItems.length
+      ? recentTrailItems.map((item, index) => `${index + 1}. ${item.label} (${buildAnchorUrl(item.anchorId)})`)
+      : ['—']),
+    '',
+    'All direct jumps:',
+    ...items.map((item) => `Alt+${item.keyLabel} → ${item.label} (${buildAnchorUrl(item.anchorId)})`),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
+}
+
 type ShortcutItem = {
   keyLabel: string;
   anchorId: string;
@@ -229,6 +265,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [pinnedAnchorIds, setPinnedAnchorIds] = useState<string[]>([]);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
+  const [navigationBundleCopyState, setNavigationBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [shortcutGuideOpen, setShortcutGuideOpen] = useState(false);
   const [shortcutGuideCopyState, setShortcutGuideCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [searchQuery, setSearchQuery] = useState('');
@@ -236,6 +273,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [showAllFilteredResults, setShowAllFilteredResults] = useState(false);
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearShortcutGuideCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
@@ -622,6 +660,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
+      if (clearNavigationBundleCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearNavigationBundleCopyStateTimeoutRef.current);
+      }
       if (clearShortcutGuideCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearShortcutGuideCopyStateTimeoutRef.current);
       }
@@ -662,6 +703,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         : activeItem
           ? `COPY ${activeItem.label.toUpperCase()} LINK`
           : 'COPY CURRENT LINK';
+  const navigationBundleLabel =
+    navigationBundleCopyState === 'done'
+      ? 'Navigation bundle copied'
+      : navigationBundleCopyState === 'error'
+        ? 'Copy nav bundle failed'
+        : 'Copy nav bundle';
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -776,6 +823,43 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           style={{ cursor: 'pointer' }}
         >
           {copyLabel}
+        </button>
+        <button
+          type="button"
+          className="pf-pill"
+          aria-live="polite"
+          aria-label="Copy a reusable navigation bundle with the current section, pinned sections, recent trail, and direct links"
+          title="Copy a reusable navigation bundle with the current section, pinned sections, recent trail, and direct links"
+          onClick={() => {
+            void copyNavigationBundle({
+              items,
+              activeItem,
+              resumeItem,
+              pinnedItems,
+              recentTrailItems,
+            })
+              .then(() => {
+                setNavigationBundleCopyState('done');
+                if (clearNavigationBundleCopyStateTimeoutRef.current !== null) {
+                  window.clearTimeout(clearNavigationBundleCopyStateTimeoutRef.current);
+                }
+                clearNavigationBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                  setNavigationBundleCopyState('idle');
+                }, 1800);
+              })
+              .catch(() => {
+                setNavigationBundleCopyState('error');
+                if (clearNavigationBundleCopyStateTimeoutRef.current !== null) {
+                  window.clearTimeout(clearNavigationBundleCopyStateTimeoutRef.current);
+                }
+                clearNavigationBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                  setNavigationBundleCopyState('idle');
+                }, 2200);
+              });
+          }}
+          style={{ cursor: 'pointer' }}
+        >
+          {navigationBundleLabel}
         </button>
         <button
           type="button"
