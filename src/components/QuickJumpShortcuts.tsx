@@ -53,6 +53,8 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     'F → Pin or unpin the current section',
     '1-4 → Jump to pinned sections',
     '5-7 → Jump to the recent trail',
+    'Shift+P → Copy the pinned section bundle',
+    'Shift+T → Copy the recent trail bundle',
     'Alt+key → Jump to a section directly',
     'Alt+Shift+key → Copy a direct section link',
     '',
@@ -139,6 +141,35 @@ async function copyRescueBundle({
     ...(fallbackItems.length
       ? fallbackItems.map((item, index) => `${index + 1}. ${item.label} (${buildAnchorUrl(item.anchorId)}) · Alt+${item.keyLabel}`)
       : ['No recovery jumps saved yet.']),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
+}
+
+
+async function copyPinnedSectionsBundle(items: ShortcutItem[]) {
+  const lines = [
+    'Promptfolio pinned quick jump bundle',
+    '',
+    `Pinned count: ${items.length}`,
+    '',
+    ...(items.length
+      ? items.map((item, index) => `${index + 1}. ${item.label} (${buildAnchorUrl(item.anchorId)}) · Alt+${item.keyLabel}`)
+      : ['No pinned sections.']),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
+}
+
+async function copyRecentTrailBundle(items: ShortcutItem[]) {
+  const lines = [
+    'Promptfolio recent quick jump trail',
+    '',
+    `Recent count: ${items.length}`,
+    '',
+    ...(items.length
+      ? items.map((item, index) => `${index + 1}. ${item.label} (${buildAnchorUrl(item.anchorId)}) · Alt+${item.keyLabel}`)
+      : ['No recent sections.']),
   ];
 
   await navigator.clipboard.writeText(lines.join('\n'));
@@ -344,6 +375,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [navigationBundleCopyState, setNavigationBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [filteredResultsCopyState, setFilteredResultsCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [pinnedBundleCopyState, setPinnedBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [recentTrailBundleCopyState, setRecentTrailBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [rescueBundleCopyState, setRescueBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [shortcutGuideOpen, setShortcutGuideOpen] = useState(false);
   const [shortcutGuideCopyState, setShortcutGuideCopyState] = useState<'idle' | 'done' | 'error'>('idle');
@@ -354,6 +387,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearFilteredResultsCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearPinnedBundleCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearRecentTrailBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearRescueBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearShortcutGuideCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -712,6 +747,55 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 setFilteredResultsCopyState('idle');
               }, 2200);
             });
+          return;
+        }
+
+        if (event.key.toLowerCase() === 'p' && currentPinnedItems.length > 0) {
+          event.preventDefault();
+          void copyPinnedSectionsBundle(currentPinnedItems)
+            .then(() => {
+              setPinnedBundleCopyState('done');
+              if (clearPinnedBundleCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearPinnedBundleCopyStateTimeoutRef.current);
+              }
+              clearPinnedBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setPinnedBundleCopyState('idle');
+              }, 1800);
+            })
+            .catch(() => {
+              setPinnedBundleCopyState('error');
+              if (clearPinnedBundleCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearPinnedBundleCopyStateTimeoutRef.current);
+              }
+              clearPinnedBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setPinnedBundleCopyState('idle');
+              }, 2200);
+            });
+          return;
+        }
+
+        if (event.key.toLowerCase() === 't' && currentRecentTrailItems.length > 0) {
+          event.preventDefault();
+          void copyRecentTrailBundle(currentRecentTrailItems)
+            .then(() => {
+              setRecentTrailBundleCopyState('done');
+              if (clearRecentTrailBundleCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearRecentTrailBundleCopyStateTimeoutRef.current);
+              }
+              clearRecentTrailBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setRecentTrailBundleCopyState('idle');
+              }, 1800);
+            })
+            .catch(() => {
+              setRecentTrailBundleCopyState('error');
+              if (clearRecentTrailBundleCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearRecentTrailBundleCopyStateTimeoutRef.current);
+              }
+              clearRecentTrailBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setRecentTrailBundleCopyState('idle');
+              }, 2200);
+            });
+          return;
         }
         return;
       }
@@ -820,6 +904,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       }
       if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+      }
+      if (clearPinnedBundleCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearPinnedBundleCopyStateTimeoutRef.current);
+      }
+      if (clearRecentTrailBundleCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearRecentTrailBundleCopyStateTimeoutRef.current);
       }
       if (clearRescueBundleCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearRescueBundleCopyStateTimeoutRef.current);
@@ -1222,6 +1312,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               {['? toggle guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
                 <span key={label} className="pf-pill">{label}</span>
               ))}
+              <span className="pf-pill">Shift+P pinned bundle</span>
+              <span className="pf-pill">Shift+T recent trail</span>
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               {items.map((item) => (
@@ -1454,6 +1546,40 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 <button
                   type="button"
                   className="pf-pill"
+                  aria-label={`Copy pinned section bundle for ${pinnedItems.length} sections`}
+                  title={`Copy pinned section bundle for ${pinnedItems.length} sections (Shift+P)`}
+                  onClick={() => {
+                    void copyPinnedSectionsBundle(pinnedItems)
+                      .then(() => {
+                        setPinnedBundleCopyState('done');
+                        if (clearPinnedBundleCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearPinnedBundleCopyStateTimeoutRef.current);
+                        }
+                        clearPinnedBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setPinnedBundleCopyState('idle');
+                        }, 1800);
+                      })
+                      .catch(() => {
+                        setPinnedBundleCopyState('error');
+                        if (clearPinnedBundleCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearPinnedBundleCopyStateTimeoutRef.current);
+                        }
+                        clearPinnedBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setPinnedBundleCopyState('idle');
+                        }, 2200);
+                      });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {pinnedBundleCopyState === 'done'
+                    ? `Copied ${pinnedItems.length} pins`
+                    : pinnedBundleCopyState === 'error'
+                      ? 'Copy failed'
+                      : `Copy ${pinnedItems.length} pins`}
+                </button>
+                <button
+                  type="button"
+                  className="pf-pill"
                   aria-label="Clear pinned sections"
                   title="Clear pinned sections"
                   onClick={() => {
@@ -1577,6 +1703,40 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 );
               })}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  aria-label={`Copy recent trail bundle for ${recentTrailItems.length} sections`}
+                  title={`Copy recent trail bundle for ${recentTrailItems.length} sections (Shift+T)`}
+                  onClick={() => {
+                    void copyRecentTrailBundle(recentTrailItems)
+                      .then(() => {
+                        setRecentTrailBundleCopyState('done');
+                        if (clearRecentTrailBundleCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearRecentTrailBundleCopyStateTimeoutRef.current);
+                        }
+                        clearRecentTrailBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setRecentTrailBundleCopyState('idle');
+                        }, 1800);
+                      })
+                      .catch(() => {
+                        setRecentTrailBundleCopyState('error');
+                        if (clearRecentTrailBundleCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearRecentTrailBundleCopyStateTimeoutRef.current);
+                        }
+                        clearRecentTrailBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setRecentTrailBundleCopyState('idle');
+                        }, 2200);
+                      });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {recentTrailBundleCopyState === 'done'
+                    ? `Copied ${recentTrailItems.length} trail items`
+                    : recentTrailBundleCopyState === 'error'
+                      ? 'Copy failed'
+                      : `Copy ${recentTrailItems.length} trail items`}
+                </button>
                 <button
                   type="button"
                   className="pf-pill"
