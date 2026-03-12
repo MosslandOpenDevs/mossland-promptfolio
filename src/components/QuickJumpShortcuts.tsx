@@ -430,7 +430,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
 
       if (!event.shiftKey && /^[5-7]$/.test(event.key)) {
         const trailIndex = Number(event.key) - 5;
-        const trailAnchorId = recentAnchorTrail[trailIndex] ?? null;
+        const trailAnchorId = recentAnchorTrail.filter((anchorId) => anchorId !== activeAnchorId)[trailIndex] ?? null;
         const trailItem = trailAnchorId ? items.find((item) => item.anchorId === trailAnchorId) ?? null : null;
         if (!trailItem) return;
 
@@ -534,6 +534,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
   const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
   const recentTrailItems = recentAnchorTrail
+    .filter((anchorId) => anchorId !== activeAnchorId)
     .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
     .filter((item): item is ShortcutItem => Boolean(item));
   const pinnedItems = pinnedAnchorIds
@@ -869,7 +870,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         {recentTrailItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
-              Recent trail: jump back into the last few sections you touched without losing the filtered route.
+              Recent trail: jump back into the last few sections you touched before the current one without losing the filtered route.
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               {recentTrailItems.map((item, index) => {
