@@ -96,6 +96,28 @@ async function copyNavigationBundle({
   await navigator.clipboard.writeText(lines.join('\n'));
 }
 
+
+async function copyFilteredResultsBundle({
+  query,
+  items,
+}: {
+  query: string;
+  items: ShortcutItem[];
+}) {
+  const lines = [
+    'Promptfolio filtered quick jump bundle',
+    '',
+    `Filter query: ${query || '—'}`,
+    `Match count: ${items.length}`,
+    '',
+    ...(items.length
+      ? items.map((item, index) => `${index + 1}. ${item.label} (${buildAnchorUrl(item.anchorId)}) · Alt+${item.keyLabel}`)
+      : ['No matched sections.']),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
+}
+
 type ShortcutItem = {
   keyLabel: string;
   anchorId: string;
@@ -266,6 +288,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [navigationBundleCopyState, setNavigationBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [filteredResultsCopyState, setFilteredResultsCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [shortcutGuideOpen, setShortcutGuideOpen] = useState(false);
   const [shortcutGuideCopyState, setShortcutGuideCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [searchQuery, setSearchQuery] = useState('');
@@ -274,6 +297,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearFilteredResultsCopyStateTimeoutRef = useRef<number | null>(null);
   const clearShortcutGuideCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
@@ -588,6 +612,31 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       }
 
       if (event.shiftKey) {
+        if (event.key.toLowerCase() === 'c' && isSearchFocused && normalizedSearchQuery && filteredItems.length > 0) {
+          event.preventDefault();
+          void copyFilteredResultsBundle({
+            query: searchQuery.trim(),
+            items: filteredItems,
+          })
+            .then(() => {
+              setFilteredResultsCopyState('done');
+              if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+              }
+              clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setFilteredResultsCopyState('idle');
+              }, 1600);
+            })
+            .catch(() => {
+              setFilteredResultsCopyState('error');
+              if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+              }
+              clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setFilteredResultsCopyState('idle');
+              }, 2200);
+            });
+        }
         return;
       }
 
@@ -663,11 +712,14 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearNavigationBundleCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearNavigationBundleCopyStateTimeoutRef.current);
       }
+      if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+      }
       if (clearShortcutGuideCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearShortcutGuideCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, pinnedAnchorIds, recentAnchorTrail, resumeAnchorId, searchQuery, shortcutGuideOpen, togglePinnedSection]);
+  }, [activeAnchorForCopy, activeAnchorId, filteredItems, filteredItems.length, items, normalizedSearchQuery, pinnedAnchorIds, recentAnchorTrail, resumeAnchorId, searchQuery, shortcutGuideOpen, togglePinnedSection]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
@@ -1502,6 +1554,44 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               >
                 Copy selected #{selectedFilteredItem.anchorId}
               </button>
+
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`Copy filtered result bundle for ${filteredItems.length} matches`}
+                title={`Copy filtered result bundle for ${filteredItems.length} matches (Shift+C while the filter is focused)`}
+                onClick={() => {
+                  void copyFilteredResultsBundle({
+                    query: searchQuery.trim(),
+                    items: filteredItems,
+                  })
+                    .then(() => {
+                      setFilteredResultsCopyState('done');
+                      if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+                      }
+                      clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setFilteredResultsCopyState('idle');
+                      }, 1600);
+                    })
+                    .catch(() => {
+                      setFilteredResultsCopyState('error');
+                      if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+                      }
+                      clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setFilteredResultsCopyState('idle');
+                      }, 2200);
+                    });
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                {filteredResultsCopyState === 'done'
+                  ? `Copied ${filteredItems.length} matches`
+                  : filteredResultsCopyState === 'error'
+                    ? 'Copy failed'
+                    : `Copy ${filteredItems.length} matches`}
+              </button>
             </>
           ) : null}
           {searchQuery ? (
@@ -1521,7 +1611,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         {normalizedSearchQuery && filteredItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
-              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link. Multi-word queries and abbreviations like &quot;desk watch&quot;, &quot;op queue&quot;, or &quot;mf&quot; now work too.
+              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link. Multi-word queries and abbreviations like &quot;desk watch&quot;, &quot;op queue&quot;, or &quot;mf&quot; now work too. Use the new filtered bundle copy to share the whole operator path at once.
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               {visibleFilteredMatches.map(({ match, index }) => {
