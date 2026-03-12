@@ -355,7 +355,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         tagName === 'TEXTAREA' ||
         tagName === 'SELECT';
 
-      if (event.key === '/' && !event.altKey && !event.shiftKey) {
+      const isSearchFocused = document.activeElement === searchInputRef.current;
+
+      if (event.key === '/' && !event.altKey && !event.shiftKey && (!isTypingTarget || isSearchFocused)) {
         event.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
@@ -372,7 +374,6 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
-      const isSearchFocused = document.activeElement === searchInputRef.current;
       if (isSearchFocused && filteredItems.length > 0) {
         if (event.key === 'ArrowDown') {
           event.preventDefault();
