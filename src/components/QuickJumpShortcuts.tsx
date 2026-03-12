@@ -6,6 +6,7 @@ const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
 const PINNED_SECTION_STORAGE_KEY = 'promptfolio-pinned-sections';
 const SHORTCUT_GUIDE_STORAGE_KEY = 'promptfolio-shortcut-guide';
+const FILTER_QUERY_STORAGE_KEY = 'promptfolio-section-filter-query';
 const MAX_RECENT_SECTION_TRAIL = 3;
 const MAX_PINNED_SECTIONS = 4;
 
@@ -304,6 +305,35 @@ function savePinnedSections(anchorIds: string[]) {
   }
 }
 
+function loadStoredFilterQuery() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  try {
+    return window.localStorage.getItem(FILTER_QUERY_STORAGE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function saveStoredFilterQuery(value: string) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (value) {
+      window.localStorage.setItem(FILTER_QUERY_STORAGE_KEY, value);
+      return;
+    }
+
+    window.localStorage.removeItem(FILTER_QUERY_STORAGE_KEY);
+  } catch {
+    // Ignore storage write failures so the filter stays interactive.
+  }
+}
+
 export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeAnchorId, setActiveAnchorId] = useState<string | null>(null);
@@ -379,6 +409,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       // Ignore storage read failures and keep the guide collapsed by default.
     }
 
+    const storedFilterQuery = loadStoredFilterQuery().trim();
+    if (storedFilterQuery) {
+      setSearchQuery((current) => current || storedFilterQuery);
+    }
+
     const syncFromHash = () => {
       const hashAnchor = getHashAnchor();
       if (hashAnchor && itemIds.has(hashAnchor)) {
@@ -438,6 +473,10 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       // Ignore storage write failures and keep the guide optional.
     }
   }, [shortcutGuideOpen]);
+
+  useEffect(() => {
+    saveStoredFilterQuery(searchQuery.trim());
+  }, [searchQuery]);
 
   const togglePinnedSection = useCallback((anchorId: string) => {
     setPinnedAnchorIds((current) => {
