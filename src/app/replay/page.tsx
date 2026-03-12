@@ -125,6 +125,12 @@ export default async function ReplayIndexPage({
       ? null
       : rankedAgents.reduce((sum, agent) => sum + agent.pnl, 0) / rankedAgents.length;
 
+  const dynamicEquityBands = [
+    averageEquity !== null ? { key: 'avg', label: `avg+ · ≥ $${averageEquity.toFixed(0)}`, min: Math.ceil(averageEquity), max: 0 } : null,
+    medianEquity !== null ? { key: 'median', label: `median+ · ≥ $${medianEquity.toFixed(0)}`, min: Math.ceil(medianEquity), max: 0 } : null,
+    averageEquity !== null ? { key: 'below-avg', label: `below avg · ≤ $${averageEquity.toFixed(0)}`, min: 0, max: Math.floor(averageEquity) } : null,
+  ].filter((band): band is { key: string; label: string; min: number; max: number } => Boolean(band));
+
   return (
     <main style={{ display: 'grid', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
@@ -324,6 +330,34 @@ export default async function ReplayIndexPage({
           );
         })}
       </div>
+
+      {dynamicEquityBands.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12, opacity: 0.9 }}>
+          <span style={{ opacity: 0.75 }}>live equity bands:</span>
+          {dynamicEquityBands.map((band) => {
+            const active = effectiveMinEq === band.min && effectiveMaxEq === band.max;
+            return (
+              <Link
+                key={band.key}
+                href={buildReplayHref(sort, active ? 0 : band.min, active ? 0 : band.max, query, profitableOnly, requestedLossOnly)}
+                style={{
+                  border: `1px solid ${active ? '#2f5fff' : '#253042'}`,
+                  background: active ? '#10204b' : '#0b0f14',
+                  color: active ? '#b8cbff' : '#9ab',
+                  borderRadius: 999,
+                  padding: '4px 10px',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+                aria-current={active ? 'true' : undefined}
+                title={active ? 'disable live equity band filter' : `apply ${band.label} filter`}
+              >
+                {band.label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {rankedAgents.length > 0 && (
         <div
