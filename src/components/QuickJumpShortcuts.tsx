@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
 const PINNED_SECTION_STORAGE_KEY = 'promptfolio-pinned-sections';
+const SHORTCUT_GUIDE_STORAGE_KEY = 'promptfolio-shortcut-guide';
 const MAX_RECENT_SECTION_TRAIL = 3;
 const MAX_PINNED_SECTIONS = 4;
 
@@ -30,6 +31,33 @@ function openAnchorLink(anchorId: string) {
 
   window.open(href, '_blank', 'noopener,noreferrer');
   return true;
+}
+
+async function copyShortcutGuide(items: ShortcutItem[]) {
+  const lines = [
+    'Promptfolio quick jump shortcuts',
+    '',
+    '? → Open or close the shortcuts guide',
+    '/ → Focus the section filter',
+    '↑ / ↓ → Move through filtered matches',
+    'Enter → Jump to the selected filtered match',
+    'Esc → Clear the filter or close the guide',
+    '[ / ] → Move to the previous or next section',
+    'J / K → Vim-style next or previous section jump',
+    'Home / End → Jump to the first or last section',
+    'C → Copy the current section link',
+    'O → Open the current section link in a new tab',
+    'R → Resume the last saved section',
+    'F → Pin or unpin the current section',
+    '1-4 → Jump to pinned sections',
+    '5-7 → Jump to the recent trail',
+    'Alt+key → Jump to a section directly',
+    'Alt+Shift+key → Copy a direct section link',
+    '',
+    ...items.map((item) => `Alt+${item.keyLabel} → ${item.label} (${buildAnchorUrl(item.anchorId)})`),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
 }
 
 type ShortcutItem = {
@@ -159,11 +187,14 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [pinnedAnchorIds, setPinnedAnchorIds] = useState<string[]>([]);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
+  const [shortcutGuideOpen, setShortcutGuideOpen] = useState(false);
+  const [shortcutGuideCopyState, setShortcutGuideCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilteredIndex, setSelectedFilteredIndex] = useState(0);
   const [showAllFilteredResults, setShowAllFilteredResults] = useState(false);
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearShortcutGuideCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
   const activeIndex = useMemo(() => items.findIndex((item) => item.anchorId === activeAnchorId), [activeAnchorId, items]);
@@ -210,6 +241,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       const nextPinned = loadPinnedSections().filter((anchorId) => itemIds.has(anchorId)).slice(0, MAX_PINNED_SECTIONS);
       return JSON.stringify(current) === JSON.stringify(nextPinned) ? current : nextPinned;
     });
+
+    try {
+      setShortcutGuideOpen(window.localStorage.getItem(SHORTCUT_GUIDE_STORAGE_KEY) === 'open');
+    } catch {
+      // Ignore storage read failures and keep the guide collapsed by default.
+    }
 
     const syncFromHash = () => {
       const hashAnchor = getHashAnchor();
@@ -262,6 +299,14 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       return nextTrail;
     });
   }, [activeAnchorId]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SHORTCUT_GUIDE_STORAGE_KEY, shortcutGuideOpen ? 'open' : 'closed');
+    } catch {
+      // Ignore storage write failures and keep the guide optional.
+    }
+  }, [shortcutGuideOpen]);
 
   const togglePinnedSection = useCallback((anchorId: string) => {
     setPinnedAnchorIds((current) => {
@@ -363,6 +408,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
 
       const isSearchFocused = document.activeElement === searchInputRef.current;
 
+      if ((event.key === '?' || (event.key === '/' && event.shiftKey)) && !event.altKey && !event.metaKey && !event.ctrlKey && !isTypingTarget) {
+        event.preventDefault();
+        setShortcutGuideOpen((current) => !current);
+        return;
+      }
+
       if (event.key === '/' && !event.altKey && !event.shiftKey && (!isTypingTarget || isSearchFocused)) {
         event.preventDefault();
         searchInputRef.current?.focus();
@@ -371,6 +422,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       }
 
       if (event.key === 'Escape' && !event.altKey && !event.metaKey && !event.ctrlKey) {
+        if (shortcutGuideOpen) {
+          event.preventDefault();
+          setShortcutGuideOpen(false);
+          return;
+        }
+
         if (document.activeElement === searchInputRef.current || searchQuery) {
           event.preventDefault();
           setSearchQuery('');
@@ -523,8 +580,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
+      if (clearShortcutGuideCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearShortcutGuideCopyStateTimeoutRef.current);
+      }
     };
-  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, pinnedAnchorIds, recentAnchorTrail, resumeAnchorId, searchQuery, togglePinnedSection]);
+  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, pinnedAnchorIds, recentAnchorTrail, resumeAnchorId, searchQuery, shortcutGuideOpen, togglePinnedSection]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
@@ -678,6 +738,24 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         <button
           type="button"
           className="pf-pill"
+          aria-expanded={shortcutGuideOpen}
+          aria-label={shortcutGuideOpen ? 'Hide shortcuts guide (?)' : 'Show shortcuts guide (?)'}
+          title={shortcutGuideOpen ? 'Hide shortcuts guide (?)' : 'Show shortcuts guide (?)'}
+          onClick={() => {
+            setShortcutGuideOpen((current) => !current);
+          }}
+          style={{
+            cursor: 'pointer',
+            borderColor: shortcutGuideOpen ? 'var(--primary)' : undefined,
+            color: shortcutGuideOpen ? 'var(--primary)' : undefined,
+            background: shortcutGuideOpen ? 'rgba(255,255,255,.92)' : undefined,
+          }}
+        >
+          {shortcutGuideOpen ? 'Hide shortcuts' : 'Shortcuts ?'}
+        </button>
+        <button
+          type="button"
+          className="pf-pill"
           aria-live="polite"
           aria-label={activeItem ? `${isActiveSectionPinned ? 'Unpin' : 'Pin'} ${activeItem.label} (F)` : 'Pin current section (F)'}
           title={activeItem ? `${isActiveSectionPinned ? 'Unpin' : 'Pin'} ${activeItem.label} (F)` : 'Pin current section (F)'}
@@ -824,6 +902,135 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         </div>
       </div>
       <div style={{ display: 'grid', gap: 8 }}>
+        {shortcutGuideOpen ? (
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              Shortcut guide: fast ways to move, filter, pin, resume, and share direct links without leaving the page.
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {['? toggle guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'R resume', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
+                <span key={label} className="pf-pill">{label}</span>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {items.map((item) => (
+                <div
+                  key={`guide-${item.anchorId}`}
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    padding: '8px 10px',
+                    borderRadius: 14,
+                    border: '2px solid rgba(15,23,42,0.12)',
+                    background: 'rgba(255,255,255,.78)',
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="pf-pill"
+                    onClick={() => {
+                      setActiveKey(item.keyLabel);
+                      setActiveAnchorId(item.anchorId);
+                      jumpToAnchor(item.anchorId);
+                      setShortcutGuideOpen(false);
+                      window.setTimeout(() => {
+                        setActiveKey((current) => (current === item.keyLabel ? null : current));
+                      }, 1200);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Alt+{item.keyLabel} · {item.label}
+                  </button>
+                  <span className="pf-pill">#{item.anchorId}</span>
+                  <button
+                    type="button"
+                    className="pf-pill"
+                    onClick={() => openAnchorLink(item.anchorId)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Open
+                  </button>
+                  <button
+                    type="button"
+                    className="pf-pill"
+                    onClick={() => {
+                      void copyAnchorLink(item.anchorId)
+                        .then(() => {
+                          setCopiedAnchorId(item.anchorId);
+                          setCopyState('done');
+                          if (clearCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearCopyStateTimeoutRef.current);
+                          }
+                          clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setCopyState('idle');
+                            setCopiedAnchorId(null);
+                          }, 1600);
+                        })
+                        .catch(() => {
+                          setCopiedAnchorId(item.anchorId);
+                          setCopyState('error');
+                          if (clearCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearCopyStateTimeoutRef.current);
+                          }
+                          clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setCopyState('idle');
+                            setCopiedAnchorId(null);
+                          }, 2200);
+                        });
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Copy link
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="pf-pill"
+                onClick={() => {
+                  void copyShortcutGuide(items)
+                    .then(() => {
+                      setShortcutGuideCopyState('done');
+                      if (clearShortcutGuideCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearShortcutGuideCopyStateTimeoutRef.current);
+                      }
+                      clearShortcutGuideCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setShortcutGuideCopyState('idle');
+                      }, 1800);
+                    })
+                    .catch(() => {
+                      setShortcutGuideCopyState('error');
+                      if (clearShortcutGuideCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearShortcutGuideCopyStateTimeoutRef.current);
+                      }
+                      clearShortcutGuideCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setShortcutGuideCopyState('idle');
+                      }, 2200);
+                    });
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                {shortcutGuideCopyState === 'done'
+                  ? 'Guide copied'
+                  : shortcutGuideCopyState === 'error'
+                    ? 'Copy guide failed'
+                    : 'Copy guide'}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
+                onClick={() => setShortcutGuideOpen(false)}
+                style={{ cursor: 'pointer' }}
+              >
+                Close guide
+              </button>
+            </div>
+          </div>
+        ) : null}
         {pinnedItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
