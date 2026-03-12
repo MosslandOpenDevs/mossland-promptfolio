@@ -119,6 +119,30 @@ async function copyFilteredResultsBundle({
   await navigator.clipboard.writeText(lines.join('\n'));
 }
 
+async function copyRescueBundle({
+  query,
+  activeItem,
+  fallbackItems,
+}: {
+  query: string;
+  activeItem: ShortcutItem | null;
+  fallbackItems: ShortcutItem[];
+}) {
+  const lines = [
+    'Promptfolio rescue quick jump bundle',
+    '',
+    `Missed filter: ${query || '—'}`,
+    `Current section: ${activeItem ? `${activeItem.label} (${buildAnchorUrl(activeItem.anchorId)})` : 'Top'}`,
+    '',
+    'Suggested recovery jumps:',
+    ...(fallbackItems.length
+      ? fallbackItems.map((item, index) => `${index + 1}. ${item.label} (${buildAnchorUrl(item.anchorId)}) · Alt+${item.keyLabel}`)
+      : ['No recovery jumps saved yet.']),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
+}
+
 type ShortcutItem = {
   keyLabel: string;
   anchorId: string;
@@ -290,6 +314,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [navigationBundleCopyState, setNavigationBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [filteredResultsCopyState, setFilteredResultsCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [rescueBundleCopyState, setRescueBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [shortcutGuideOpen, setShortcutGuideOpen] = useState(false);
   const [shortcutGuideCopyState, setShortcutGuideCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [searchQuery, setSearchQuery] = useState('');
@@ -299,6 +324,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearFilteredResultsCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearRescueBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearShortcutGuideCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
@@ -756,6 +782,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
       }
+      if (clearRescueBundleCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearRescueBundleCopyStateTimeoutRef.current);
+      }
       if (clearShortcutGuideCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearShortcutGuideCopyStateTimeoutRef.current);
       }
@@ -820,6 +849,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       : navigationBundleCopyState === 'error'
         ? 'Copy nav bundle failed'
         : 'Copy nav bundle';
+  const rescueBundleLabel =
+    rescueBundleCopyState === 'done'
+      ? 'Rescue bundle copied'
+      : rescueBundleCopyState === 'error'
+        ? 'Copy rescue bundle failed'
+        : 'Copy rescue bundle';
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -1826,45 +1861,84 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               {fallbackItems.length ? ' You can also jump back into your live, pinned, or recent sections below.' : ''}
             </div>
             {fallbackItems.length ? (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {fallbackItems.map((item) => {
-                  const isLive = activeAnchorId === item.anchorId;
-                  const isPinned = pinnedAnchorIds.includes(item.anchorId);
-                  const isResume = resumeAnchorId === item.anchorId;
-                  const isRecent = recentTrailItems.some((trailItem) => trailItem.anchorId === item.anchorId);
-                  const badges = [
-                    isLive ? 'live' : null,
-                    isPinned ? 'pinned' : null,
-                    isResume ? 'last stop' : null,
-                    isRecent ? 'recent' : null,
-                  ].filter(Boolean).join(' · ');
+              <div style={{ display: 'grid', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {fallbackItems.map((item) => {
+                    const isLive = activeAnchorId === item.anchorId;
+                    const isPinned = pinnedAnchorIds.includes(item.anchorId);
+                    const isResume = resumeAnchorId === item.anchorId;
+                    const isRecent = recentTrailItems.some((trailItem) => trailItem.anchorId === item.anchorId);
+                    const badges = [
+                      isLive ? 'live' : null,
+                      isPinned ? 'pinned' : null,
+                      isResume ? 'last stop' : null,
+                      isRecent ? 'recent' : null,
+                    ].filter(Boolean).join(' · ');
 
-                  return (
-                    <button
-                      key={`fallback-${item.anchorId}`}
-                      type="button"
-                      className="pf-pill"
-                      onClick={() => {
-                        setActiveKey('/');
-                        setActiveAnchorId(item.anchorId);
-                        jumpToAnchor(item.anchorId);
-                        window.setTimeout(() => {
-                          setActiveKey((current) => (current === '/' ? null : current));
-                        }, 1200);
-                      }}
-                      aria-label={`Jump to fallback section ${item.label}`}
-                      title={`Jump to ${item.label}${badges ? ` · ${badges}` : ''}`}
-                      style={{
-                        cursor: 'pointer',
-                        borderColor: isLive ? 'var(--primary)' : undefined,
-                        color: isLive ? 'var(--primary)' : undefined,
-                        background: isLive ? 'rgba(255,255,255,.92)' : undefined,
-                      }}
-                    >
-                      Rescue → {item.label}{badges ? ` · ${badges}` : ''}
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={`fallback-${item.anchorId}`}
+                        type="button"
+                        className="pf-pill"
+                        onClick={() => {
+                          setActiveKey('/');
+                          setActiveAnchorId(item.anchorId);
+                          jumpToAnchor(item.anchorId);
+                          window.setTimeout(() => {
+                            setActiveKey((current) => (current === '/' ? null : current));
+                          }, 1200);
+                        }}
+                        aria-label={`Jump to fallback section ${item.label}`}
+                        title={`Jump to ${item.label}${badges ? ` · ${badges}` : ''}`}
+                        style={{
+                          cursor: 'pointer',
+                          borderColor: isLive ? 'var(--primary)' : undefined,
+                          color: isLive ? 'var(--primary)' : undefined,
+                          background: isLive ? 'rgba(255,255,255,.92)' : undefined,
+                        }}
+                      >
+                        Rescue → {item.label}{badges ? ` · ${badges}` : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    className="pf-pill"
+                    onClick={() => {
+                      void copyRescueBundle({
+                        query: searchQuery.trim(),
+                        activeItem,
+                        fallbackItems,
+                      })
+                        .then(() => {
+                          setRescueBundleCopyState('done');
+                          if (clearRescueBundleCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearRescueBundleCopyStateTimeoutRef.current);
+                          }
+                          clearRescueBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setRescueBundleCopyState('idle');
+                          }, 1800);
+                        })
+                        .catch(() => {
+                          setRescueBundleCopyState('error');
+                          if (clearRescueBundleCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearRescueBundleCopyStateTimeoutRef.current);
+                          }
+                          clearRescueBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setRescueBundleCopyState('idle');
+                          }, 2200);
+                        });
+                    }}
+                    style={{ cursor: 'pointer' }}
+                    aria-label="Copy rescue bundle with the current section and suggested recovery jumps"
+                    title="Copy rescue bundle with the current section and suggested recovery jumps"
+                  >
+                    {rescueBundleLabel}
+                  </button>
+                  <span className="pf-pill">Recovery set {fallbackItems.length}</span>
+                </div>
               </div>
             ) : null}
           </div>
