@@ -230,8 +230,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
 
     syncFromHash();
     window.addEventListener('hashchange', syncFromHash);
+    window.addEventListener('popstate', syncFromHash);
 
-    return () => window.removeEventListener('hashchange', syncFromHash);
+    return () => {
+      window.removeEventListener('hashchange', syncFromHash);
+      window.removeEventListener('popstate', syncFromHash);
+    };
   }, [itemIds]);
 
   useEffect(() => {

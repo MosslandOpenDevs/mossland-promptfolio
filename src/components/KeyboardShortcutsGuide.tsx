@@ -21,10 +21,15 @@ async function copyShortcutMap(items: ShortcutItem[]) {
     '? → Open or close the keyboard shortcuts guide',
     'Home / End → Jump to the first or last operator section',
     '[ / ] → Move to previous or next section',
-    'J / K → Vim-style next or previous section jump',
+    'K / J → Vim-style previous or next section jump',
+    '/ → Focus the jump rail filter',
+    '↑ / ↓ → Move through filtered matches',
+    'Enter → Jump to the selected filtered match',
+    'Esc → Clear the filter or close the guide',
     'C → Copy the link for the current section',
     'O → Open the direct link for the current section in a new tab',
     'R / Resume → Jump back to the last saved section',
+    'F → Pin or unpin the current section',
     '1-4 → Jump to the matching pinned section from the pinboard',
     '5-7 → Re-open one of the last few sections you touched from the jump rail',
     '',
@@ -227,8 +232,20 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-dim" style={{ fontSize: 11 }}>Move to previous or next section</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>J / K</span>
-            <span className="pf-dim" style={{ fontSize: 11 }}>Vim-style next or previous section jump</span>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>K / J</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Vim-style previous or next section jump</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>/</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Focus the jump rail filter</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>↑ / ↓</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Move through filtered matches</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Enter</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Jump to the selected filtered match</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>C</span>
@@ -241,6 +258,10 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>R / Resume</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Jump back to the last section you were viewing on your previous visit</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>F</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Pin or unpin the section you are currently viewing</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>1-4</span>
