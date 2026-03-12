@@ -420,10 +420,46 @@ export default async function ReplayIndexPage({
       </div>
 
       {rankedAgents.length === 0 && (
-        <div style={{ opacity: 0.7 }}>
-          {query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly || lossOnly
-            ? `No agents matched current filters.`
-            : 'No agents yet.'}
+        <div style={{ display: 'grid', gap: 10 }}>
+          <div style={{ opacity: 0.7 }}>
+            {query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly || lossOnly
+              ? `No agents matched current filters.`
+              : 'No agents yet.'}
+          </div>
+
+          {(query || effectiveMinEq > 0 || effectiveMaxEq > 0 || profitableOnly || requestedLossOnly) && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
+              <span style={{ opacity: 0.7 }}>recovery:</span>
+              {query && (
+                <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, '', profitableOnly, requestedLossOnly)} style={activeFilterChip}>
+                  clear query
+                </Link>
+              )}
+              {effectiveMinEq > 0 && (
+                <Link href={buildReplayHref(sort, 0, effectiveMaxEq, query, profitableOnly, requestedLossOnly)} style={activeFilterChip}>
+                  remove min
+                </Link>
+              )}
+              {effectiveMaxEq > 0 && (
+                <Link href={buildReplayHref(sort, effectiveMinEq, 0, query, profitableOnly, requestedLossOnly)} style={activeFilterChip}>
+                  remove max
+                </Link>
+              )}
+              {profitableOnly && (
+                <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, false, requestedLossOnly)} style={activeFilterChip}>
+                  disable winners only
+                </Link>
+              )}
+              {requestedLossOnly && (
+                <Link href={buildReplayHref(sort, effectiveMinEq, effectiveMaxEq, query, profitableOnly, false)} style={activeFilterChip}>
+                  disable underwater only
+                </Link>
+              )}
+              <Link href={buildReplayHref(sort, 0, 0, '', false, false)} style={quickActionLink(false)}>
+                reset view
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </main>
