@@ -28,6 +28,7 @@ async function copyShortcutMap(items: ShortcutItem[]) {
     'Esc → Clear the filter or close the guide',
     'C → Copy the link for the current section',
     'O → Open the direct link for the current section in a new tab',
+    'B → Copy the reusable navigation bundle',
     'R / Resume → Jump back to the last saved section',
     'F → Pin or unpin the current section',
     '1-4 → Jump to the matching pinned section from the pinboard',
@@ -254,6 +255,10 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>O</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Open the direct link for the section you are currently viewing in a new tab</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>B</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Copy the reusable navigation bundle with the current section, pinboard, and recent trail</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>R / Resume</span>

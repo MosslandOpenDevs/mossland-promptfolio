@@ -47,6 +47,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     'Home / End → Jump to the first or last section',
     'C → Copy the current section link',
     'O → Open the current section link in a new tab',
+    'B → Copy the reusable navigation bundle',
     'R → Resume the last saved section',
     'F → Pin or unpin the current section',
     '1-4 → Jump to pinned sections',
@@ -451,6 +452,16 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   }, [items]);
 
   useEffect(() => {
+    const currentActiveItem = items.find((item) => item.anchorId === activeAnchorForCopy) ?? items[0] ?? null;
+    const currentResumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
+    const currentPinnedItems = pinnedAnchorIds
+      .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
+      .filter((item): item is ShortcutItem => Boolean(item));
+    const currentRecentTrailItems = recentAnchorTrail
+      .filter((anchorId) => anchorId !== activeAnchorId)
+      .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
+      .filter((item): item is ShortcutItem => Boolean(item));
+
     const clearActiveKey = () => {
       if (clearActiveKeyTimeoutRef.current !== null) {
         window.clearTimeout(clearActiveKeyTimeoutRef.current);
@@ -683,6 +694,36 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
+      if (event.key.toLowerCase() === 'b') {
+        event.preventDefault();
+        void copyNavigationBundle({
+          items,
+          activeItem: currentActiveItem,
+          resumeItem: currentResumeItem,
+          pinnedItems: currentPinnedItems,
+          recentTrailItems: currentRecentTrailItems,
+        })
+          .then(() => {
+            setNavigationBundleCopyState('done');
+            if (clearNavigationBundleCopyStateTimeoutRef.current !== null) {
+              window.clearTimeout(clearNavigationBundleCopyStateTimeoutRef.current);
+            }
+            clearNavigationBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+              setNavigationBundleCopyState('idle');
+            }, 1800);
+          })
+          .catch(() => {
+            setNavigationBundleCopyState('error');
+            if (clearNavigationBundleCopyStateTimeoutRef.current !== null) {
+              window.clearTimeout(clearNavigationBundleCopyStateTimeoutRef.current);
+            }
+            clearNavigationBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+              setNavigationBundleCopyState('idle');
+            }, 2200);
+          });
+        return;
+      }
+
       if (event.key.toLowerCase() === 'r' && resumeAnchorId) {
         event.preventDefault();
         if (!jumpToAnchor(resumeAnchorId)) return;
@@ -719,7 +760,20 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearShortcutGuideCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, filteredItems, filteredItems.length, items, normalizedSearchQuery, pinnedAnchorIds, recentAnchorTrail, resumeAnchorId, searchQuery, shortcutGuideOpen, togglePinnedSection]);
+  }, [
+    activeAnchorForCopy,
+    activeAnchorId,
+    filteredItems,
+    filteredItems.length,
+    items,
+    normalizedSearchQuery,
+    pinnedAnchorIds,
+    recentAnchorTrail,
+    resumeAnchorId,
+    searchQuery,
+    shortcutGuideOpen,
+    togglePinnedSection,
+  ]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
@@ -885,8 +939,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           type="button"
           className="pf-pill"
           aria-live="polite"
-          aria-label="Copy a reusable navigation bundle with the current section, pinned sections, recent trail, and direct links"
-          title="Copy a reusable navigation bundle with the current section, pinned sections, recent trail, and direct links"
+          aria-label="Copy a reusable navigation bundle with the current section, pinned sections, recent trail, and direct links (B)"
+          title="Copy a reusable navigation bundle with the current section, pinned sections, recent trail, and direct links (B)"
           onClick={() => {
             void copyNavigationBundle({
               items,
@@ -1091,7 +1145,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               Shortcut guide: fast ways to move, filter, pin, resume, and share direct links without leaving the page.
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {['? toggle guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'R resume', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
+              {['? toggle guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
                 <span key={label} className="pf-pill">{label}</span>
               ))}
             </div>
