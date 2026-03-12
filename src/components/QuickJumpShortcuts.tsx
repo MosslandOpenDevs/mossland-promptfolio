@@ -424,6 +424,21 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         return;
       }
 
+      if (!event.shiftKey && /^[5-7]$/.test(event.key)) {
+        const trailIndex = Number(event.key) - 5;
+        const trailAnchorId = recentAnchorTrail[trailIndex] ?? null;
+        const trailItem = trailAnchorId ? items.find((item) => item.anchorId === trailAnchorId) ?? null : null;
+        if (!trailItem) return;
+
+        event.preventDefault();
+        if (!jumpToAnchor(trailItem.anchorId)) return;
+
+        setActiveKey(`trail:${trailIndex + 1}`);
+        setActiveAnchorId(trailItem.anchorId);
+        clearActiveKey();
+        return;
+      }
+
       if (event.shiftKey) {
         return;
       }
@@ -498,7 +513,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         window.clearTimeout(clearCopyStateTimeoutRef.current);
       }
     };
-  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, pinnedAnchorIds, resumeAnchorId, searchQuery, togglePinnedSection]);
+  }, [activeAnchorForCopy, activeAnchorId, filteredItems.length, items, pinnedAnchorIds, recentAnchorTrail, resumeAnchorId, searchQuery, togglePinnedSection]);
 
   const hasItems = items.length > 0;
   const resumeItem = resumeAnchorId ? items.find((item) => item.anchorId === resumeAnchorId) ?? null : null;
