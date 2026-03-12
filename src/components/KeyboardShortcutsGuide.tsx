@@ -25,6 +25,8 @@ async function copyShortcutMap(items: ShortcutItem[]) {
     '/ → Focus the jump rail filter',
     '↑ / ↓ → Move through filtered matches',
     'Enter → Jump to the selected filtered match',
+    'Cmd/Ctrl+Enter → Open the selected filtered match in a new tab',
+    'Alt+Enter → Copy the selected filtered match link',
     'Esc → Clear the filter or close the guide',
     'C → Copy the link for the current section',
     'O → Open the direct link for the current section in a new tab',

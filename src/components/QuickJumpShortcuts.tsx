@@ -42,6 +42,8 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     '/ → Focus the section filter',
     '↑ / ↓ → Move through filtered matches',
     'Enter → Jump to the selected filtered match',
+    'Cmd/Ctrl+Enter → Open the selected filtered match in a new tab',
+    'Alt+Enter → Copy the selected filtered match link',
     'Esc → Clear the filter or close the guide',
     '[ / ] → Move to the previous or next section',
     'J / K → Vim-style next or previous section jump',
@@ -1309,7 +1311,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               Shortcut guide: fast ways to move, filter, pin, resume, and share direct links without leaving the page.
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {['? toggle guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
+              {['? toggle guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Cmd/Ctrl+Enter open selected', 'Alt+Enter copy selected', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
                 <span key={label} className="pf-pill">{label}</span>
               ))}
               <span className="pf-pill">Shift+P pinned bundle</span>
@@ -1762,6 +1764,39 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             onKeyDown={(event: ReactKeyboardEvent<HTMLInputElement>) => {
               if (event.key === 'Enter' && selectedFilteredItem) {
                 event.preventDefault();
+
+                if (event.metaKey || event.ctrlKey) {
+                  openAnchorLink(selectedFilteredItem.anchorId);
+                  return;
+                }
+
+                if (event.altKey) {
+                  void copyAnchorLink(selectedFilteredItem.anchorId)
+                    .then(() => {
+                      setCopiedAnchorId(selectedFilteredItem.anchorId);
+                      setCopyState('done');
+                      if (clearCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearCopyStateTimeoutRef.current);
+                      }
+                      clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setCopyState('idle');
+                        setCopiedAnchorId(null);
+                      }, 1600);
+                    })
+                    .catch(() => {
+                      setCopiedAnchorId(selectedFilteredItem.anchorId);
+                      setCopyState('error');
+                      if (clearCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearCopyStateTimeoutRef.current);
+                      }
+                      clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setCopyState('idle');
+                        setCopiedAnchorId(null);
+                      }, 2200);
+                    });
+                  return;
+                }
+
                 setActiveKey('/');
                 setActiveAnchorId(selectedFilteredItem.anchorId);
                 jumpToAnchor(selectedFilteredItem.anchorId);
@@ -1904,7 +1939,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         {normalizedSearchQuery && filteredItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
-              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link. Multi-word queries and abbreviations like &quot;desk watch&quot;, &quot;op queue&quot;, or &quot;mf&quot; now work too. Use the new filtered bundle copy to share the whole operator path at once.
+              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link. Enter jumps to the selected result, Cmd/Ctrl+Enter opens it in a new tab, and Alt+Enter copies the direct link without leaving the filter. Multi-word queries and abbreviations like &quot;desk watch&quot;, &quot;op queue&quot;, or &quot;mf&quot; now work too. Use the filtered bundle copy to share the whole operator path at once.
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               {visibleFilteredMatches.map(({ match, index }) => {
