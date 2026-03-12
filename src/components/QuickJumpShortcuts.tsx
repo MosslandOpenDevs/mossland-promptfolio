@@ -45,6 +45,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     'Cmd/Ctrl+Enter → Open the selected filtered match in a new tab',
     'Alt+Enter → Copy the selected filtered match link',
     'Esc → Clear the filter or close the guide',
+    'Click outside the guide → Close it without losing your current section',
     '[ / ] → Move to the previous or next section',
     'J / K → Vim-style next or previous section jump',
     'Home / End → Jump to the first or last section',
@@ -52,6 +53,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     'O → Open the current section link in a new tab',
     'B → Copy the reusable navigation bundle',
     'R → Resume the last saved section',
+    'Shift+R → Reset saved nav state (pins, trail, last stop, filter)',
     'F → Pin or unpin the current section',
     '1-4 → Jump to pinned sections',
     '5-7 → Jump to the recent trail',
@@ -278,6 +280,21 @@ function clearStoredLastStop() {
   }
 }
 
+function clearStoredNavigationState() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(LAST_ACTIVE_SECTION_STORAGE_KEY);
+    window.localStorage.removeItem(RECENT_SECTION_TRAIL_STORAGE_KEY);
+    window.localStorage.removeItem(PINNED_SECTION_STORAGE_KEY);
+    window.localStorage.removeItem(FILTER_QUERY_STORAGE_KEY);
+  } catch {
+    // Ignore storage write failures and keep reset actions non-blocking.
+  }
+}
+
 function loadRecentSectionTrail() {
   if (typeof window === 'undefined') {
     return [] as string[];
@@ -394,6 +411,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearRescueBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearShortcutGuideCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const shortcutGuidePanelRef = useRef<HTMLDivElement | null>(null);
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
   const activeIndex = useMemo(() => items.findIndex((item) => item.anchorId === activeAnchorId), [activeAnchorId, items]);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0] ?? null;
@@ -509,6 +527,23 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     } catch {
       // Ignore storage write failures and keep the guide optional.
     }
+  }, [shortcutGuideOpen]);
+
+  useEffect(() => {
+    if (!shortcutGuideOpen) {
+      return;
+    }
+
+    shortcutGuidePanelRef.current?.focus();
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!shortcutGuidePanelRef.current) return;
+      if (shortcutGuidePanelRef.current.contains(event.target as Node)) return;
+      setShortcutGuideOpen(false);
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => window.removeEventListener('pointerdown', handlePointerDown);
   }, [shortcutGuideOpen]);
 
   useEffect(() => {
@@ -797,6 +832,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 setRecentTrailBundleCopyState('idle');
               }, 2200);
             });
+          return;
+        }
+
+        if (event.key.toLowerCase() === 'r') {
+          event.preventDefault();
+          clearStoredNavigationState();
+          setResumeAnchorId(null);
+          setPinnedAnchorIds([]);
+          setRecentAnchorTrail([]);
+          setSearchQuery('');
+          setSelectedFilteredIndex(0);
+          setShowAllFilteredResults(false);
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          if (items[0]) {
+            setActiveKey('Reset');
+            setActiveAnchorId(items[0].anchorId);
+            jumpToAnchor(items[0].anchorId);
+            clearActiveKey();
+          }
           return;
         }
         return;
@@ -1159,6 +1213,33 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         <button
           type="button"
           className="pf-pill"
+          aria-label="Reset saved navigation state (Shift+R)"
+          title="Reset saved navigation state (Shift+R)"
+          onClick={() => {
+            clearStoredNavigationState();
+            setResumeAnchorId(null);
+            setPinnedAnchorIds([]);
+            setRecentAnchorTrail([]);
+            setSearchQuery('');
+            setSelectedFilteredIndex(0);
+            setShowAllFilteredResults(false);
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            if (items[0]) {
+              setActiveKey('Reset');
+              setActiveAnchorId(items[0].anchorId);
+              jumpToAnchor(items[0].anchorId);
+              window.setTimeout(() => {
+                setActiveKey((current) => (current === 'Reset' ? null : current));
+              }, 1200);
+            }
+          }}
+          style={{ cursor: 'pointer' }}
+        >
+          Reset nav state
+        </button>
+        <button
+          type="button"
+          className="pf-pill"
           aria-live="polite"
           aria-label={activeItem ? `${isActiveSectionPinned ? 'Unpin' : 'Pin'} ${activeItem.label} (F)` : 'Pin current section (F)'}
           title={activeItem ? `${isActiveSectionPinned ? 'Unpin' : 'Pin'} ${activeItem.label} (F)` : 'Pin current section (F)'}
@@ -1306,12 +1387,19 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       </div>
       <div style={{ display: 'grid', gap: 8 }}>
         {shortcutGuideOpen ? (
-          <div style={{ display: 'grid', gap: 6 }}>
+          <div
+            ref={shortcutGuidePanelRef}
+            role="dialog"
+            aria-label="Quick jump shortcuts guide"
+            aria-modal="false"
+            tabIndex={-1}
+            style={{ display: 'grid', gap: 6 }}
+          >
             <div className="pf-dim" style={{ fontSize: 11 }}>
               Shortcut guide: fast ways to move, filter, pin, resume, and share direct links without leaving the page.
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {['? toggle guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Cmd/Ctrl+Enter open selected', 'Alt+Enter copy selected', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
+              {['? toggle guide', 'click outside close guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Cmd/Ctrl+Enter open selected', 'Alt+Enter copy selected', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'Shift+R reset nav state', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
                 <span key={label} className="pf-pill">{label}</span>
               ))}
               <span className="pf-pill">Shift+P pinned bundle</span>
