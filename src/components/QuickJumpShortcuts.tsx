@@ -71,23 +71,65 @@ type ShortcutItemMatchMeta = {
   matchedFields: string[];
 };
 
+function normalizeSearchText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function tokenizeSearchText(value: string) {
+  return normalizeSearchText(value).split(/\s+/).filter(Boolean);
+}
+
+function buildShortcutAliases(item: ShortcutItem) {
+  const labelTokens = tokenizeSearchText(item.label);
+  const anchorTokens = tokenizeSearchText(item.anchorId);
+  const acronym = labelTokens.map((token) => token[0]).join('');
+
+  return Array.from(new Set([
+    item.label,
+    item.anchorId,
+    item.keyLabel,
+    labelTokens.join(' '),
+    anchorTokens.join(' '),
+    anchorTokens.join(''),
+    acronym,
+    `${item.keyLabel} ${labelTokens.join(' ')}`,
+  ].filter(Boolean)));
+}
+
+function includesAllSearchTokens(haystacks: string[], searchTokens: string[]) {
+  if (searchTokens.length === 0) {
+    return false;
+  }
+
+  return searchTokens.every((token) => haystacks.some((haystack) => haystack.includes(token)));
+}
+
 function getShortcutItemMatchMeta(item: ShortcutItem, normalizedSearchQuery: string): ShortcutItemMatchMeta | null {
   if (!normalizedSearchQuery) {
     return { item, matchedFields: [] };
   }
 
+  const searchTokens = tokenizeSearchText(normalizedSearchQuery);
+  const normalizedLabel = normalizeSearchText(item.label);
+  const normalizedAnchorId = normalizeSearchText(item.anchorId);
+  const normalizedShortcut = normalizeSearchText(item.keyLabel);
+  const normalizedAliases = buildShortcutAliases(item).map((alias) => normalizeSearchText(alias));
   const matchedFields: string[] = [];
-  if (item.label.toLowerCase().includes(normalizedSearchQuery)) {
+
+  if (normalizedLabel.includes(normalizedSearchQuery) || includesAllSearchTokens([normalizedLabel], searchTokens)) {
     matchedFields.push('label');
   }
-  if (item.anchorId.toLowerCase().includes(normalizedSearchQuery)) {
+  if (normalizedAnchorId.includes(normalizedSearchQuery) || includesAllSearchTokens([normalizedAnchorId], searchTokens)) {
     matchedFields.push('section id');
   }
-  if (item.keyLabel.toLowerCase().includes(normalizedSearchQuery)) {
+  if (normalizedShortcut.includes(normalizedSearchQuery) || includesAllSearchTokens([normalizedShortcut], searchTokens)) {
     matchedFields.push('shortcut');
   }
+  if (includesAllSearchTokens(normalizedAliases, searchTokens)) {
+    matchedFields.push('aliases');
+  }
 
-  return matchedFields.length > 0 ? { item, matchedFields } : null;
+  return matchedFields.length > 0 ? { item, matchedFields: Array.from(new Set(matchedFields)) } : null;
 }
 
 function getHashAnchor() {
@@ -1395,7 +1437,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         {normalizedSearchQuery && filteredItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
-              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link.
+              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link. Multi-word queries and abbreviations like &quot;desk watch&quot;, &quot;op queue&quot;, or &quot;mf&quot; now work too.
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               {visibleFilteredMatches.map(({ match, index }) => {
