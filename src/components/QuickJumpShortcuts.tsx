@@ -742,6 +742,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const pinnedItems = pinnedAnchorIds
     .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
     .filter((item): item is ShortcutItem => Boolean(item));
+  const fallbackItems = Array.from(new Map(
+    [activeItem, resumeItem, ...pinnedItems, ...recentTrailItems]
+      .filter((item): item is ShortcutItem => Boolean(item))
+      .map((item) => [item.anchorId, item]),
+  ).values()).slice(0, 4);
   const isActiveSectionPinned = activeAnchorForCopy ? pinnedAnchorIds.includes(activeAnchorForCopy) : false;
   const copyLabel =
     copyState === 'done'
@@ -1761,8 +1766,53 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           </div>
         ) : null}
         {normalizedSearchQuery && filteredItems.length === 0 ? (
-          <div className="pf-dim" style={{ fontSize: 11 }}>
-            No section matches that filter yet. Try label words like market, desk, operator, or leaderboard.
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              No section matches that filter yet. Try label words like market, desk, operator, or leaderboard.
+              {fallbackItems.length ? ' You can also jump back into your live, pinned, or recent sections below.' : ''}
+            </div>
+            {fallbackItems.length ? (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {fallbackItems.map((item) => {
+                  const isLive = activeAnchorId === item.anchorId;
+                  const isPinned = pinnedAnchorIds.includes(item.anchorId);
+                  const isResume = resumeAnchorId === item.anchorId;
+                  const isRecent = recentTrailItems.some((trailItem) => trailItem.anchorId === item.anchorId);
+                  const badges = [
+                    isLive ? 'live' : null,
+                    isPinned ? 'pinned' : null,
+                    isResume ? 'last stop' : null,
+                    isRecent ? 'recent' : null,
+                  ].filter(Boolean).join(' · ');
+
+                  return (
+                    <button
+                      key={`fallback-${item.anchorId}`}
+                      type="button"
+                      className="pf-pill"
+                      onClick={() => {
+                        setActiveKey('/');
+                        setActiveAnchorId(item.anchorId);
+                        jumpToAnchor(item.anchorId);
+                        window.setTimeout(() => {
+                          setActiveKey((current) => (current === '/' ? null : current));
+                        }, 1200);
+                      }}
+                      aria-label={`Jump to fallback section ${item.label}`}
+                      title={`Jump to ${item.label}${badges ? ` · ${badges}` : ''}`}
+                      style={{
+                        cursor: 'pointer',
+                        borderColor: isLive ? 'var(--primary)' : undefined,
+                        color: isLive ? 'var(--primary)' : undefined,
+                        background: isLive ? 'rgba(255,255,255,.92)' : undefined,
+                      }}
+                    >
+                      Rescue → {item.label}{badges ? ` · ${badges}` : ''}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
