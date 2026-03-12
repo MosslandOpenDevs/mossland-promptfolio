@@ -161,6 +161,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilteredIndex, setSelectedFilteredIndex] = useState(0);
+  const [showAllFilteredResults, setShowAllFilteredResults] = useState(false);
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -181,9 +182,14 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const filteredItems = filteredItemMatches.map((match) => match.item);
   const selectedFilteredItem = filteredItems[Math.min(selectedFilteredIndex, Math.max(filteredItems.length - 1, 0))] ?? null;
   const selectedFilteredMatch = filteredItemMatches[Math.min(selectedFilteredIndex, Math.max(filteredItemMatches.length - 1, 0))] ?? null;
+  const visibleFilteredMatches = (showAllFilteredResults ? filteredItemMatches : filteredItemMatches.slice(0, 5)).map((match) => ({
+    match,
+    index: filteredItemMatches.findIndex((itemMatch) => itemMatch.item.anchorId === match.item.anchorId),
+  }));
 
   useEffect(() => {
     setSelectedFilteredIndex(0);
+    setShowAllFilteredResults(false);
   }, [normalizedSearchQuery]);
 
   useEffect(() => {
@@ -1033,7 +1039,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               Filtered route: click any result to jump, or use the side actions to open/copy the direct section link.
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
-              {filteredItemMatches.slice(0, 5).map((match, index) => {
+              {visibleFilteredMatches.map(({ match, index }) => {
                 const { item, matchedFields } = match;
                 const isSelected = selectedFilteredItem?.anchorId === item.anchorId;
                 const isActive = activeAnchorId === item.anchorId;
@@ -1159,8 +1165,22 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               })}
             </div>
             {filteredItems.length > 5 ? (
-              <div className="pf-dim" style={{ fontSize: 11 }}>
-                Showing top 5 matches. Use ↑ / ↓ to move through the full result set, then Enter to jump.
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <div className="pf-dim" style={{ fontSize: 11 }}>
+                  {showAllFilteredResults
+                    ? `Showing all ${filteredItems.length} matches. Use ↑ / ↓ to move through the full result set, then Enter to jump.`
+                    : 'Showing top 5 matches. Use ↑ / ↓ to move through the full result set, then Enter to jump.'}
+                </div>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  onClick={() => setShowAllFilteredResults((current) => !current)}
+                  style={{ cursor: 'pointer' }}
+                  aria-label={showAllFilteredResults ? 'Collapse filtered matches to the top five results' : 'Show all filtered matches'}
+                  title={showAllFilteredResults ? 'Collapse filtered matches to the top five results' : 'Show all filtered matches'}
+                >
+                  {showAllFilteredResults ? 'Show top 5' : `Show all ${filteredItems.length}`}
+                </button>
               </div>
             ) : null}
           </div>
