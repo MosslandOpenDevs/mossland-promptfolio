@@ -829,48 +829,124 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             <div className="pf-dim" style={{ fontSize: 11 }}>
               Pinboard: keep up to four favorite sections ready for one-tap jumps. Press F to pin or unpin the section currently in view.
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gap: 6 }}>
               {pinnedItems.map((item, index) => {
                 const isActive = activeAnchorId === item.anchorId;
                 return (
-                  <button
+                  <div
                     key={`pinned-${item.anchorId}`}
-                    type="button"
-                    className="pf-pill"
-                    aria-label={`Jump to pinned section ${item.label} (${index + 1})`}
-                    title={`Jump to pinned section ${item.label} (${index + 1})`}
-                    onClick={() => {
-                      setActiveKey(`pin:${index + 1}`);
-                      setActiveAnchorId(item.anchorId);
-                      jumpToAnchor(item.anchorId);
-                      window.setTimeout(() => {
-                        setActiveKey((current) => (current === `pin:${index + 1}` ? null : current));
-                      }, 1200);
-                    }}
                     style={{
-                      cursor: 'pointer',
-                      borderColor: isActive ? 'var(--primary)' : undefined,
-                      color: isActive ? 'var(--primary)' : undefined,
-                      background: isActive ? 'rgba(255,255,255,.92)' : undefined,
+                      display: 'flex',
+                      gap: 8,
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    {index + 1} · {item.label}
-                  </button>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Jump to pinned section ${item.label} (${index + 1})`}
+                      title={`Jump to pinned section ${item.label} (${index + 1})`}
+                      onClick={() => {
+                        setActiveKey(`pin:${index + 1}`);
+                        setActiveAnchorId(item.anchorId);
+                        jumpToAnchor(item.anchorId);
+                        window.setTimeout(() => {
+                          setActiveKey((current) => (current === `pin:${index + 1}` ? null : current));
+                        }, 1200);
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        borderColor: isActive ? 'var(--primary)' : undefined,
+                        color: isActive ? 'var(--primary)' : undefined,
+                        background: isActive ? 'rgba(255,255,255,.92)' : undefined,
+                      }}
+                    >
+                      {index + 1} · {item.label}
+                    </button>
+                    <span className="pf-pill" aria-live="polite">
+                      #{item.anchorId}
+                    </span>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Open pinned section ${item.label} in a new tab`}
+                      title={`Open pinned section ${item.label} in a new tab`}
+                      onClick={() => {
+                        openAnchorLink(item.anchorId);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Open
+                    </button>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Copy pinned section link for ${item.label}`}
+                      title={`Copy pinned section link for ${item.label}`}
+                      onClick={() => {
+                        void copyAnchorLink(item.anchorId)
+                          .then(() => {
+                            setCopiedAnchorId(item.anchorId);
+                            setCopyState('done');
+                            if (clearCopyStateTimeoutRef.current !== null) {
+                              window.clearTimeout(clearCopyStateTimeoutRef.current);
+                            }
+                            clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                              setCopyState('idle');
+                              setCopiedAnchorId(null);
+                            }, 1600);
+                          })
+                          .catch(() => {
+                            setCopiedAnchorId(item.anchorId);
+                            setCopyState('error');
+                            if (clearCopyStateTimeoutRef.current !== null) {
+                              window.clearTimeout(clearCopyStateTimeoutRef.current);
+                            }
+                            clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                              setCopyState('idle');
+                              setCopiedAnchorId(null);
+                            }, 2200);
+                          });
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Copy link
+                    </button>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Remove pinned section ${item.label}`}
+                      title={`Remove pinned section ${item.label}`}
+                      onClick={() => {
+                        setPinnedAnchorIds((current) => {
+                          const nextPinned = current.filter((anchorId) => anchorId !== item.anchorId);
+                          savePinnedSections(nextPinned);
+                          return nextPinned;
+                        });
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
                 );
               })}
-              <button
-                type="button"
-                className="pf-pill"
-                aria-label="Clear pinned sections"
-                title="Clear pinned sections"
-                onClick={() => {
-                  setPinnedAnchorIds([]);
-                  savePinnedSections([]);
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                Clear pinboard
-              </button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  aria-label="Clear pinned sections"
+                  title="Clear pinned sections"
+                  onClick={() => {
+                    setPinnedAnchorIds([]);
+                    savePinnedSections([]);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Clear pinboard
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
@@ -879,48 +955,124 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             <div className="pf-dim" style={{ fontSize: 11 }}>
               Recent trail: jump back into the last few sections you touched before the current one without losing the filtered route.
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gap: 6 }}>
               {recentTrailItems.map((item, index) => {
                 const isActive = activeAnchorId === item.anchorId;
                 return (
-                  <button
+                  <div
                     key={`trail-${item.anchorId}`}
-                    type="button"
-                    className="pf-pill"
-                    aria-label={`Jump to recent section ${item.label}`}
-                    title={`Jump to recent section ${item.label}`}
-                    onClick={() => {
-                      setActiveKey(`trail:${index + 1}`);
-                      setActiveAnchorId(item.anchorId);
-                      jumpToAnchor(item.anchorId);
-                      window.setTimeout(() => {
-                        setActiveKey((current) => (current === `trail:${index + 1}` ? null : current));
-                      }, 1200);
-                    }}
                     style={{
-                      cursor: 'pointer',
-                      borderColor: isActive ? 'var(--primary)' : undefined,
-                      color: isActive ? 'var(--primary)' : undefined,
-                      background: isActive ? 'rgba(255,255,255,.92)' : undefined,
+                      display: 'flex',
+                      gap: 8,
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
                     }}
                   >
-                    Trail {index + 1} · {item.label}
-                  </button>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Jump to recent section ${item.label}`}
+                      title={`Jump to recent section ${item.label}`}
+                      onClick={() => {
+                        setActiveKey(`trail:${index + 1}`);
+                        setActiveAnchorId(item.anchorId);
+                        jumpToAnchor(item.anchorId);
+                        window.setTimeout(() => {
+                          setActiveKey((current) => (current === `trail:${index + 1}` ? null : current));
+                        }, 1200);
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        borderColor: isActive ? 'var(--primary)' : undefined,
+                        color: isActive ? 'var(--primary)' : undefined,
+                        background: isActive ? 'rgba(255,255,255,.92)' : undefined,
+                      }}
+                    >
+                      Trail {index + 1} · {item.label}
+                    </button>
+                    <span className="pf-pill" aria-live="polite">
+                      #{item.anchorId}
+                    </span>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Open recent section ${item.label} in a new tab`}
+                      title={`Open recent section ${item.label} in a new tab`}
+                      onClick={() => {
+                        openAnchorLink(item.anchorId);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Open
+                    </button>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Copy recent section link for ${item.label}`}
+                      title={`Copy recent section link for ${item.label}`}
+                      onClick={() => {
+                        void copyAnchorLink(item.anchorId)
+                          .then(() => {
+                            setCopiedAnchorId(item.anchorId);
+                            setCopyState('done');
+                            if (clearCopyStateTimeoutRef.current !== null) {
+                              window.clearTimeout(clearCopyStateTimeoutRef.current);
+                            }
+                            clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                              setCopyState('idle');
+                              setCopiedAnchorId(null);
+                            }, 1600);
+                          })
+                          .catch(() => {
+                            setCopiedAnchorId(item.anchorId);
+                            setCopyState('error');
+                            if (clearCopyStateTimeoutRef.current !== null) {
+                              window.clearTimeout(clearCopyStateTimeoutRef.current);
+                            }
+                            clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                              setCopyState('idle');
+                              setCopiedAnchorId(null);
+                            }, 2200);
+                          });
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Copy link
+                    </button>
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Remove recent section ${item.label} from the trail`}
+                      title={`Remove recent section ${item.label} from the trail`}
+                      onClick={() => {
+                        setRecentAnchorTrail((current) => {
+                          const nextTrail = current.filter((anchorId) => anchorId !== item.anchorId);
+                          saveRecentSectionTrail(nextTrail);
+                          return nextTrail;
+                        });
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
                 );
               })}
-              <button
-                type="button"
-                className="pf-pill"
-                aria-label="Clear recent section trail"
-                title="Clear recent section trail"
-                onClick={() => {
-                  setRecentAnchorTrail([]);
-                  saveRecentSectionTrail([]);
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                Clear trail
-              </button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  aria-label="Clear recent section trail"
+                  title="Clear recent section trail"
+                  onClick={() => {
+                    setRecentAnchorTrail([]);
+                    saveRecentSectionTrail([]);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Clear trail
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
