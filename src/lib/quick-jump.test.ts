@@ -123,6 +123,24 @@ test('getQuickJumpRelevanceScore prioritizes exact and prefix hits ahead of broa
   );
 });
 
+test('getQuickJumpRelevanceScore supports collapsed multi-word aliases for dense filter queries', () => {
+  assert.equal(
+    getQuickJumpRelevanceScore({
+      normalizedSearchQuery: 'deskwatch',
+      haystacks: ['desk watchlist', 'deskwatchlist'],
+    }),
+    1
+  );
+
+  assert.equal(
+    getQuickJumpRelevanceScore({
+      normalizedSearchQuery: 'marketfresh',
+      haystacks: ['market freshness', 'marketfreshness'],
+    }),
+    1
+  );
+});
+
 test('sortQuickJumpItemMatches prioritizes stronger relevance before field tie-breakers', () => {
   const matches = sortQuickJumpItemMatches({
     anchorIdsInRouteOrder: ['operator-brief', 'operator-priority-queue'],

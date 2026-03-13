@@ -275,6 +275,7 @@ function buildShortcutAliases(item: ShortcutItem) {
     item.anchorId,
     item.keyLabel,
     labelTokens.join(' '),
+    labelTokens.join(''),
     anchorTokens.join(' '),
     anchorTokens.join(''),
     acronym,
@@ -2561,7 +2562,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         {normalizedSearchQuery && filteredItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
-              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link. Enter jumps to the selected result, Cmd/Ctrl+Enter opens it in a new tab, and Alt+Enter copies the direct link without leaving the filter. Multi-word queries and abbreviations like &quot;desk watch&quot;, &quot;op queue&quot;, or &quot;mf&quot; now work too. Use the filtered bundle copy to share the whole operator path at once.
+              Filtered route: click any result to jump, or use the side actions to open/copy the direct section link. Enter jumps to the selected result, Cmd/Ctrl+Enter opens it in a new tab, and Alt+Enter copies the direct link without leaving the filter. Multi-word queries and abbreviations like &quot;desk watch&quot;, &quot;deskwatch&quot;, &quot;op queue&quot;, or &quot;mf&quot; now work too. Use the filtered bundle copy to share the whole operator path at once.
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               {visibleFilteredMatches.map(({ match, index }) => {
