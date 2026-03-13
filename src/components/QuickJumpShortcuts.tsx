@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -217,6 +217,7 @@ type ShortcutItem = {
 type ShortcutItemMatchMeta = {
   item: ShortcutItem;
   matchedFields: string[];
+  relevanceScore?: number;
 };
 
 function normalizeSearchText(value: string) {
@@ -277,7 +278,18 @@ function getShortcutItemMatchMeta(item: ShortcutItem, normalizedSearchQuery: str
     matchedFields.push('aliases');
   }
 
-  return matchedFields.length > 0 ? { item, matchedFields: Array.from(new Set(matchedFields)) } : null;
+  if (matchedFields.length === 0) {
+    return null;
+  }
+
+  return {
+    item,
+    matchedFields: Array.from(new Set(matchedFields)),
+    relevanceScore: getQuickJumpRelevanceScore({
+      normalizedSearchQuery,
+      haystacks: [normalizedLabel, normalizedAnchorId, normalizedShortcut, ...normalizedAliases],
+    }),
+  };
 }
 
 function getHashAnchor() {

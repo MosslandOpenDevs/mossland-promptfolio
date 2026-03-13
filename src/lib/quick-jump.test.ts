@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, sortQuickJumpItemMatches } from './quick-jump.ts';
+import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, getQuickJumpRelevanceScore, sortQuickJumpItemMatches } from './quick-jump.ts';
 
 test('buildBulkPinnedAnchorIds prioritizes the selected filtered item first', () => {
   const result = buildBulkPinnedAnchorIds({
@@ -86,6 +86,63 @@ test('sortQuickJumpItemMatches prioritizes stronger match fields for filter disc
   assert.deepEqual(
     matches.map((match) => match.item.anchorId),
     ['operator-brief', 'market-freshness', 'operator-priority-queue', 'leaderboard-top']
+  );
+});
+
+test('getQuickJumpRelevanceScore prioritizes exact and prefix hits ahead of broad substring matches', () => {
+  assert.equal(
+    getQuickJumpRelevanceScore({
+      normalizedSearchQuery: 'ops',
+      haystacks: ['market ops', 'operator brief'],
+    }),
+    2
+  );
+
+  assert.equal(
+    getQuickJumpRelevanceScore({
+      normalizedSearchQuery: 'operator',
+      haystacks: ['market operator brief'],
+    }),
+    2
+  );
+
+  assert.equal(
+    getQuickJumpRelevanceScore({
+      normalizedSearchQuery: 'brief',
+      haystacks: ['operator brief'],
+    }),
+    2
+  );
+
+  assert.equal(
+    getQuickJumpRelevanceScore({
+      normalizedSearchQuery: 'queue',
+      haystacks: ['priority queue'],
+    }),
+    2
+  );
+});
+
+test('sortQuickJumpItemMatches prioritizes stronger relevance before field tie-breakers', () => {
+  const matches = sortQuickJumpItemMatches({
+    anchorIdsInRouteOrder: ['operator-brief', 'operator-priority-queue'],
+    matches: [
+      {
+        item: { anchorId: 'operator-priority-queue' },
+        matchedFields: ['label'],
+        relevanceScore: 3,
+      },
+      {
+        item: { anchorId: 'operator-brief' },
+        matchedFields: ['aliases'],
+        relevanceScore: 0,
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    matches.map((match) => match.item.anchorId),
+    ['operator-brief', 'operator-priority-queue']
   );
 });
 

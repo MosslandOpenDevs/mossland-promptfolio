@@ -17,13 +17,57 @@ function getBestMatchFieldScore(matchedFields: string[]) {
   return bestScore;
 }
 
-export function sortQuickJumpItemMatches<T extends { item: { anchorId: string }; matchedFields: string[] }>(params: {
+export function getQuickJumpRelevanceScore(params: {
+  normalizedSearchQuery: string;
+  haystacks: string[];
+}) {
+  const query = params.normalizedSearchQuery.trim();
+  if (!query || !params.haystacks.length) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const haystack of params.haystacks) {
+    if (!haystack) {
+      continue;
+    }
+
+    if (haystack === query) {
+      bestScore = Math.min(bestScore, 0);
+      continue;
+    }
+
+    if (haystack.startsWith(query)) {
+      bestScore = Math.min(bestScore, 1);
+      continue;
+    }
+
+    if (haystack.split(/\s+/).some((token) => token.startsWith(query))) {
+      bestScore = Math.min(bestScore, 2);
+      continue;
+    }
+
+    if (haystack.includes(query)) {
+      bestScore = Math.min(bestScore, 3);
+    }
+  }
+
+  return bestScore;
+}
+
+export function sortQuickJumpItemMatches<T extends { item: { anchorId: string }; matchedFields: string[]; relevanceScore?: number }>(params: {
   matches: T[];
   anchorIdsInRouteOrder: string[];
 }) {
   const anchorOrder = new Map(params.anchorIdsInRouteOrder.map((anchorId, index) => [anchorId, index]));
 
   return [...params.matches].sort((left, right) => {
+    const leftRelevanceScore = left.relevanceScore ?? Number.POSITIVE_INFINITY;
+    const rightRelevanceScore = right.relevanceScore ?? Number.POSITIVE_INFINITY;
+    if (leftRelevanceScore !== rightRelevanceScore) {
+      return leftRelevanceScore - rightRelevanceScore;
+    }
+
     const leftBestFieldScore = getBestMatchFieldScore(left.matchedFields);
     const rightBestFieldScore = getBestMatchFieldScore(right.matchedFields);
     if (leftBestFieldScore !== rightBestFieldScore) {
