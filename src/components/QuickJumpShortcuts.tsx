@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, MAX_PINNED_SECTIONS } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -480,9 +480,14 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       return items.map((item) => ({ item, matchedFields: [] }));
     }
 
-    return items
+    const matches = items
       .map((item) => getShortcutItemMatchMeta(item, normalizedSearchQuery))
       .filter((match): match is ShortcutItemMatchMeta => Boolean(match));
+
+    return sortQuickJumpItemMatches({
+      matches,
+      anchorIdsInRouteOrder: items.map((item) => item.anchorId),
+    });
   }, [items, normalizedSearchQuery]);
   const filteredItems = filteredItemMatches.map((match) => match.item);
   const selectedFilteredItem = filteredItems[Math.min(selectedFilteredIndex, Math.max(filteredItems.length - 1, 0))] ?? null;

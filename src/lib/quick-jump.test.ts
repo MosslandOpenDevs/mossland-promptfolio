@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds } from './quick-jump.ts';
+import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, sortQuickJumpItemMatches } from './quick-jump.ts';
 
 test('buildBulkPinnedAnchorIds prioritizes the selected filtered item first', () => {
   const result = buildBulkPinnedAnchorIds({
@@ -69,5 +69,37 @@ test('buildRouteContextAnchorIds returns an empty list when the selection is mis
       selectedAnchorId: 'unknown',
     }),
     []
+  );
+});
+
+test('sortQuickJumpItemMatches prioritizes stronger match fields for filter discoverability', () => {
+  const matches = sortQuickJumpItemMatches({
+    anchorIdsInRouteOrder: ['operator-brief', 'operator-priority-queue', 'market-freshness', 'leaderboard-top'],
+    matches: [
+      { item: { anchorId: 'operator-priority-queue' }, matchedFields: ['section id'] },
+      { item: { anchorId: 'market-freshness' }, matchedFields: ['aliases'] },
+      { item: { anchorId: 'operator-brief' }, matchedFields: ['label'] },
+      { item: { anchorId: 'leaderboard-top' }, matchedFields: ['shortcut'] },
+    ],
+  });
+
+  assert.deepEqual(
+    matches.map((match) => match.item.anchorId),
+    ['operator-brief', 'market-freshness', 'operator-priority-queue', 'leaderboard-top']
+  );
+});
+
+test('sortQuickJumpItemMatches keeps route order as a stable tie-breaker', () => {
+  const matches = sortQuickJumpItemMatches({
+    anchorIdsInRouteOrder: ['season-status', 'market-freshness', 'operator-brief'],
+    matches: [
+      { item: { anchorId: 'operator-brief' }, matchedFields: ['aliases'] },
+      { item: { anchorId: 'market-freshness' }, matchedFields: ['aliases'] },
+    ],
+  });
+
+  assert.deepEqual(
+    matches.map((match) => match.item.anchorId),
+    ['market-freshness', 'operator-brief']
   );
 });
