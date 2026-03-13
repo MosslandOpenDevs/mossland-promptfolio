@@ -1907,6 +1907,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 Selected match {selectedFilteredIndex + 1}/{filteredItems.length} · {selectedFilteredItem.label}
                 {selectedFilteredMatch?.matchedFields.length ? ` · via ${selectedFilteredMatch.matchedFields.join(', ')}` : ''}
               </span>
+              <span className="pf-pill" aria-live="polite">
+                Shortcut Alt+{selectedFilteredItem.keyLabel} · #{selectedFilteredItem.anchorId}
+              </span>
               <button
                 type="button"
                 className="pf-pill"
@@ -1923,6 +1926,25 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 style={{ cursor: 'pointer', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}
               >
                 Jump selected → {selectedFilteredItem.label}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`${pinnedAnchorIds.includes(selectedFilteredItem.anchorId) ? 'Unpin' : 'Pin'} selected match ${selectedFilteredItem.label}`}
+                title={`${pinnedAnchorIds.includes(selectedFilteredItem.anchorId) ? 'Unpin' : 'Pin'} selected match ${selectedFilteredItem.label}`}
+                onClick={() => {
+                  togglePinnedSection(selectedFilteredItem.anchorId);
+                }}
+                style={{
+                  cursor: 'pointer',
+                  borderColor: pinnedAnchorIds.includes(selectedFilteredItem.anchorId) ? 'var(--primary)' : undefined,
+                  color: pinnedAnchorIds.includes(selectedFilteredItem.anchorId) ? 'var(--primary)' : undefined,
+                  background: pinnedAnchorIds.includes(selectedFilteredItem.anchorId) ? 'rgba(255,255,255,.92)' : undefined,
+                }}
+              >
+                {pinnedAnchorIds.includes(selectedFilteredItem.anchorId)
+                  ? `Unpin selected · ${selectedFilteredItem.label}`
+                  : `Pin selected · ${selectedFilteredItem.label}`}
               </button>
               <button
                 type="button"
