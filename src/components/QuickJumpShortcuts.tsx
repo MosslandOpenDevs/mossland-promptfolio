@@ -9,6 +9,7 @@ const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
 const PINNED_SECTION_STORAGE_KEY = 'promptfolio-pinned-sections';
 const SHORTCUT_GUIDE_STORAGE_KEY = 'promptfolio-shortcut-guide';
 const FILTER_QUERY_STORAGE_KEY = 'promptfolio-section-filter-query';
+const SHOW_ALL_FILTERED_RESULTS_STORAGE_KEY = 'promptfolio-show-all-filtered-results';
 const MAX_RECENT_SECTION_TRAIL = 3;
 
 function buildAnchorUrl(anchorId: string) {
@@ -292,6 +293,7 @@ function clearStoredNavigationState() {
     window.localStorage.removeItem(RECENT_SECTION_TRAIL_STORAGE_KEY);
     window.localStorage.removeItem(PINNED_SECTION_STORAGE_KEY);
     window.localStorage.removeItem(FILTER_QUERY_STORAGE_KEY);
+    window.localStorage.removeItem(SHOW_ALL_FILTERED_RESULTS_STORAGE_KEY);
   } catch {
     // Ignore storage write failures and keep reset actions non-blocking.
   }
@@ -383,6 +385,35 @@ function saveStoredFilterQuery(value: string) {
     window.localStorage.removeItem(FILTER_QUERY_STORAGE_KEY);
   } catch {
     // Ignore storage write failures so the filter stays interactive.
+  }
+}
+
+function loadStoredShowAllFilteredResults() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    return window.localStorage.getItem(SHOW_ALL_FILTERED_RESULTS_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function saveStoredShowAllFilteredResults(value: boolean) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (value) {
+      window.localStorage.setItem(SHOW_ALL_FILTERED_RESULTS_STORAGE_KEY, 'true');
+      return;
+    }
+
+    window.localStorage.removeItem(SHOW_ALL_FILTERED_RESULTS_STORAGE_KEY);
+  } catch {
+    // Ignore storage write failures so the expanded results view stays optional.
   }
 }
 
@@ -487,6 +518,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       setSearchQuery((current) => current || storedFilterQuery);
     }
 
+    setShowAllFilteredResults(loadStoredShowAllFilteredResults());
+
     const syncFromHash = () => {
       const hashAnchor = getHashAnchor();
       if (hashAnchor && itemIds.has(hashAnchor)) {
@@ -567,6 +600,10 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   useEffect(() => {
     saveStoredFilterQuery(searchQuery.trim());
   }, [searchQuery]);
+
+  useEffect(() => {
+    saveStoredShowAllFilteredResults(showAllFilteredResults && normalizedSearchQuery.length > 0);
+  }, [normalizedSearchQuery, showAllFilteredResults]);
 
   const togglePinnedSection = useCallback((anchorId: string) => {
     setPinnedAnchorIds((current) => {
