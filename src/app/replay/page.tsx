@@ -79,6 +79,15 @@ export default async function ReplayIndexPage({
       return b.equity - a.equity;
     });
 
+  const fullEquityValues = computedAgents
+    .map((agent) => agent.equity)
+    .sort((a, b) => b - a);
+  const liveTopEquity = fullEquityValues[0] ?? null;
+  const liveBottomEquity = fullEquityValues.length > 0 ? fullEquityValues[fullEquityValues.length - 1] : null;
+  const isMinEqAboveLiveRange = effectiveMinEq > 0 && liveTopEquity !== null && effectiveMinEq > liveTopEquity;
+  const isMaxEqBelowLiveRange = effectiveMaxEq > 0 && liveBottomEquity !== null && effectiveMaxEq < liveBottomEquity;
+  const canSnapToLiveRange = liveTopEquity !== null && liveBottomEquity !== null && liveBottomEquity <= liveTopEquity;
+
   const buildReplayHref = (
     nextSort: 'name' | 'equity' | 'pnl' | 'roi',
     nextMinEq: number = effectiveMinEq,
@@ -278,6 +287,38 @@ export default async function ReplayIndexPage({
       {isProfitFilterConflict && (
         <div style={{ fontSize: 12, opacity: 0.75, color: '#ffd38f' }}>
           both “profitable only” and “loss only” were selected; showing profitable-only results.
+        </div>
+      )}
+
+      {(isMinEqAboveLiveRange || isMaxEqBelowLiveRange) && canSnapToLiveRange && (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ fontSize: 12, opacity: 0.8, color: '#b8cbff' }}>
+            current equity range sits outside the live desk window (${liveBottomEquity!.toFixed(2)} – ${liveTopEquity!.toFixed(2)}).
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
+            {isMinEqAboveLiveRange && (
+              <Link
+                href={buildReplayHref(sort, Math.ceil(liveTopEquity!), effectiveMaxEq, query, profitableOnly, requestedLossOnly)}
+                style={quickActionLink(false)}
+              >
+                snap min to live top
+              </Link>
+            )}
+            {isMaxEqBelowLiveRange && (
+              <Link
+                href={buildReplayHref(sort, effectiveMinEq, Math.floor(liveBottomEquity!), query, profitableOnly, requestedLossOnly)}
+                style={quickActionLink(false)}
+              >
+                snap max to live floor
+              </Link>
+            )}
+            <Link
+              href={buildReplayHref(sort, Math.floor(liveBottomEquity!), Math.ceil(liveTopEquity!), query, profitableOnly, requestedLossOnly)}
+              style={quickActionLink(false)}
+            >
+              fit live range
+            </Link>
+          </div>
         </div>
       )}
 
