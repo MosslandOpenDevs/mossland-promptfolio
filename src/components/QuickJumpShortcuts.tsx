@@ -1273,6 +1273,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       .filter((item): item is ShortcutItem => Boolean(item))
       .map((item) => [item.anchorId, item]),
   ).values()).slice(0, 4);
+  const noMatchSuggestionItems = Array.from(new Map(
+    [...fallbackItems, ...items]
+      .filter((item): item is ShortcutItem => Boolean(item))
+      .map((item) => [item.anchorId, item]),
+  ).values()).slice(0, 4);
   const isActiveSectionPinned = activeAnchorForCopy ? pinnedAnchorIds.includes(activeAnchorForCopy) : false;
   const copyLabel =
     copyState === 'done'
@@ -2725,6 +2730,28 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               No section matches that filter yet. Try label words like market, desk, operator, or leaderboard.
               {fallbackItems.length ? ' You can also jump back into your live, pinned, or recent sections below.' : ''}
             </div>
+            {noMatchSuggestionItems.length ? (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span className="pf-dim" style={{ fontSize: 11 }}>Try:</span>
+                {noMatchSuggestionItems.map((item) => (
+                  <button
+                    key={`no-match-suggestion-${item.anchorId}`}
+                    type="button"
+                    className="pf-pill"
+                    aria-label={`Filter by ${item.label}`}
+                    title={`Filter by ${item.label}`}
+                    onClick={() => {
+                      setSearchQuery(item.label);
+                      setSelectedFilteredIndex(0);
+                      searchInputRef.current?.focus();
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {showResumeButton && resumeItem ? (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <button
