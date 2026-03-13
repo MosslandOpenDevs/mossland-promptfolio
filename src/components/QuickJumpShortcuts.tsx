@@ -2251,6 +2251,27 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               No section matches that filter yet. Try label words like market, desk, operator, or leaderboard.
               {fallbackItems.length ? ' You can also jump back into your live, pinned, or recent sections below.' : ''}
             </div>
+            {showResumeButton && resumeItem ? (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  aria-label={`Resume ${resumeItem.label}`}
+                  title={`Resume ${resumeItem.label} from your last stop (R)`}
+                  onClick={() => {
+                    setActiveKey('Resume');
+                    setActiveAnchorId(resumeItem.anchorId);
+                    jumpToAnchor(resumeItem.anchorId);
+                    window.setTimeout(() => {
+                      setActiveKey((current) => (current === 'Resume' ? null : current));
+                    }, 1200);
+                  }}
+                  style={{ cursor: 'pointer', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}
+                >
+                  Resume last stop (R) → {resumeItem.label}
+                </button>
+              </div>
+            ) : null}
             {fallbackItems.length ? (
               <div style={{ display: 'grid', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
