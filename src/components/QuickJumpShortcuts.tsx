@@ -442,6 +442,15 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     match,
     index: filteredItemMatches.findIndex((itemMatch) => itemMatch.item.anchorId === match.item.anchorId),
   }));
+  const selectedFilteredItemGlobalIndex = selectedFilteredItem
+    ? items.findIndex((item) => item.anchorId === selectedFilteredItem.anchorId)
+    : -1;
+  const selectedFilteredPrevItem =
+    selectedFilteredItemGlobalIndex > 0 ? items[selectedFilteredItemGlobalIndex - 1] ?? null : null;
+  const selectedFilteredNextItem =
+    selectedFilteredItemGlobalIndex >= 0 && selectedFilteredItemGlobalIndex < items.length - 1
+      ? items[selectedFilteredItemGlobalIndex + 1] ?? null
+      : null;
 
   useEffect(() => {
     setSelectedFilteredIndex(0);
@@ -2094,6 +2103,53 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                     ? 'Copy failed'
                     : `Copy ${filteredItems.length} matches`}
               </button>
+              {selectedFilteredPrevItem || selectedFilteredNextItem ? (
+                <>
+                  <span className="pf-pill" aria-live="polite">
+                    Route context
+                    {selectedFilteredPrevItem ? ` · prev ${selectedFilteredPrevItem.label}` : ''}
+                    {selectedFilteredNextItem ? ` · next ${selectedFilteredNextItem.label}` : ''}
+                  </span>
+                  {selectedFilteredPrevItem ? (
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Jump to the section before ${selectedFilteredItem.label}`}
+                      title={`Jump to the section before ${selectedFilteredItem.label}`}
+                      onClick={() => {
+                        setActiveKey('context-prev');
+                        setActiveAnchorId(selectedFilteredPrevItem.anchorId);
+                        jumpToAnchor(selectedFilteredPrevItem.anchorId);
+                        window.setTimeout(() => {
+                          setActiveKey((current) => (current === 'context-prev' ? null : current));
+                        }, 1200);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Prev in route → {selectedFilteredPrevItem.label}
+                    </button>
+                  ) : null}
+                  {selectedFilteredNextItem ? (
+                    <button
+                      type="button"
+                      className="pf-pill"
+                      aria-label={`Jump to the section after ${selectedFilteredItem.label}`}
+                      title={`Jump to the section after ${selectedFilteredItem.label}`}
+                      onClick={() => {
+                        setActiveKey('context-next');
+                        setActiveAnchorId(selectedFilteredNextItem.anchorId);
+                        jumpToAnchor(selectedFilteredNextItem.anchorId);
+                        window.setTimeout(() => {
+                          setActiveKey((current) => (current === 'context-next' ? null : current));
+                        }, 1200);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      Next in route → {selectedFilteredNextItem.label}
+                    </button>
+                  ) : null}
+                </>
+              ) : null}
             </>
           ) : null}
           {searchQuery ? (
