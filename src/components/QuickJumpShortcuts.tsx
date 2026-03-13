@@ -59,6 +59,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     '5-7 → Jump to the recent trail',
     'Shift+P → Copy the pinned section bundle',
     'Shift+T → Copy the recent trail bundle',
+    'Shift+F (while filter is focused) → Pin or unpin all filtered matches',
     'Alt+key → Jump to a section directly',
     'Alt+Shift+key → Copy a direct section link',
     '',
@@ -429,6 +430,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const filteredItems = filteredItemMatches.map((match) => match.item);
   const selectedFilteredItem = filteredItems[Math.min(selectedFilteredIndex, Math.max(filteredItems.length - 1, 0))] ?? null;
   const selectedFilteredMatch = filteredItemMatches[Math.min(selectedFilteredIndex, Math.max(filteredItemMatches.length - 1, 0))] ?? null;
+  const everyFilteredItemPinned = filteredItems.length > 0 && filteredItems.every((item) => pinnedAnchorIds.includes(item.anchorId));
   const visibleFilteredMatches = (showAllFilteredResults ? filteredItemMatches : filteredItemMatches.slice(0, 5)).map((match) => ({
     match,
     index: filteredItemMatches.findIndex((itemMatch) => itemMatch.item.anchorId === match.item.anchorId),
@@ -787,6 +789,21 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           return;
         }
 
+        if (event.key.toLowerCase() === 'f' && isSearchFocused && filteredItems.length > 0) {
+          event.preventDefault();
+          setPinnedAnchorIds((current) => {
+            const nextPinned = everyFilteredItemPinned
+              ? current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId))
+              : [
+                  ...filteredItems.map((item) => item.anchorId),
+                  ...current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId)),
+                ].slice(0, MAX_PINNED_SECTIONS);
+            savePinnedSections(nextPinned);
+            return nextPinned;
+          });
+          return;
+        }
+
         if (event.key.toLowerCase() === 'p' && currentPinnedItems.length > 0) {
           event.preventDefault();
           void copyPinnedSectionsBundle(currentPinnedItems)
@@ -977,6 +994,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   }, [
     activeAnchorForCopy,
     activeAnchorId,
+    everyFilteredItemPinned,
     filteredItems,
     filteredItems.length,
     items,
@@ -1404,6 +1422,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               ))}
               <span className="pf-pill">Shift+P pinned bundle</span>
               <span className="pf-pill">Shift+T recent trail</span>
+              <span className="pf-pill">Shift+F pin filtered matches</span>
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               {items.map((item) => (
@@ -1993,6 +2012,34 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 Copy selected #{selectedFilteredItem.anchorId}
               </button>
 
+              <button
+                type="button"
+                className="pf-pill"
+                aria-label={`${everyFilteredItemPinned ? 'Unpin' : 'Pin'} all ${filteredItems.length} filtered matches`}
+                title={`${everyFilteredItemPinned ? 'Unpin' : 'Pin'} all ${filteredItems.length} filtered matches (Shift+F while the filter is focused)`}
+                onClick={() => {
+                  setPinnedAnchorIds((current) => {
+                    const nextPinned = everyFilteredItemPinned
+                      ? current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId))
+                      : [
+                          ...filteredItems.map((item) => item.anchorId),
+                          ...current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId)),
+                        ].slice(0, MAX_PINNED_SECTIONS);
+                    savePinnedSections(nextPinned);
+                    return nextPinned;
+                  });
+                }}
+                style={{
+                  cursor: 'pointer',
+                  borderColor: everyFilteredItemPinned ? 'var(--primary)' : undefined,
+                  color: everyFilteredItemPinned ? 'var(--primary)' : undefined,
+                  background: everyFilteredItemPinned ? 'rgba(255,255,255,.92)' : undefined,
+                }}
+              >
+                {everyFilteredItemPinned
+                  ? `Unpin ${filteredItems.length} matches`
+                  : `Pin ${filteredItems.length} matches`}
+              </button>
               <button
                 type="button"
                 className="pf-pill"
