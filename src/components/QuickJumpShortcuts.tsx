@@ -1131,6 +1131,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     items.length > 1 && effectiveActiveIndex >= 0 ? Math.round((effectiveActiveIndex / (items.length - 1)) * 100) : hasItems ? 100 : 0;
   const previousItem = canJumpPrev ? items[effectiveActiveIndex - 1] : null;
   const nextItem = canJumpNext ? items[effectiveActiveIndex + 1] : null;
+  const activeRouteContextItems = buildRouteContextAnchorIds({
+    anchorIds: items.map((item) => item.anchorId),
+    selectedAnchorId: activeItem?.anchorId ?? null,
+  })
+    .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
+    .filter((item): item is ShortcutItem => Boolean(item));
   const lastStopLabel = resumeItem ? `#${resumeItem.anchorId}` : null;
   const activeHashLabel = activeItem ? `#${activeItem.anchorId}` : '#home-top';
   const copiedItem = copiedAnchorId ? items.find((item) => item.anchorId === copiedAnchorId) ?? null : null;
@@ -1517,6 +1523,52 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         </div>
       </div>
       <div style={{ display: 'grid', gap: 8 }}>
+        {activeRouteContextItems.length > 0 ? (
+          <div style={{ display: 'grid', gap: 6 }}>
+            <div className="pf-dim" style={{ fontSize: 11 }}>
+              Live route context: keep the current section plus the closest previous and next stops one tap away.
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              {activeRouteContextItems.map((item) => {
+                const isCurrent = item.anchorId === activeItem?.anchorId;
+                return (
+                  <button
+                    key={`active-route-${item.anchorId}`}
+                    type="button"
+                    className="pf-pill"
+                    aria-current={isCurrent ? 'true' : undefined}
+                    aria-label={`${isCurrent ? 'Current' : 'Jump to'} route context section ${item.label}`}
+                    title={`${isCurrent ? 'Current' : 'Jump to'} route context section ${item.label}`}
+                    onClick={() => {
+                      setActiveKey(isCurrent ? 'context-current' : item.anchorId === previousItem?.anchorId ? 'context-prev' : 'context-next');
+                      setActiveAnchorId(item.anchorId);
+                      jumpToAnchor(item.anchorId);
+                      window.setTimeout(() => {
+                        setActiveKey((current) => (
+                          current === 'context-current' || current === 'context-prev' || current === 'context-next'
+                            ? null
+                            : current
+                        ));
+                      }, 1200);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      borderColor: isCurrent ? 'var(--primary)' : undefined,
+                      color: isCurrent ? 'var(--primary)' : undefined,
+                      background: isCurrent ? 'rgba(255,255,255,.92)' : undefined,
+                    }}
+                  >
+                    {isCurrent
+                      ? `Current · ${item.label}`
+                      : item.anchorId === previousItem?.anchorId
+                        ? `Prev route · ${item.label}`
+                        : `Next route · ${item.label}`}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
         {shortcutGuideOpen ? (
           <div
             ref={shortcutGuidePanelRef}
