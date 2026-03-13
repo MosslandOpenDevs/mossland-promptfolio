@@ -99,6 +99,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     'Shift+P → Copy the pinned section bundle',
     'Shift+T → Copy the recent trail bundle',
     'Shift+L (while filter is focused) → Copy the current filtered view link',
+    'Shift+O (while filter is focused) → Open the current filtered view in a new tab',
     'Shift+F (while filter is focused) → Pin or unpin all filtered matches',
     'Alt+key → Jump to a section directly',
     'Alt+Shift+key → Copy a direct section link',
@@ -1008,6 +1009,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           return;
         }
 
+        if (event.key.toLowerCase() === 'o' && isSearchFocused && normalizedSearchQuery) {
+          event.preventDefault();
+          openFilteredViewLink(searchQuery.trim(), selectedFilteredItem?.anchorId ?? activeAnchorId);
+          return;
+        }
+
         if (event.key.toLowerCase() === 'f' && isSearchFocused && filteredItems.length > 0) {
           event.preventDefault();
           setPinnedAnchorIds((current) => {
@@ -1744,6 +1751,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               <span className="pf-pill">Shift+P pinned bundle</span>
               <span className="pf-pill">Shift+T recent trail</span>
               <span className="pf-pill">Shift+L copy filtered view</span>
+              <span className="pf-pill">Shift+O open filtered view</span>
               <span className="pf-pill">Shift+F pin filtered matches</span>
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
@@ -2541,9 +2549,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 }}
                 style={{ cursor: 'pointer' }}
                 aria-label="Open the current filtered view in a new tab"
-                title="Open the current filtered view in a new tab"
+                title="Open the current filtered view in a new tab (Shift+O while the filter is focused)"
               >
-                Open filtered view
+                Open filtered view (Shift+O)
               </button>
               <button
                 type="button"
