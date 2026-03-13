@@ -2270,6 +2270,52 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 >
                   Resume last stop (R) → {resumeItem.label}
                 </button>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  aria-label={`Open last stop ${resumeItem.label} in a new tab`}
+                  title={`Open last stop ${resumeItem.label} in a new tab`}
+                  onClick={() => {
+                    openAnchorLink(resumeItem.anchorId);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Open last stop ↗
+                </button>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  aria-label={`Copy last stop link for ${resumeItem.label}`}
+                  title={`Copy last stop link for ${resumeItem.label}`}
+                  onClick={() => {
+                    void copyAnchorLink(resumeItem.anchorId)
+                      .then(() => {
+                        setCopiedAnchorId(resumeItem.anchorId);
+                        setCopyState('done');
+                        if (clearCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearCopyStateTimeoutRef.current);
+                        }
+                        clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setCopyState('idle');
+                          setCopiedAnchorId((current) => (current === resumeItem.anchorId ? null : current));
+                        }, 1800);
+                      })
+                      .catch(() => {
+                        setCopiedAnchorId(resumeItem.anchorId);
+                        setCopyState('error');
+                        if (clearCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearCopyStateTimeoutRef.current);
+                        }
+                        clearCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setCopyState('idle');
+                          setCopiedAnchorId((current) => (current === resumeItem.anchorId ? null : current));
+                        }, 2200);
+                      });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {copiedAnchorId === resumeItem.anchorId ? 'Copied last stop link' : 'Copy last stop link'}
+                </button>
               </div>
             ) : null}
             {fallbackItems.length ? (
