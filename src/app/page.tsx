@@ -13,6 +13,7 @@ import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
 import { buildHomeBriefing, buildOperatorActionPlan, buildOperatorChecklist, buildOperatorHandoff, buildOperatorPriorityQueue, buildOperatorRadarBrief } from '../lib/home-briefing';
+import { getDeskWatchSignal } from '../lib/desk-watchlist';
 
 export const dynamic = 'force-dynamic';
 
@@ -383,6 +384,8 @@ export default async function Page() {
         trade_count: number | string;
       }>)
     : [];
+
+  const nowTickTs = Date.now();
 
   const operatorBriefing = buildHomeBriefing({
     seasonName: season?.name ?? '—',
@@ -1013,6 +1016,20 @@ export default async function Page() {
                       : 'var(--ink)';
                 const reason = String(desk.last_reason ?? '').trim();
                 const tradeCount = Number(desk.trade_count ?? 0);
+                const parsedTickTs = desk.last_tick_ts ? new Date(desk.last_tick_ts).getTime() : null;
+                const latestTickAgeMs = parsedTickTs ? nowTickTs - parsedTickTs : null;
+                const watchSignal = getDeskWatchSignal({
+                  tradeCount,
+                  hasMemo: Boolean(reason),
+                  latestTickAgeMs,
+                  totalDeskCount: agentsCount,
+                });
+                const watchTone =
+                  watchSignal.tone === 'danger'
+                    ? 'var(--alert)'
+                    : watchSignal.tone === 'warning'
+                      ? '#b45309'
+                      : 'var(--ink)';
 
                 return (
                   <div key={desk.id} style={{ border: `2px solid ${sideTone}`, borderRadius: 14, padding: '12px 14px', background: 'rgba(255,255,255,.74)', display: 'grid', gap: 8 }}>
@@ -1031,15 +1048,21 @@ export default async function Page() {
                           <div className="pf-dim" style={{ fontSize: 11 }}>equity ${equity} · trades {tradeCount}</div>
                         </div>
                       </div>
-                      <span className="pf-pill" style={{ borderColor: sideTone, color: sideTone }}>
-                        {desk.last_side ?? 'NO SIGNAL'}
-                      </span>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <span className="pf-pill" style={{ borderColor: sideTone, color: sideTone }}>
+                          {desk.last_side ?? 'NO SIGNAL'}
+                        </span>
+                        <span className="pf-pill" style={{ borderColor: watchTone, color: watchTone }}>
+                          {watchSignal.label}
+                        </span>
+                      </div>
                     </div>
                     <div className="pf-dim" style={{ fontSize: 11 }}>
                       {reason
                         ? `Latest memo: "${reason.slice(0, 120)}${reason.length > 120 ? '…' : ''}"`
                         : 'No trade memo yet. Run a fresh tick to get a signal.'}
                     </div>
+                    <div className="pf-dim" style={{ fontSize: 11 }}>{watchSignal.note}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                       <span className="pf-pill">last tick: {desk.last_tick_ts ? String(desk.last_tick_ts).slice(11, 19) : '—'}</span>
                       <Link href={`/agents/${desk.id}/replay`} className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>
