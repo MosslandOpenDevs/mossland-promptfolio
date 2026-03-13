@@ -19,3 +19,26 @@ export function buildBulkPinnedAnchorIds(params: {
     ])
   ).slice(0, maxPinnedSections);
 }
+
+export function buildRouteContextAnchorIds(params: {
+  anchorIds: string[];
+  selectedAnchorId?: string | null;
+  radius?: number;
+}) {
+  const radius = Math.max(0, Math.floor(params.radius ?? 1));
+  const selectedAnchorId = params.selectedAnchorId ?? null;
+
+  if (!selectedAnchorId) {
+    return [] as string[];
+  }
+
+  const selectedIndex = params.anchorIds.findIndex((anchorId) => anchorId === selectedAnchorId);
+  if (selectedIndex < 0) {
+    return [] as string[];
+  }
+
+  const startIndex = Math.max(0, selectedIndex - radius);
+  const endIndex = Math.min(params.anchorIds.length - 1, selectedIndex + radius);
+
+  return params.anchorIds.slice(startIndex, endIndex + 1);
+}

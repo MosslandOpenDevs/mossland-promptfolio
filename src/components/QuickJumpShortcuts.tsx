@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, MAX_PINNED_SECTIONS } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, MAX_PINNED_SECTIONS } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -107,6 +107,31 @@ async function copyNavigationBundle({
   await navigator.clipboard.writeText(lines.join('\n'));
 }
 
+
+async function copyRouteContextBundle({
+  query,
+  selectedItem,
+  contextItems,
+}: {
+  query: string;
+  selectedItem: ShortcutItem;
+  contextItems: ShortcutItem[];
+}) {
+  const lines = [
+    'Promptfolio route context bundle',
+    '',
+    `Filter query: ${query || '—'}`,
+    `Selected section: ${selectedItem.label} (${buildAnchorUrl(selectedItem.anchorId)})`,
+    '',
+    'Route context:',
+    ...contextItems.map((item, index) => {
+      const role = item.anchorId === selectedItem.anchorId ? 'current' : index < contextItems.findIndex((contextItem) => contextItem.anchorId === selectedItem.anchorId) ? 'before' : 'after';
+      return `- ${role.toUpperCase()} · ${item.label} (${buildAnchorUrl(item.anchorId)}) · Alt+${item.keyLabel}`;
+    }),
+  ];
+
+  await navigator.clipboard.writeText(lines.join('\n'));
+}
 
 async function copyFilteredResultsBundle({
   query,
@@ -473,15 +498,18 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     match,
     index: filteredItemMatches.findIndex((itemMatch) => itemMatch.item.anchorId === match.item.anchorId),
   }));
-  const selectedFilteredItemGlobalIndex = selectedFilteredItem
-    ? items.findIndex((item) => item.anchorId === selectedFilteredItem.anchorId)
-    : -1;
-  const selectedFilteredPrevItem =
-    selectedFilteredItemGlobalIndex > 0 ? items[selectedFilteredItemGlobalIndex - 1] ?? null : null;
-  const selectedFilteredNextItem =
-    selectedFilteredItemGlobalIndex >= 0 && selectedFilteredItemGlobalIndex < items.length - 1
-      ? items[selectedFilteredItemGlobalIndex + 1] ?? null
-      : null;
+  const selectedFilteredRouteContextItems = buildRouteContextAnchorIds({
+    anchorIds: items.map((item) => item.anchorId),
+    selectedAnchorId: selectedFilteredItem?.anchorId ?? null,
+  })
+    .map((anchorId) => items.find((item) => item.anchorId === anchorId) ?? null)
+    .filter((item): item is ShortcutItem => Boolean(item));
+  const selectedFilteredPrevItem = selectedFilteredRouteContextItems[0]?.anchorId !== selectedFilteredItem?.anchorId
+    ? selectedFilteredRouteContextItems[0] ?? null
+    : null;
+  const selectedFilteredNextItem = selectedFilteredRouteContextItems[selectedFilteredRouteContextItems.length - 1]?.anchorId !== selectedFilteredItem?.anchorId
+    ? selectedFilteredRouteContextItems[selectedFilteredRouteContextItems.length - 1] ?? null
+    : null;
 
   useEffect(() => {
     setSelectedFilteredIndex(0);
@@ -2147,6 +2175,44 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                     {selectedFilteredPrevItem ? ` · prev ${selectedFilteredPrevItem.label}` : ''}
                     {selectedFilteredNextItem ? ` · next ${selectedFilteredNextItem.label}` : ''}
                   </span>
+                  <button
+                    type="button"
+                    className="pf-pill"
+                    aria-label={`Copy route context for ${selectedFilteredItem.label}`}
+                    title={`Copy route context for ${selectedFilteredItem.label}`}
+                    onClick={() => {
+                      void copyRouteContextBundle({
+                        query: searchQuery.trim(),
+                        selectedItem: selectedFilteredItem,
+                        contextItems: selectedFilteredRouteContextItems,
+                      })
+                        .then(() => {
+                          setFilteredResultsCopyState('done');
+                          if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+                          }
+                          clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setFilteredResultsCopyState('idle');
+                          }, 1600);
+                        })
+                        .catch(() => {
+                          setFilteredResultsCopyState('error');
+                          if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+                          }
+                          clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setFilteredResultsCopyState('idle');
+                          }, 2200);
+                        });
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {filteredResultsCopyState === 'done'
+                      ? 'Route copied'
+                      : filteredResultsCopyState === 'error'
+                        ? 'Route copy failed'
+                        : 'Copy route context'}
+                  </button>
                   {selectedFilteredPrevItem ? (
                     <button
                       type="button"
