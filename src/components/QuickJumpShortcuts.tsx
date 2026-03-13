@@ -465,6 +465,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [navigationBundleCopyState, setNavigationBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [filteredResultsCopyState, setFilteredResultsCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [activeRouteBundleCopyState, setActiveRouteBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [pinnedBundleCopyState, setPinnedBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [recentTrailBundleCopyState, setRecentTrailBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [rescueBundleCopyState, setRescueBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
@@ -477,6 +478,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearFilteredResultsCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearActiveRouteBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearPinnedBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearRecentTrailBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearRescueBundleCopyStateTimeoutRef = useRef<number | null>(null);
@@ -1090,6 +1092,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
       }
+      if (clearActiveRouteBundleCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearActiveRouteBundleCopyStateTimeoutRef.current);
+      }
       if (clearPinnedBundleCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearPinnedBundleCopyStateTimeoutRef.current);
       }
@@ -1177,6 +1182,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       : rescueBundleCopyState === 'error'
         ? 'Copy rescue bundle failed'
         : 'Copy rescue bundle';
+  const activeRouteBundleLabel =
+    activeRouteBundleCopyState === 'done'
+      ? 'Live route copied'
+      : activeRouteBundleCopyState === 'error'
+        ? 'Copy live route failed'
+        : 'Copy live route';
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -1566,6 +1577,42 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                   </button>
                 );
               })}
+              {activeItem ? (
+                <button
+                  type="button"
+                  className="pf-pill"
+                  aria-label={`Copy live route context for ${activeItem.label}`}
+                  title={`Copy live route context for ${activeItem.label}`}
+                  onClick={() => {
+                    void copyRouteContextBundle({
+                      query: '',
+                      selectedItem: activeItem,
+                      contextItems: activeRouteContextItems,
+                    })
+                      .then(() => {
+                        setActiveRouteBundleCopyState('done');
+                        if (clearActiveRouteBundleCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearActiveRouteBundleCopyStateTimeoutRef.current);
+                        }
+                        clearActiveRouteBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setActiveRouteBundleCopyState('idle');
+                        }, 1600);
+                      })
+                      .catch(() => {
+                        setActiveRouteBundleCopyState('error');
+                        if (clearActiveRouteBundleCopyStateTimeoutRef.current !== null) {
+                          window.clearTimeout(clearActiveRouteBundleCopyStateTimeoutRef.current);
+                        }
+                        clearActiveRouteBundleCopyStateTimeoutRef.current = window.setTimeout(() => {
+                          setActiveRouteBundleCopyState('idle');
+                        }, 2200);
+                      });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {activeRouteBundleLabel}
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}
