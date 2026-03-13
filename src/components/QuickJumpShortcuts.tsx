@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
+import { buildBulkPinnedAnchorIds, MAX_PINNED_SECTIONS } from '../lib/quick-jump';
+
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
 const PINNED_SECTION_STORAGE_KEY = 'promptfolio-pinned-sections';
 const SHORTCUT_GUIDE_STORAGE_KEY = 'promptfolio-shortcut-guide';
 const FILTER_QUERY_STORAGE_KEY = 'promptfolio-section-filter-query';
 const MAX_RECENT_SECTION_TRAIL = 3;
-const MAX_PINNED_SECTIONS = 4;
 
 function buildAnchorUrl(anchorId: string) {
   if (typeof window === 'undefined') {
@@ -431,6 +432,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const selectedFilteredItem = filteredItems[Math.min(selectedFilteredIndex, Math.max(filteredItems.length - 1, 0))] ?? null;
   const selectedFilteredMatch = filteredItemMatches[Math.min(selectedFilteredIndex, Math.max(filteredItemMatches.length - 1, 0))] ?? null;
   const everyFilteredItemPinned = filteredItems.length > 0 && filteredItems.every((item) => pinnedAnchorIds.includes(item.anchorId));
+  const filteredPinPreview = buildBulkPinnedAnchorIds({
+    currentPinnedAnchorIds: pinnedAnchorIds,
+    filteredAnchorIds: filteredItems.map((item) => item.anchorId),
+    selectedAnchorId: selectedFilteredItem?.anchorId ?? null,
+  });
+  const willTrimFilteredPins = !everyFilteredItemPinned && filteredItems.length > MAX_PINNED_SECTIONS;
   const visibleFilteredMatches = (showAllFilteredResults ? filteredItemMatches : filteredItemMatches.slice(0, 5)).map((match) => ({
     match,
     index: filteredItemMatches.findIndex((itemMatch) => itemMatch.item.anchorId === match.item.anchorId),
@@ -794,10 +801,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           setPinnedAnchorIds((current) => {
             const nextPinned = everyFilteredItemPinned
               ? current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId))
-              : [
-                  ...filteredItems.map((item) => item.anchorId),
-                  ...current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId)),
-                ].slice(0, MAX_PINNED_SECTIONS);
+              : buildBulkPinnedAnchorIds({
+                  currentPinnedAnchorIds: current,
+                  filteredAnchorIds: filteredItems.map((item) => item.anchorId),
+                  selectedAnchorId: selectedFilteredItem?.anchorId ?? null,
+                });
             savePinnedSections(nextPinned);
             return nextPinned;
           });
@@ -1003,6 +1011,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     recentAnchorTrail,
     resumeAnchorId,
     searchQuery,
+    selectedFilteredItem?.anchorId,
     shortcutGuideOpen,
     togglePinnedSection,
   ]);
@@ -2021,10 +2030,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                   setPinnedAnchorIds((current) => {
                     const nextPinned = everyFilteredItemPinned
                       ? current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId))
-                      : [
-                          ...filteredItems.map((item) => item.anchorId),
-                          ...current.filter((anchorId) => !filteredItems.some((item) => item.anchorId === anchorId)),
-                        ].slice(0, MAX_PINNED_SECTIONS);
+                      : buildBulkPinnedAnchorIds({
+                          currentPinnedAnchorIds: current,
+                          filteredAnchorIds: filteredItems.map((item) => item.anchorId),
+                          selectedAnchorId: selectedFilteredItem?.anchorId ?? null,
+                        });
                     savePinnedSections(nextPinned);
                     return nextPinned;
                   });
@@ -2040,6 +2050,13 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                   ? `Unpin ${filteredItems.length} matches`
                   : `Pin ${filteredItems.length} matches`}
               </button>
+              {!everyFilteredItemPinned ? (
+                <span className="pf-pill" aria-live="polite">
+                  Pin preview {filteredPinPreview.length}/{MAX_PINNED_SECTIONS}
+                  {selectedFilteredItem ? ` · keeps ${selectedFilteredItem.label}` : ''}
+                  {willTrimFilteredPins ? ' · first 4 only' : ''}
+                </span>
+              ) : null}
               <button
                 type="button"
                 className="pf-pill"
