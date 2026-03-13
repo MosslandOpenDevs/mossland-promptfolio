@@ -88,6 +88,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     '5-7 → Jump to the recent trail',
     'Shift+P → Copy the pinned section bundle',
     'Shift+T → Copy the recent trail bundle',
+    'Shift+L (while filter is focused) → Copy the current filtered view link',
     'Shift+F (while filter is focused) → Pin or unpin all filtered matches',
     'Alt+key → Jump to a section directly',
     'Alt+Shift+key → Copy a direct section link',
@@ -972,6 +973,30 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           return;
         }
 
+        if (event.key.toLowerCase() === 'l' && isSearchFocused && normalizedSearchQuery) {
+          event.preventDefault();
+          void copyFilteredViewLink(searchQuery.trim(), selectedFilteredItem?.anchorId ?? activeAnchorId)
+            .then(() => {
+              setFilteredViewLinkCopyState('done');
+              if (clearFilteredViewLinkCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearFilteredViewLinkCopyStateTimeoutRef.current);
+              }
+              clearFilteredViewLinkCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setFilteredViewLinkCopyState('idle');
+              }, 1600);
+            })
+            .catch(() => {
+              setFilteredViewLinkCopyState('error');
+              if (clearFilteredViewLinkCopyStateTimeoutRef.current !== null) {
+                window.clearTimeout(clearFilteredViewLinkCopyStateTimeoutRef.current);
+              }
+              clearFilteredViewLinkCopyStateTimeoutRef.current = window.setTimeout(() => {
+                setFilteredViewLinkCopyState('idle');
+              }, 2200);
+            });
+          return;
+        }
+
         if (event.key.toLowerCase() === 'f' && isSearchFocused && filteredItems.length > 0) {
           event.preventDefault();
           setPinnedAnchorIds((current) => {
@@ -1707,6 +1732,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               ))}
               <span className="pf-pill">Shift+P pinned bundle</span>
               <span className="pf-pill">Shift+T recent trail</span>
+              <span className="pf-pill">Shift+L copy filtered view</span>
               <span className="pf-pill">Shift+F pin filtered matches</span>
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
@@ -2488,13 +2514,13 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 }}
                 style={{ cursor: 'pointer' }}
                 aria-label="Copy the current filtered view link"
-                title="Copy the current filtered view link"
+                title="Copy the current filtered view link (Shift+L while the filter is focused)"
               >
                 {filteredViewLinkCopyState === 'done'
                   ? 'View link copied'
                   : filteredViewLinkCopyState === 'error'
                     ? 'View link failed'
-                    : 'Copy filtered view'}
+                    : 'Copy filtered view (Shift+L)'}
               </button>
               <button
                 type="button"
