@@ -23,8 +23,33 @@ function buildAnchorUrl(anchorId: string) {
   return url.toString();
 }
 
+function buildFilteredViewUrl(query: string, anchorId?: string | null) {
+  if (typeof window === 'undefined') {
+    const normalizedQuery = query.trim();
+    const search = normalizedQuery ? `?${FILTER_QUERY_SEARCH_PARAM}=${encodeURIComponent(normalizedQuery)}` : '';
+    const hash = anchorId ? `#${anchorId}` : '';
+    return `${search}${hash}` || '#';
+  }
+
+  const url = new URL(window.location.href);
+  const normalizedQuery = query.trim();
+
+  if (normalizedQuery) {
+    url.searchParams.set(FILTER_QUERY_SEARCH_PARAM, normalizedQuery);
+  } else {
+    url.searchParams.delete(FILTER_QUERY_SEARCH_PARAM);
+  }
+
+  url.hash = anchorId ?? '';
+  return url.toString();
+}
+
 async function copyAnchorLink(anchorId: string) {
   await navigator.clipboard.writeText(buildAnchorUrl(anchorId));
+}
+
+async function copyFilteredViewLink(query: string, anchorId?: string | null) {
+  await navigator.clipboard.writeText(buildFilteredViewUrl(query, anchorId));
 }
 
 function openAnchorLink(anchorId: string) {
@@ -501,6 +526,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [copiedAnchorId, setCopiedAnchorId] = useState<string | null>(null);
   const [navigationBundleCopyState, setNavigationBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [filteredResultsCopyState, setFilteredResultsCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [filteredViewLinkCopyState, setFilteredViewLinkCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [activeRouteBundleCopyState, setActiveRouteBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [pinnedBundleCopyState, setPinnedBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [recentTrailBundleCopyState, setRecentTrailBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
@@ -514,6 +540,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearFilteredResultsCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearFilteredViewLinkCopyStateTimeoutRef = useRef<number | null>(null);
   const clearActiveRouteBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearPinnedBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearRecentTrailBundleCopyStateTimeoutRef = useRef<number | null>(null);
@@ -1134,6 +1161,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       }
       if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+      }
+      if (clearFilteredViewLinkCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearFilteredViewLinkCopyStateTimeoutRef.current);
       }
       if (clearActiveRouteBundleCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearActiveRouteBundleCopyStateTimeoutRef.current);
@@ -2431,17 +2461,53 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             </>
           ) : null}
           {searchQuery ? (
-            <button
-              type="button"
-              className="pf-pill"
-              onClick={() => {
-                setSearchQuery('');
-                searchInputRef.current?.focus();
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              Clear filter
-            </button>
+            <>
+              <button
+                type="button"
+                className="pf-pill"
+                onClick={() => {
+                  void copyFilteredViewLink(searchQuery, selectedFilteredItem?.anchorId ?? activeAnchorId)
+                    .then(() => {
+                      setFilteredViewLinkCopyState('done');
+                      if (clearFilteredViewLinkCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearFilteredViewLinkCopyStateTimeoutRef.current);
+                      }
+                      clearFilteredViewLinkCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setFilteredViewLinkCopyState('idle');
+                      }, 1600);
+                    })
+                    .catch(() => {
+                      setFilteredViewLinkCopyState('error');
+                      if (clearFilteredViewLinkCopyStateTimeoutRef.current !== null) {
+                        window.clearTimeout(clearFilteredViewLinkCopyStateTimeoutRef.current);
+                      }
+                      clearFilteredViewLinkCopyStateTimeoutRef.current = window.setTimeout(() => {
+                        setFilteredViewLinkCopyState('idle');
+                      }, 2200);
+                    });
+                }}
+                style={{ cursor: 'pointer' }}
+                aria-label="Copy the current filtered view link"
+                title="Copy the current filtered view link"
+              >
+                {filteredViewLinkCopyState === 'done'
+                  ? 'View link copied'
+                  : filteredViewLinkCopyState === 'error'
+                    ? 'View link failed'
+                    : 'Copy filtered view'}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
+                onClick={() => {
+                  setSearchQuery('');
+                  searchInputRef.current?.focus();
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                Clear filter
+              </button>
+            </>
           ) : null}
         </div>
         {normalizedSearchQuery && filteredItems.length > 0 ? (
