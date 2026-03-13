@@ -42,7 +42,8 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     '',
     '? → Open or close the shortcuts guide',
     '/ → Focus the section filter',
-    '↑ / ↓ → Move through filtered matches',
+    '↑ / ↓ / PgUp / PgDn → Move through filtered matches',
+    'Home / End (while filter is focused) → Jump to the first or last filtered match',
     'Enter → Jump to the selected filtered match',
     'Cmd/Ctrl+Enter → Open the selected filtered match in a new tab',
     'Alt+Enter → Copy the selected filtered match link',
@@ -778,15 +779,27 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       }
 
       if (isSearchFocused && filteredItems.length > 0) {
-        if (event.key === 'ArrowDown') {
+        if (event.key === 'ArrowDown' || event.key === 'PageDown') {
           event.preventDefault();
           setSelectedFilteredIndex((current) => (current + 1) % filteredItems.length);
           return;
         }
 
-        if (event.key === 'ArrowUp') {
+        if (event.key === 'ArrowUp' || event.key === 'PageUp') {
           event.preventDefault();
           setSelectedFilteredIndex((current) => (current - 1 + filteredItems.length) % filteredItems.length);
+          return;
+        }
+
+        if (event.key === 'Home') {
+          event.preventDefault();
+          setSelectedFilteredIndex(0);
+          return;
+        }
+
+        if (event.key === 'End') {
+          event.preventDefault();
+          setSelectedFilteredIndex(filteredItems.length - 1);
           return;
         }
       }
@@ -1505,7 +1518,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               Shortcut guide: fast ways to move, filter, pin, resume, and share direct links without leaving the page.
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              {['? toggle guide', 'click outside close guide', '/ filter', '↑ / ↓ select', 'Enter jump', 'Cmd/Ctrl+Enter open selected', 'Alt+Enter copy selected', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'Shift+R reset nav state', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
+              {['? toggle guide', 'click outside close guide', '/ filter', '↑ / ↓ / PgUp / PgDn select', 'Home / End first-last filtered match', 'Enter jump', 'Cmd/Ctrl+Enter open selected', 'Alt+Enter copy selected', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End section first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'Shift+R reset nav state', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
                 <span key={label} className="pf-pill">{label}</span>
               ))}
               <span className="pf-pill">Shift+P pinned bundle</span>
@@ -2000,7 +2013,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 }, 1200);
               }
             }}
-            placeholder="Filter sections (/ to focus, ↑/↓ choose, Enter to jump)"
+            placeholder="Filter sections (/ to focus, ↑/↓ or PgUp/PgDn choose, Enter to jump)"
             aria-label="Filter quick jump sections"
             className="pf-pill"
             style={{ minWidth: 240, flex: '1 1 280px', textAlign: 'left', background: 'rgba(255,255,255,.92)' }}
@@ -2016,6 +2029,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               </span>
               <span className="pf-pill" aria-live="polite">
                 Shortcut Alt+{selectedFilteredItem.keyLabel} · #{selectedFilteredItem.anchorId}
+              </span>
+              <span className="pf-pill" aria-live="polite">
+                Filter nav ↑/↓ · PgUp/PgDn · Home/End
               </span>
               <button
                 type="button"
