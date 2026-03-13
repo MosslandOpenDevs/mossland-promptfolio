@@ -52,6 +52,16 @@ async function copyFilteredViewLink(query: string, anchorId?: string | null) {
   await navigator.clipboard.writeText(buildFilteredViewUrl(query, anchorId));
 }
 
+function openFilteredViewLink(query: string, anchorId?: string | null) {
+  const href = buildFilteredViewUrl(query, anchorId);
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  window.open(href, '_blank', 'noopener,noreferrer');
+  return true;
+}
+
 function openAnchorLink(anchorId: string) {
   const href = buildAnchorUrl(anchorId);
   if (typeof window === 'undefined') {
@@ -2521,6 +2531,18 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                   : filteredViewLinkCopyState === 'error'
                     ? 'View link failed'
                     : 'Copy filtered view (Shift+L)'}
+              </button>
+              <button
+                type="button"
+                className="pf-pill"
+                onClick={() => {
+                  openFilteredViewLink(searchQuery, selectedFilteredItem?.anchorId ?? activeAnchorId);
+                }}
+                style={{ cursor: 'pointer' }}
+                aria-label="Open the current filtered view in a new tab"
+                title="Open the current filtered view in a new tab"
+              >
+                Open filtered view
               </button>
               <button
                 type="button"
