@@ -10,6 +10,7 @@ const PINNED_SECTION_STORAGE_KEY = 'promptfolio-pinned-sections';
 const SHORTCUT_GUIDE_STORAGE_KEY = 'promptfolio-shortcut-guide';
 const FILTER_QUERY_STORAGE_KEY = 'promptfolio-section-filter-query';
 const SHOW_ALL_FILTERED_RESULTS_STORAGE_KEY = 'promptfolio-show-all-filtered-results';
+const FILTER_QUERY_SEARCH_PARAM = 'jump';
 const MAX_RECENT_SECTION_TRAIL = 3;
 
 function buildAnchorUrl(anchorId: string) {
@@ -397,6 +398,19 @@ function savePinnedSections(anchorIds: string[]) {
   }
 }
 
+function loadFilterQueryFromUrl() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  try {
+    const url = new URL(window.location.href);
+    return url.searchParams.get(FILTER_QUERY_SEARCH_PARAM) ?? '';
+  } catch {
+    return '';
+  }
+}
+
 function loadStoredFilterQuery() {
   if (typeof window === 'undefined') {
     return '';
@@ -452,6 +466,28 @@ function saveStoredShowAllFilteredResults(value: boolean) {
     window.localStorage.removeItem(SHOW_ALL_FILTERED_RESULTS_STORAGE_KEY);
   } catch {
     // Ignore storage write failures so the expanded results view stays optional.
+  }
+}
+
+function syncFilterQueryToUrl(value: string) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    const url = new URL(window.location.href);
+    const normalizedValue = value.trim();
+
+    if (normalizedValue) {
+      url.searchParams.set(FILTER_QUERY_SEARCH_PARAM, normalizedValue);
+    } else {
+      url.searchParams.delete(FILTER_QUERY_SEARCH_PARAM);
+    }
+
+    const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+    window.history.replaceState(null, '', nextUrl);
+  } catch {
+    // Ignore history failures so the filter remains usable.
   }
 }
 
@@ -561,14 +597,19 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       // Ignore storage read failures and keep the guide collapsed by default.
     }
 
+    const filterQueryFromUrl = loadFilterQueryFromUrl().trim();
     const storedFilterQuery = loadStoredFilterQuery().trim();
-    if (storedFilterQuery) {
-      setSearchQuery((current) => current || storedFilterQuery);
+    const initialFilterQuery = filterQueryFromUrl || storedFilterQuery;
+    if (initialFilterQuery) {
+      setSearchQuery((current) => current || initialFilterQuery);
     }
 
     setShowAllFilteredResults(loadStoredShowAllFilteredResults());
 
     const syncFromHash = () => {
+      const queryFromUrl = loadFilterQueryFromUrl().trim();
+      setSearchQuery((current) => (current === queryFromUrl ? current : queryFromUrl));
+
       const hashAnchor = getHashAnchor();
       if (hashAnchor && itemIds.has(hashAnchor)) {
         setActiveAnchorId(hashAnchor);
@@ -646,7 +687,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   }, [shortcutGuideOpen]);
 
   useEffect(() => {
-    saveStoredFilterQuery(searchQuery.trim());
+    const normalizedQuery = searchQuery.trim();
+    saveStoredFilterQuery(normalizedQuery);
+    syncFilterQueryToUrl(normalizedQuery);
   }, [searchQuery]);
 
   useEffect(() => {
