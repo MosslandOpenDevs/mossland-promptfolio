@@ -127,6 +127,26 @@ export function buildRouteContextAnchorIds(params: {
   return params.anchorIds.slice(startIndex, endIndex + 1);
 }
 
+export function getQuickJumpSelectedIndex(params: {
+  anchorIds: string[];
+  selectedAnchorId?: string | null;
+  fallbackIndex?: number;
+}) {
+  if (!params.anchorIds.length) {
+    return 0;
+  }
+
+  const fallbackIndex = Math.min(Math.max(0, Math.floor(params.fallbackIndex ?? 0)), params.anchorIds.length - 1);
+  const selectedAnchorId = params.selectedAnchorId ?? null;
+
+  if (!selectedAnchorId) {
+    return fallbackIndex;
+  }
+
+  const selectedIndex = params.anchorIds.findIndex((anchorId) => anchorId === selectedAnchorId);
+  return selectedIndex >= 0 ? selectedIndex : fallbackIndex;
+}
+
 export function buildVisibleQuickJumpMatchIndexes(params: {
   totalMatches: number;
   selectedIndex: number;

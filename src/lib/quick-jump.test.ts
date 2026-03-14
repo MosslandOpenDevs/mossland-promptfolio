@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, sortQuickJumpItemMatches } from './quick-jump.ts';
+import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, sortQuickJumpItemMatches } from './quick-jump.ts';
 
 test('buildBulkPinnedAnchorIds prioritizes the selected filtered item first', () => {
   const result = buildBulkPinnedAnchorIds({
@@ -69,6 +69,35 @@ test('buildRouteContextAnchorIds returns an empty list when the selection is mis
       selectedAnchorId: 'unknown',
     }),
     []
+  );
+});
+
+test('getQuickJumpSelectedIndex restores the filtered selection from the active anchor when available', () => {
+  assert.equal(
+    getQuickJumpSelectedIndex({
+      anchorIds: ['season-status', 'market-freshness', 'operator-brief'],
+      selectedAnchorId: 'market-freshness',
+      fallbackIndex: 0,
+    }),
+    1
+  );
+
+  assert.equal(
+    getQuickJumpSelectedIndex({
+      anchorIds: ['season-status', 'market-freshness', 'operator-brief'],
+      selectedAnchorId: 'unknown',
+      fallbackIndex: 2,
+    }),
+    2
+  );
+
+  assert.equal(
+    getQuickJumpSelectedIndex({
+      anchorIds: [],
+      selectedAnchorId: 'market-freshness',
+      fallbackIndex: 4,
+    }),
+    0
   );
 });
 

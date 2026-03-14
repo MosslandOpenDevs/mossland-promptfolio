@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -617,9 +617,13 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     : null;
 
   useEffect(() => {
-    setSelectedFilteredIndex(0);
+    setSelectedFilteredIndex((current) => getQuickJumpSelectedIndex({
+      anchorIds: filteredItems.map((item) => item.anchorId),
+      selectedAnchorId: activeAnchorId,
+      fallbackIndex: normalizedSearchQuery ? current : 0,
+    }));
     setShowAllFilteredResults(false);
-  }, [normalizedSearchQuery]);
+  }, [activeAnchorId, filteredItems, normalizedSearchQuery]);
 
   useEffect(() => {
     if (!filteredItems.length) {
