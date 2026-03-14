@@ -33,23 +33,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang={locale}>
       <body className={`${spaceGrotesk.variable} ${courierPrime.variable} ${blackOpsOne.variable}`}>
+        <a href="#main-content" className="pf-skip" aria-label="Skip to main content">
+          Skip to content
+        </a>
         <div className="pf-wrap">
           <div className="pf-top">
             <div>
               <div className="pf-brand">{t(locale, 'appName')}</div>
               <div className="pf-tag">{t(locale, 'tagline')}</div>
             </div>
-            <div className="pf-nav">
-              <a href="/">{t(locale, 'home')}</a>
-              <a href="/agents">{t(locale, 'agents')}</a>
-              <a href="/season">{t(locale, 'season')}</a>
-              <a href="/leaderboard">{t(locale, 'leaderboard')}</a>
-              <a href="/replay">{t(locale, 'replay')}</a>
+            <nav className="pf-nav" aria-label="Primary">
+              <a href="/" aria-label="Go to homepage">{t(locale, 'home')}</a>
+              <a href="/agents" aria-label="View agents">{t(locale, 'agents')}</a>
+              <a href="/season" aria-label="Open season status">{t(locale, 'season')}</a>
+              <a href="/leaderboard" aria-label="View leaderboard">{t(locale, 'leaderboard')}</a>
+              <a href="/replay" aria-label="Open replay board">{t(locale, 'replay')}</a>
               <LocaleToggle locale={locale} />
-            </div>
+            </nav>
           </div>
           <hr />
-          {children}
+          <main id="main-content">{children}</main>
         </div>
       </body>
     </html>
