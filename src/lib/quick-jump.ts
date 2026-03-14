@@ -280,3 +280,26 @@ export function buildQuickJumpNoMatchSuggestions(params: {
     .map(([candidate]) => candidate)
     .slice(0, limit);
 }
+
+export function getQuickJumpNoMatchEnterAction(params: {
+  suggestionQueries: string[];
+  suggestionItems: Array<{ anchorId: string }>;
+}) {
+  const firstQuery = params.suggestionQueries.find((query) => query.trim().length > 0) ?? null;
+  if (firstQuery) {
+    return {
+      type: 'query' as const,
+      query: firstQuery,
+    };
+  }
+
+  const firstItem = params.suggestionItems[0] ?? null;
+  if (firstItem) {
+    return {
+      type: 'item' as const,
+      anchorId: firstItem.anchorId,
+    };
+  }
+
+  return null;
+}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildQuickJumpNoMatchSuggestions, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, sortQuickJumpItemMatches } from './quick-jump.ts';
+import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildQuickJumpNoMatchSuggestions, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpNoMatchEnterAction, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, sortQuickJumpItemMatches } from './quick-jump.ts';
 
 test('buildBulkPinnedAnchorIds prioritizes the selected filtered item first', () => {
   const result = buildBulkPinnedAnchorIds({
@@ -298,4 +298,40 @@ test('buildQuickJumpNoMatchSuggestions falls back to short high-signal tokens wh
   assert.equal(suggestions.length, 4);
   assert.ok(suggestions.includes('desk'));
   assert.ok(suggestions.every((suggestion) => suggestion.length >= 2));
+});
+
+test('getQuickJumpNoMatchEnterAction prioritizes the first rescue query', () => {
+  assert.deepEqual(
+    getQuickJumpNoMatchEnterAction({
+      suggestionQueries: ['market', 'desk'],
+      suggestionItems: [{ anchorId: 'operator-brief' }],
+    }),
+    {
+      type: 'query',
+      query: 'market',
+    }
+  );
+});
+
+test('getQuickJumpNoMatchEnterAction falls back to the first rescue item when queries are unavailable', () => {
+  assert.deepEqual(
+    getQuickJumpNoMatchEnterAction({
+      suggestionQueries: [],
+      suggestionItems: [{ anchorId: 'operator-brief' }, { anchorId: 'desk-watchlist' }],
+    }),
+    {
+      type: 'item',
+      anchorId: 'operator-brief',
+    }
+  );
+});
+
+test('getQuickJumpNoMatchEnterAction returns null when there is no rescue target', () => {
+  assert.equal(
+    getQuickJumpNoMatchEnterAction({
+      suggestionQueries: [],
+      suggestionItems: [],
+    }),
+    null
+  );
 });

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, buildQuickJumpNoMatchSuggestions, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildQuickJumpNoMatchSuggestions, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpNoMatchEnterAction, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -1310,6 +1310,10 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     items,
     limit: 4,
   });
+  const noMatchEnterAction = getQuickJumpNoMatchEnterAction({
+    suggestionQueries: noMatchSuggestionQueries,
+    suggestionItems: noMatchSuggestionItems,
+  });
   const isActiveSectionPinned = activeAnchorForCopy ? pinnedAnchorIds.includes(activeAnchorForCopy) : false;
   const copyLabel =
     copyState === 'done'
@@ -2244,7 +2248,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             onKeyDown={(event: ReactKeyboardEvent<HTMLInputElement>) => {
-              if (event.key === 'Enter' && selectedFilteredItem) {
+              if (event.key !== 'Enter') {
+                return;
+              }
+
+              if (selectedFilteredItem) {
                 event.preventDefault();
 
                 if (event.metaKey || event.ctrlKey) {
@@ -2285,7 +2293,31 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 window.setTimeout(() => {
                   setActiveKey((current) => (current === '/' ? null : current));
                 }, 1200);
+                return;
               }
+
+              if (!normalizedSearchQuery || filteredItems.length > 0 || !noMatchEnterAction) {
+                return;
+              }
+
+              event.preventDefault();
+
+              if (noMatchEnterAction.type === 'query') {
+                setSearchQuery(noMatchEnterAction.query);
+                setSelectedFilteredIndex(0);
+                return;
+              }
+
+              setSearchQuery('');
+              setSelectedFilteredIndex(0);
+              setShowAllFilteredResults(false);
+              searchInputRef.current?.blur();
+              setActiveKey('/');
+              setActiveAnchorId(noMatchEnterAction.anchorId);
+              jumpToAnchor(noMatchEnterAction.anchorId);
+              window.setTimeout(() => {
+                setActiveKey((current) => (current === '/' ? null : current));
+              }, 1200);
             }}
             placeholder="Filter sections (/ to focus, ↑/↓ or PgUp/PgDn choose, Enter to jump)"
             aria-label="Filter quick jump sections"
@@ -2764,6 +2796,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
           <div style={{ display: 'grid', gap: 8 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
               No section matches that filter yet. Try a tighter rescue query like market, desk, operator, or leaderboard.
+              {noMatchEnterAction?.type === 'query' ? ` Press Enter to try ${noMatchEnterAction.query}.` : noMatchEnterAction?.type === 'item' ? ' Press Enter to jump to the top rescue section.' : ''}
               {fallbackItems.length ? ' You can also jump back into your live, pinned, or recent sections below.' : ''}
             </div>
             {noMatchSuggestionQueries.length ? (
