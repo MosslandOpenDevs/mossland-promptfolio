@@ -102,6 +102,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     'Shift+L (while filter is focused) → Copy the current filtered view link',
     'Shift+O (while filter is focused) → Open the current filtered view in a new tab',
     'Shift+F (while filter is focused) → Pin or unpin all filtered matches',
+    '. (while filter is focused) → Toggle between top matches and the full filtered list',
     'Alt+key → Jump to a section directly',
     'Alt+Shift+key → Copy a direct section link',
     '',
@@ -914,6 +915,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         if (event.key === 'End') {
           event.preventDefault();
           setSelectedFilteredIndex(filteredItems.length - 1);
+          return;
+        }
+
+        if (event.key === '.' && filteredItems.length > 5 && !event.altKey && !event.shiftKey) {
+          event.preventDefault();
+          setShowAllFilteredResults((current) => !current);
           return;
         }
       }
@@ -1790,6 +1797,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               <span className="pf-pill">Shift+L copy filtered view</span>
               <span className="pf-pill">Shift+O open filtered view</span>
               <span className="pf-pill">Shift+F pin filtered matches</span>
+              <span className="pf-pill">. toggle full filtered list</span>
             </div>
             <div style={{ display: 'grid', gap: 6 }}>
               {items.map((item) => (
@@ -2297,7 +2305,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 Shortcut Alt+{selectedFilteredItem.keyLabel} · #{selectedFilteredItem.anchorId}
               </span>
               <span className="pf-pill" aria-live="polite">
-                Filter nav ↑/↓ · PgUp/PgDn · Home/End
+                Filter nav ↑/↓ · PgUp/PgDn · Home/End{filteredItems.length > 5 ? ' · . list toggle' : ''}
               </span>
               <button
                 type="button"
@@ -2735,8 +2743,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div className="pf-dim" style={{ fontSize: 11 }}>
                   {showAllFilteredResults
-                    ? `Showing all ${filteredItems.length} matches. Use ↑ / ↓ to move through the full result set, then Enter to jump.`
-                    : 'Showing top 5 matches. Use ↑ / ↓ to move through the full result set, then Enter to jump.'}
+                    ? `Showing all ${filteredItems.length} matches. Use ↑ / ↓ to move through the full result set, then Enter to jump, or press . to collapse back to the top results.`
+                    : 'Showing top 5 matches. Use ↑ / ↓ to move through the full result set, then Enter to jump, or press . to expand the full list.'}
                 </div>
                 <button
                   type="button"
