@@ -2895,6 +2895,26 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                 ))}
               </div>
             ) : null}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="pf-pill"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedFilteredIndex(0);
+                  setShowAllFilteredResults(false);
+                  searchInputRef.current?.blur();
+                }}
+                style={{ cursor: 'pointer' }}
+                aria-label="Clear filter and return to full section list"
+                title="Clear filter and return to full section list"
+              >
+                Clear filter
+              </button>
+              <span className="pf-pill" aria-live="polite">
+                Showing all sections now
+              </span>
+            </div>
             {showResumeButton && resumeItem ? (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <button
