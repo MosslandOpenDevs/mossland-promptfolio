@@ -58,7 +58,11 @@ function openFilteredViewLink(query: string, anchorId?: string | null) {
     return false;
   }
 
-  window.open(href, '_blank', 'noopener,noreferrer');
+  const opened = window.open(href, '_blank', 'noopener,noreferrer');
+  if (!opened) {
+    window.location.href = href;
+  }
+
   return true;
 }
 
@@ -68,7 +72,11 @@ function openAnchorLink(anchorId: string) {
     return false;
   }
 
-  window.open(href, '_blank', 'noopener,noreferrer');
+  const opened = window.open(href, '_blank', 'noopener,noreferrer');
+  if (!opened) {
+    window.location.href = href;
+  }
+
   return true;
 }
 
