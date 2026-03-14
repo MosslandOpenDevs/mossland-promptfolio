@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -564,6 +564,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearShortcutGuideCopyStateTimeoutRef = useRef<number | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const shortcutGuidePanelRef = useRef<HTMLDivElement | null>(null);
+  const previousNormalizedSearchQueryRef = useRef('');
   const itemIds = useMemo(() => new Set(items.map((item) => item.anchorId)), [items]);
   const activeIndex = useMemo(() => items.findIndex((item) => item.anchorId === activeAnchorId), [activeAnchorId, items]);
   const activeItem = activeIndex >= 0 ? items[activeIndex] : items[0] ?? null;
@@ -617,11 +618,14 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     : null;
 
   useEffect(() => {
-    setSelectedFilteredIndex((current) => getQuickJumpSelectedIndex({
+    setSelectedFilteredIndex((current) => getQuickJumpFilteredSelectionIndex({
       anchorIds: filteredItems.map((item) => item.anchorId),
       selectedAnchorId: activeAnchorId,
-      fallbackIndex: normalizedSearchQuery ? current : 0,
+      currentQuery: normalizedSearchQuery,
+      previousQuery: previousNormalizedSearchQueryRef.current,
+      previousIndex: current,
     }));
+    previousNormalizedSearchQueryRef.current = normalizedSearchQuery;
     setShowAllFilteredResults(false);
   }, [activeAnchorId, filteredItems, normalizedSearchQuery]);
 

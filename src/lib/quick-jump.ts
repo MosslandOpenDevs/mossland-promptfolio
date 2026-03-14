@@ -147,6 +147,22 @@ export function getQuickJumpSelectedIndex(params: {
   return selectedIndex >= 0 ? selectedIndex : fallbackIndex;
 }
 
+export function getQuickJumpFilteredSelectionIndex(params: {
+  anchorIds: string[];
+  selectedAnchorId?: string | null;
+  currentQuery: string;
+  previousQuery: string;
+  previousIndex: number;
+}) {
+  const queryChanged = params.currentQuery !== params.previousQuery;
+
+  return getQuickJumpSelectedIndex({
+    anchorIds: params.anchorIds,
+    selectedAnchorId: params.selectedAnchorId,
+    fallbackIndex: queryChanged ? 0 : params.previousIndex,
+  });
+}
+
 export function buildVisibleQuickJumpMatchIndexes(params: {
   totalMatches: number;
   selectedIndex: number;

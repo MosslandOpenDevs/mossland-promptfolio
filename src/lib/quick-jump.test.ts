@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, sortQuickJumpItemMatches } from './quick-jump.ts';
+import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, sortQuickJumpItemMatches } from './quick-jump.ts';
 
 test('buildBulkPinnedAnchorIds prioritizes the selected filtered item first', () => {
   const result = buildBulkPinnedAnchorIds({
@@ -99,6 +99,42 @@ test('getQuickJumpSelectedIndex restores the filtered selection from the active 
     }),
     0
   );
+});
+
+test('getQuickJumpFilteredSelectionIndex resets to the first match when the filter query changes', () => {
+  const result = getQuickJumpFilteredSelectionIndex({
+    anchorIds: ['season-status', 'market-freshness', 'operator-brief'],
+    selectedAnchorId: 'unknown',
+    currentQuery: 'operator',
+    previousQuery: 'market',
+    previousIndex: 2,
+  });
+
+  assert.equal(result, 0);
+});
+
+test('getQuickJumpFilteredSelectionIndex keeps the prior index when the filter query is unchanged', () => {
+  const result = getQuickJumpFilteredSelectionIndex({
+    anchorIds: ['season-status', 'market-freshness', 'operator-brief'],
+    selectedAnchorId: 'unknown',
+    currentQuery: 'operator',
+    previousQuery: 'operator',
+    previousIndex: 2,
+  });
+
+  assert.equal(result, 2);
+});
+
+test('getQuickJumpFilteredSelectionIndex still prioritizes the active section when available', () => {
+  const result = getQuickJumpFilteredSelectionIndex({
+    anchorIds: ['season-status', 'market-freshness', 'operator-brief'],
+    selectedAnchorId: 'market-freshness',
+    currentQuery: 'market',
+    previousQuery: 'ops',
+    previousIndex: 0,
+  });
+
+  assert.equal(result, 1);
 });
 
 test('buildVisibleQuickJumpMatchIndexes keeps the selected result visible within the collapsed window', () => {
