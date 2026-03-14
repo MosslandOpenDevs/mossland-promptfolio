@@ -2796,12 +2796,19 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                     key={`no-match-suggestion-${item.anchorId}`}
                     type="button"
                     className="pf-pill"
-                    aria-label={`Filter by ${item.label}`}
-                    title={`Filter by ${item.label}`}
+                    aria-label={`Jump to ${item.label}`}
+                    title={`Jump to ${item.label}`}
                     onClick={() => {
-                      setSearchQuery(item.label);
+                      setSearchQuery('');
                       setSelectedFilteredIndex(0);
-                      searchInputRef.current?.focus();
+                      setShowAllFilteredResults(false);
+                      searchInputRef.current?.blur();
+                      setActiveKey('/');
+                      setActiveAnchorId(item.anchorId);
+                      jumpToAnchor(item.anchorId);
+                      window.setTimeout(() => {
+                        setActiveKey((current) => (current === '/' ? null : current));
+                      }, 1200);
                     }}
                     style={{ cursor: 'pointer' }}
                   >
