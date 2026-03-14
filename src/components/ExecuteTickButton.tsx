@@ -79,17 +79,19 @@ export default function ExecuteTickButton({ disabled }: { disabled?: boolean }) 
         type="button"
         onClick={run}
         disabled={disabled || busy}
+        aria-busy={busy}
+        aria-label={busy ? 'Executing market tick' : 'Execute market tick'}
       >
         {busy ? <Spinner seed={seed} label="EXECUTING" /> : 'EXECUTE TICK'}
       </button>
-      {busy && (
-        <div className="pf-dim" style={{ fontSize: 10 }}>
-          tip: this is paper trading. if it breaks, it’s lore.
-        </div>
-      )}
+      <div aria-live="polite" role="status" className="pf-dim" style={{ fontSize: 10 }}>
+        {busy ? 'tip: this is paper trading. if it breaks, it’s lore.' : null}
+      </div>
       {notice && (
         <div
           className="pf-dim"
+          role="status"
+          aria-live="polite"
           style={{
             fontSize: 11,
             color: notice.type === 'error' ? 'var(--alert)' : 'var(--primary)',
