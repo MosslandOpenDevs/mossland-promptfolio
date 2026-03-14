@@ -2799,6 +2799,43 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               {noMatchEnterAction?.type === 'query' ? ` Press Enter to try ${noMatchEnterAction.query}.` : noMatchEnterAction?.type === 'item' ? ' Press Enter to jump to the top rescue section.' : ''}
               {fallbackItems.length ? ' You can also jump back into your live, pinned, or recent sections below.' : ''}
             </div>
+            {noMatchEnterAction ? (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="pf-pill"
+                  onClick={() => {
+                    if (noMatchEnterAction.type === 'query') {
+                      setSearchQuery(noMatchEnterAction.query);
+                      setSelectedFilteredIndex(0);
+                      searchInputRef.current?.focus();
+                      return;
+                    }
+
+                    setSearchQuery('');
+                    setSelectedFilteredIndex(0);
+                    setShowAllFilteredResults(false);
+                    searchInputRef.current?.blur();
+                    setActiveKey('/');
+                    setActiveAnchorId(noMatchEnterAction.anchorId);
+                    jumpToAnchor(noMatchEnterAction.anchorId);
+                    window.setTimeout(() => {
+                      setActiveKey((current) => (current === '/' ? null : current));
+                    }, 1200);
+                  }}
+                  style={{ cursor: 'pointer', borderColor: 'var(--primary)', color: 'var(--primary)', background: 'rgba(255,255,255,.92)' }}
+                  aria-label={noMatchEnterAction.type === 'query' ? `Try rescue query ${noMatchEnterAction.query}` : 'Jump to the top rescue section'}
+                  title={noMatchEnterAction.type === 'query' ? `Try rescue query ${noMatchEnterAction.query}` : 'Jump to the top rescue section'}
+                >
+                  {noMatchEnterAction.type === 'query'
+                    ? `Try rescue query → ${noMatchEnterAction.query}`
+                    : `Jump to rescue section → ${noMatchEnterAction.anchorId}`}
+                </button>
+                <span className="pf-pill" aria-live="polite">
+                  Enter action · {noMatchEnterAction.type === 'query' ? 'apply rescue query' : 'jump to rescue section'}
+                </span>
+              </div>
+            ) : null}
             {noMatchSuggestionQueries.length ? (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span className="pf-dim" style={{ fontSize: 11 }}>Try query:</span>
