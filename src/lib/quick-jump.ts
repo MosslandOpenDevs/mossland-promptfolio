@@ -1,5 +1,17 @@
 export const MAX_PINNED_SECTIONS = 4;
 const MATCH_FIELD_PRIORITY = ['label', 'aliases', 'section id', 'shortcut'] as const;
+const QUICK_JUMP_SUGGESTION_STOP_WORDS = new Set([
+  'and',
+  'for',
+  'the',
+  'with',
+  'from',
+  'into',
+  'your',
+  'view',
+  'page',
+  'section',
+]);
 
 function getBestMatchFieldScore(matchedFields: string[]) {
   if (!matchedFields.length) {
@@ -185,4 +197,86 @@ export function buildVisibleQuickJumpMatchIndexes(params: {
   const startIndex = Math.min(Math.max(0, idealStartIndex), maxStartIndex);
 
   return Array.from({ length: collapsedLimit }, (_, index) => startIndex + index);
+}
+
+function normalizeQuickJumpSuggestionToken(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function tokenizeQuickJumpSuggestionValue(value: string) {
+  return normalizeQuickJumpSuggestionToken(value)
+    .split(/\s+/)
+    .filter((token) => token.length >= 3 && !QUICK_JUMP_SUGGESTION_STOP_WORDS.has(token));
+}
+
+function buildQuickJumpSuggestionCandidates(item: {
+  label: string;
+  anchorId: string;
+  keyLabel: string;
+}) {
+  const labelTokens = tokenizeQuickJumpSuggestionValue(item.label);
+  const anchorTokens = tokenizeQuickJumpSuggestionValue(item.anchorId);
+  const collapsedLabel = labelTokens.join('');
+  const collapsedAnchor = anchorTokens.join('');
+  const acronym = labelTokens.map((token) => token[0]).join('');
+
+  return Array.from(new Set([
+    ...labelTokens,
+    ...anchorTokens,
+    collapsedLabel,
+    collapsedAnchor,
+    acronym.length >= 2 ? acronym : '',
+    item.keyLabel.toLowerCase(),
+  ].filter((token) => token.length >= 2)));
+}
+
+export function buildQuickJumpNoMatchSuggestions(params: {
+  query: string;
+  items: Array<{ label: string; anchorId: string; keyLabel: string }>;
+  limit?: number;
+}) {
+  const normalizedQuery = normalizeQuickJumpSuggestionToken(params.query).replace(/\s+/g, '');
+  const limit = Math.max(1, Math.floor(params.limit ?? 4));
+
+  const suggestionScores = new Map<string, number>();
+
+  for (const item of params.items) {
+    for (const candidate of buildQuickJumpSuggestionCandidates(item)) {
+      const collapsedCandidate = candidate.replace(/\s+/g, '');
+      if (!collapsedCandidate) {
+        continue;
+      }
+
+      let score = 4;
+      if (!normalizedQuery) {
+        score = collapsedCandidate.length <= 8 ? 1 : 2;
+      } else if (collapsedCandidate === normalizedQuery) {
+        score = 0;
+      } else if (collapsedCandidate.startsWith(normalizedQuery) || normalizedQuery.startsWith(collapsedCandidate)) {
+        score = 1;
+      } else if (collapsedCandidate.includes(normalizedQuery) || normalizedQuery.includes(collapsedCandidate)) {
+        score = 2;
+      } else if (collapsedCandidate[0] === normalizedQuery[0]) {
+        score = 3;
+      }
+
+      const currentBest = suggestionScores.get(candidate) ?? Number.POSITIVE_INFINITY;
+      if (score < currentBest) {
+        suggestionScores.set(candidate, score);
+      }
+    }
+  }
+
+  return [...suggestionScores.entries()]
+    .sort((left, right) => {
+      if (left[1] !== right[1]) {
+        return left[1] - right[1];
+      }
+      if (left[0].length !== right[0].length) {
+        return left[0].length - right[0].length;
+      }
+      return left[0].localeCompare(right[0]);
+    })
+    .map(([candidate]) => candidate)
+    .slice(0, limit);
 }

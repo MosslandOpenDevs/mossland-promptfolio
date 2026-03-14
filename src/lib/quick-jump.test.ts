@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, sortQuickJumpItemMatches } from './quick-jump.ts';
+import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildQuickJumpNoMatchSuggestions, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, getQuickJumpSelectedIndex, sortQuickJumpItemMatches } from './quick-jump.ts';
 
 test('buildBulkPinnedAnchorIds prioritizes the selected filtered item first', () => {
   const result = buildBulkPinnedAnchorIds({
@@ -268,4 +268,34 @@ test('sortQuickJumpItemMatches keeps route order as a stable tie-breaker', () =>
     matches.map((match) => match.item.anchorId),
     ['market-freshness', 'operator-brief']
   );
+});
+
+test('buildQuickJumpNoMatchSuggestions suggests compact recovery queries for near-miss searches', () => {
+  const suggestions = buildQuickJumpNoMatchSuggestions({
+    query: 'marke',
+    items: [
+      { keyLabel: 'm', anchorId: 'market-freshness', label: 'Market Freshness' },
+      { keyLabel: 'd', anchorId: 'desk-watchlist', label: 'Desk Watchlist' },
+      { keyLabel: 'o', anchorId: 'operator-brief', label: 'Operator Brief' },
+    ],
+  });
+
+  assert.equal(suggestions[0], 'market');
+  assert.equal(suggestions.length, 4);
+  assert.ok(suggestions.includes('marketfreshness'));
+});
+
+test('buildQuickJumpNoMatchSuggestions falls back to short high-signal tokens when the query is empty', () => {
+  const suggestions = buildQuickJumpNoMatchSuggestions({
+    query: '',
+    items: [
+      { keyLabel: 'm', anchorId: 'market-freshness', label: 'Market Freshness' },
+      { keyLabel: 'd', anchorId: 'desk-watchlist', label: 'Desk Watchlist' },
+      { keyLabel: 'o', anchorId: 'operator-brief', label: 'Operator Brief' },
+    ],
+  });
+
+  assert.equal(suggestions.length, 4);
+  assert.ok(suggestions.includes('desk'));
+  assert.ok(suggestions.every((suggestion) => suggestion.length >= 2));
 });

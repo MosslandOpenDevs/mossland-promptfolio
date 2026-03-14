@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildQuickJumpNoMatchSuggestions, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -1298,6 +1298,11 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       .filter((item): item is ShortcutItem => Boolean(item))
       .map((item) => [item.anchorId, item]),
   ).values()).slice(0, 4);
+  const noMatchSuggestionQueries = buildQuickJumpNoMatchSuggestions({
+    query: searchQuery,
+    items,
+    limit: 4,
+  });
   const isActiveSectionPinned = activeAnchorForCopy ? pinnedAnchorIds.includes(activeAnchorForCopy) : false;
   const copyLabel =
     copyState === 'done'
@@ -2750,12 +2755,34 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
         {normalizedSearchQuery && filteredItems.length === 0 ? (
           <div style={{ display: 'grid', gap: 8 }}>
             <div className="pf-dim" style={{ fontSize: 11 }}>
-              No section matches that filter yet. Try label words like market, desk, operator, or leaderboard.
+              No section matches that filter yet. Try a tighter rescue query like market, desk, operator, or leaderboard.
               {fallbackItems.length ? ' You can also jump back into your live, pinned, or recent sections below.' : ''}
             </div>
+            {noMatchSuggestionQueries.length ? (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span className="pf-dim" style={{ fontSize: 11 }}>Try query:</span>
+                {noMatchSuggestionQueries.map((query) => (
+                  <button
+                    key={`no-match-query-${query}`}
+                    type="button"
+                    className="pf-pill"
+                    aria-label={`Filter by ${query}`}
+                    title={`Filter by ${query}`}
+                    onClick={() => {
+                      setSearchQuery(query);
+                      setSelectedFilteredIndex(0);
+                      searchInputRef.current?.focus();
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {query}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {noMatchSuggestionItems.length ? (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span className="pf-dim" style={{ fontSize: 11 }}>Try:</span>
+                <span className="pf-dim" style={{ fontSize: 11 }}>Or jump to:</span>
                 {noMatchSuggestionItems.map((item) => (
                   <button
                     key={`no-match-suggestion-${item.anchorId}`}
