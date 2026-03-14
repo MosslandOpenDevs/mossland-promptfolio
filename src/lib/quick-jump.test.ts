@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, getQuickJumpRelevanceScore, sortQuickJumpItemMatches } from './quick-jump.ts';
+import { MAX_PINNED_SECTIONS, buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, sortQuickJumpItemMatches } from './quick-jump.ts';
 
 test('buildBulkPinnedAnchorIds prioritizes the selected filtered item first', () => {
   const result = buildBulkPinnedAnchorIds({
@@ -69,6 +69,32 @@ test('buildRouteContextAnchorIds returns an empty list when the selection is mis
       selectedAnchorId: 'unknown',
     }),
     []
+  );
+});
+
+test('buildVisibleQuickJumpMatchIndexes keeps the selected result visible within the collapsed window', () => {
+  assert.deepEqual(
+    buildVisibleQuickJumpMatchIndexes({
+      totalMatches: 9,
+      selectedIndex: 0,
+    }),
+    [0, 1, 2, 3, 4]
+  );
+
+  assert.deepEqual(
+    buildVisibleQuickJumpMatchIndexes({
+      totalMatches: 9,
+      selectedIndex: 5,
+    }),
+    [3, 4, 5, 6, 7]
+  );
+
+  assert.deepEqual(
+    buildVisibleQuickJumpMatchIndexes({
+      totalMatches: 9,
+      selectedIndex: 8,
+    }),
+    [4, 5, 6, 7, 8]
   );
 });
 

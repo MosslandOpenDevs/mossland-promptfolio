@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
-import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
+import { buildBulkPinnedAnchorIds, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
 const LAST_ACTIVE_SECTION_STORAGE_KEY = 'promptfolio-last-active-section';
 const RECENT_SECTION_TRAIL_STORAGE_KEY = 'promptfolio-recent-section-trail';
@@ -593,9 +593,15 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
     selectedAnchorId: selectedFilteredItem?.anchorId ?? null,
   });
   const willTrimFilteredPins = !everyFilteredItemPinned && filteredItems.length > MAX_PINNED_SECTIONS;
-  const visibleFilteredMatches = (showAllFilteredResults ? filteredItemMatches : filteredItemMatches.slice(0, 5)).map((match) => ({
-    match,
-    index: filteredItemMatches.findIndex((itemMatch) => itemMatch.item.anchorId === match.item.anchorId),
+  const visibleFilteredMatchIndexes = showAllFilteredResults
+    ? filteredItemMatches.map((_, index) => index)
+    : buildVisibleQuickJumpMatchIndexes({
+        totalMatches: filteredItemMatches.length,
+        selectedIndex: selectedFilteredIndex,
+      });
+  const visibleFilteredMatches = visibleFilteredMatchIndexes.map((index) => ({
+    match: filteredItemMatches[index],
+    index,
   }));
   const selectedFilteredRouteContextItems = buildRouteContextAnchorIds({
     anchorIds: items.map((item) => item.anchorId),

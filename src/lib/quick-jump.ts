@@ -126,3 +126,27 @@ export function buildRouteContextAnchorIds(params: {
 
   return params.anchorIds.slice(startIndex, endIndex + 1);
 }
+
+export function buildVisibleQuickJumpMatchIndexes(params: {
+  totalMatches: number;
+  selectedIndex: number;
+  collapsedLimit?: number;
+}) {
+  const totalMatches = Math.max(0, Math.floor(params.totalMatches));
+  const collapsedLimit = Math.max(1, Math.floor(params.collapsedLimit ?? 5));
+
+  if (totalMatches === 0) {
+    return [] as number[];
+  }
+
+  if (totalMatches <= collapsedLimit) {
+    return Array.from({ length: totalMatches }, (_, index) => index);
+  }
+
+  const clampedSelectedIndex = Math.min(Math.max(0, Math.floor(params.selectedIndex)), totalMatches - 1);
+  const maxStartIndex = totalMatches - collapsedLimit;
+  const idealStartIndex = clampedSelectedIndex - Math.floor(collapsedLimit / 2);
+  const startIndex = Math.min(Math.max(0, idealStartIndex), maxStartIndex);
+
+  return Array.from({ length: collapsedLimit }, (_, index) => startIndex + index);
+}
