@@ -98,6 +98,7 @@ async function copyShortcutGuide(items: ShortcutItem[]) {
     '5-7 → Jump to the recent trail',
     'Shift+P → Copy the pinned section bundle',
     'Shift+T → Copy the recent trail bundle',
+    'Shift+C (while filter is focused) → Copy the filtered result bundle',
     'Shift+L (while filter is focused) → Copy the current filtered view link',
     'Shift+O (while filter is focused) → Open the current filtered view in a new tab',
     'Shift+F (while filter is focused) → Pin or unpin all filtered matches',
@@ -540,6 +541,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [navigationBundleCopyState, setNavigationBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [filteredResultsCopyState, setFilteredResultsCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [filteredViewLinkCopyState, setFilteredViewLinkCopyState] = useState<'idle' | 'done' | 'error'>('idle');
+  const [filteredRouteCopyState, setFilteredRouteCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [activeRouteBundleCopyState, setActiveRouteBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [pinnedBundleCopyState, setPinnedBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const [recentTrailBundleCopyState, setRecentTrailBundleCopyState] = useState<'idle' | 'done' | 'error'>('idle');
@@ -554,6 +556,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearFilteredResultsCopyStateTimeoutRef = useRef<number | null>(null);
   const clearFilteredViewLinkCopyStateTimeoutRef = useRef<number | null>(null);
+  const clearFilteredRouteCopyStateTimeoutRef = useRef<number | null>(null);
   const clearActiveRouteBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearPinnedBundleCopyStateTimeoutRef = useRef<number | null>(null);
   const clearRecentTrailBundleCopyStateTimeoutRef = useRef<number | null>(null);
@@ -1208,6 +1211,9 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       if (clearFilteredViewLinkCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearFilteredViewLinkCopyStateTimeoutRef.current);
       }
+      if (clearFilteredRouteCopyStateTimeoutRef.current !== null) {
+        window.clearTimeout(clearFilteredRouteCopyStateTimeoutRef.current);
+      }
       if (clearActiveRouteBundleCopyStateTimeoutRef.current !== null) {
         window.clearTimeout(clearActiveRouteBundleCopyStateTimeoutRef.current);
       }
@@ -1309,6 +1315,12 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
       : activeRouteBundleCopyState === 'error'
         ? 'Copy live route failed'
         : 'Copy live route';
+  const filteredRouteLabel =
+    filteredRouteCopyState === 'done'
+      ? 'Route copied'
+      : filteredRouteCopyState === 'error'
+        ? 'Route copy failed'
+        : 'Copy route context';
 
   return (
     <div style={{ display: 'grid', gap: 8 }}>
@@ -1753,6 +1765,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               {['? toggle guide', 'click outside close guide', '/ filter', '↑ / ↓ / PgUp / PgDn select', 'Home / End first-last filtered match', 'Enter jump', 'Cmd/Ctrl+Enter open selected', 'Alt+Enter copy selected', 'Esc clear or close', '[ ] / J K prev-next', 'Home / End section first-last', 'C copy current', 'O open current', 'B copy nav bundle', 'R resume', 'Shift+R reset nav state', 'F pin current', '1-4 pinned', '5-7 trail'].map((label) => (
                 <span key={label} className="pf-pill">{label}</span>
               ))}
+              <span className="pf-pill">Shift+C filtered bundle</span>
               <span className="pf-pill">Shift+P pinned bundle</span>
               <span className="pf-pill">Shift+T recent trail</span>
               <span className="pf-pill">Shift+L copy filtered view</span>
@@ -2442,31 +2455,27 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
                         contextItems: selectedFilteredRouteContextItems,
                       })
                         .then(() => {
-                          setFilteredResultsCopyState('done');
-                          if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
-                            window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+                          setFilteredRouteCopyState('done');
+                          if (clearFilteredRouteCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearFilteredRouteCopyStateTimeoutRef.current);
                           }
-                          clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
-                            setFilteredResultsCopyState('idle');
+                          clearFilteredRouteCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setFilteredRouteCopyState('idle');
                           }, 1600);
                         })
                         .catch(() => {
-                          setFilteredResultsCopyState('error');
-                          if (clearFilteredResultsCopyStateTimeoutRef.current !== null) {
-                            window.clearTimeout(clearFilteredResultsCopyStateTimeoutRef.current);
+                          setFilteredRouteCopyState('error');
+                          if (clearFilteredRouteCopyStateTimeoutRef.current !== null) {
+                            window.clearTimeout(clearFilteredRouteCopyStateTimeoutRef.current);
                           }
-                          clearFilteredResultsCopyStateTimeoutRef.current = window.setTimeout(() => {
-                            setFilteredResultsCopyState('idle');
+                          clearFilteredRouteCopyStateTimeoutRef.current = window.setTimeout(() => {
+                            setFilteredRouteCopyState('idle');
                           }, 2200);
                         });
                     }}
                     style={{ cursor: 'pointer' }}
                   >
-                    {filteredResultsCopyState === 'done'
-                      ? 'Route copied'
-                      : filteredResultsCopyState === 'error'
-                        ? 'Route copy failed'
-                        : 'Copy route context'}
+                    {filteredRouteLabel}
                   </button>
                   {selectedFilteredPrevItem ? (
                     <button
