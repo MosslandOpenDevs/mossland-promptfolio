@@ -22,12 +22,27 @@ export default function LocaleToggle({ locale }: { locale: 'en' | 'ko' }) {
   return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <span className="pf-pill">Lang</span>
-      <button onClick={() => setLocale('en')} disabled={pending || locale === 'en'} className="pf-btn" style={small(locale === 'en')}>
+      <button
+        onClick={() => setLocale('en')}
+        disabled={pending || locale === 'en'}
+        className="pf-btn"
+        style={small(locale === 'en')}
+        aria-pressed={locale === 'en'}
+        aria-label="Switch language to English"
+      >
         EN
       </button>
-      <button onClick={() => setLocale('ko')} disabled={pending || locale === 'ko'} className="pf-btn" style={small(locale === 'ko')}>
+      <button
+        onClick={() => setLocale('ko')}
+        disabled={pending || locale === 'ko'}
+        className="pf-btn"
+        style={small(locale === 'ko')}
+        aria-pressed={locale === 'ko'}
+        aria-label="한국어로 전환"
+      >
         KO
       </button>
+      {pending ? <span className="pf-dim" aria-live="polite">saving…</span> : null}
     </div>
   );
 }
