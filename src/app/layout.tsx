@@ -38,6 +38,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     { href: '/replay', label: t(locale, 'replay') },
   ];
 
+  const appVersion = process.env.npm_package_version || "0.0.1";
+
   return (
     <html lang={locale}>
       <body className={`${blackOpsOne.variable} ${courierPrime.variable} ${spaceGrotesk.variable}`}>
@@ -55,7 +57,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <main id="main-content" tabIndex={-1}>{children}</main>
           <footer className="pf-footer" aria-label="Global footer">
             <span>© {new Date().getFullYear()} mossland-promptfolio</span>
-            <span>Live prompt arena · UI mode: web</span>
+            <span>
+              Live prompt arena · UI mode: web · v{appVersion} · locale: {locale}
+            </span>
           </footer>
         </div>
       </body>
