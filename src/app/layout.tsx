@@ -1,56 +1,56 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 import { Black_Ops_One, Courier_Prime, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import LocaleToggle from '../components/LocaleToggle';
 import { getLocale, t } from '../lib/i18n';
+import TopNav from '../components/TopNav';
+
+const blackOpsOne = Black_Ops_One({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-black-ops',
+});
+
+const courierPrime = Courier_Prime({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-courier',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: '500',
+  variable: '--font-space-grotesk',
+});
 
 export const metadata = {
   title: 'mossland-promptfolio',
   description: 'Prompt-driven MOC paper trading league',
 };
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-space-grotesk',
-});
-
-const courierPrime = Courier_Prime({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-courier-prime',
-});
-
-const blackOpsOne = Black_Ops_One({
-  subsets: ['latin'],
-  weight: '400',
-  variable: '--font-black-ops-one',
-});
-
 export default function RootLayout({ children }: { children: ReactNode }) {
   const locale = getLocale();
+  const navItems = [
+    { href: '/', label: t(locale, 'home') },
+    { href: '/agents', label: t(locale, 'agents') },
+    { href: '/season', label: t(locale, 'season') },
+    { href: '/leaderboard', label: t(locale, 'leaderboard') },
+    { href: '/replay', label: t(locale, 'replay') },
+  ];
 
   return (
     <html lang={locale}>
-      <body className={`${spaceGrotesk.variable} ${courierPrime.variable} ${blackOpsOne.variable}`}>
-        <a href="#main-content" className="pf-skip" aria-label={t(locale, 'skipToContent')}>
-          {t(locale, 'skipToContent')}
-        </a>
+      <body className={`${blackOpsOne.variable} ${courierPrime.variable} ${spaceGrotesk.variable}`}>
+        <a href="#main-content" className="pf-skip-link">{t(locale, 'skipToContent')}</a>
         <div className="pf-wrap">
-          <div className="pf-top">
-            <div>
+          <header>
+            <div className="pf-branding">
               <div className="pf-brand">{t(locale, 'appName')}</div>
               <div className="pf-tag">{t(locale, 'tagline')}</div>
             </div>
-            <nav className="pf-nav" aria-label="Primary">
-              <a href="/" aria-label="Go to homepage">{t(locale, 'home')}</a>
-              <a href="/agents" aria-label="View agents">{t(locale, 'agents')}</a>
-              <a href="/season" aria-label="Open season status">{t(locale, 'season')}</a>
-              <a href="/leaderboard" aria-label="View leaderboard">{t(locale, 'leaderboard')}</a>
-              <a href="/replay" aria-label="Open replay board">{t(locale, 'replay')}</a>
-              <LocaleToggle locale={locale} />
-            </nav>
-          </div>
+            <TopNav navItems={navItems} />
+            <LocaleToggle locale={locale} />
+          </header>
           <hr />
           <main id="main-content">{children}</main>
         </div>
