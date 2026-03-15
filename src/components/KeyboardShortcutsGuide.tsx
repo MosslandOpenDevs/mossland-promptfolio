@@ -86,6 +86,7 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
   const [isOpen, setIsOpen] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const panelId = useId();
+  const panelLabelId = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
   const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
   const didMountRef = useRef(false);
@@ -178,6 +179,7 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
         onClick={() => setIsOpen((current) => !current)}
         style={{ cursor: 'pointer', fontWeight: 900 }}
         title="Show keyboard shortcuts (?)"
+        aria-label={isOpen ? 'Hide keyboard shortcuts panel' : 'Show keyboard shortcuts panel'}
       >
         {isOpen ? 'Hide shortcuts (?)' : 'Shortcuts (?)'}
       </button>
@@ -187,6 +189,7 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
           id={panelId}
           ref={panelRef}
           role="dialog"
+          aria-labelledby={panelLabelId}
           aria-label="Keyboard shortcuts guide"
           aria-modal="false"
           tabIndex={-1}
@@ -199,7 +202,7 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-            <div className="pf-h2" style={{ fontSize: 12 }}>Keyboard shortcuts</div>
+            <div id={panelLabelId} className="pf-h2" style={{ fontSize: 12 }}>Keyboard shortcuts</div>
             <button
               type="button"
               className="pf-pill"
