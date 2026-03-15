@@ -53,6 +53,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </header>
           <hr />
           <main id="main-content" tabIndex={-1}>{children}</main>
+          <footer className="pf-footer" aria-label="Global footer">
+            <span>© {new Date().getFullYear()} mossland-promptfolio</span>
+            <span>Live prompt arena · UI mode: web</span>
+          </footer>
         </div>
       </body>
     </html>

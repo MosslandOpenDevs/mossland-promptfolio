@@ -297,3 +297,19 @@ hr{ border:0; border-top:2px solid var(--ink); opacity:.85; margin:16px 0; borde
   background: linear-gradient(transparent 70%, rgba(191,168,128,.55) 0);
   padding-bottom: 2px;
 }
+
+.pf-footer{
+  margin-top: 16px;
+  padding: 12px 0;
+  border-top: 1px dashed rgba(26,26,26,0.45);
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--ink-dim);
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.pf-footer span{display:inline-block;}
