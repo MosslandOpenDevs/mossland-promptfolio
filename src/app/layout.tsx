@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <LocaleToggle locale={locale} />
           </header>
           <hr />
-          <main id="main-content">{children}</main>
+          <main id="main-content" tabIndex={-1}>{children}</main>
         </div>
       </body>
     </html>
