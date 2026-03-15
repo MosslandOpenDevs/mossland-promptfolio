@@ -532,6 +532,8 @@ export default async function Page() {
           <div className="pf-h2">Quick jumps</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span className="pf-pill">home navigation</span>
+            <span className="pf-pill">feed: {feedState}</span>
+            <span className="pf-pill">pulse: {pulseLabel}</span>
             <span className="pf-pill">snapshot: {snapshotGeneratedLabel}</span>
             <KeyboardShortcutsGuide items={quickJumpItems.map((item) => ({ ...item }))} />
             <CopyBriefButton
