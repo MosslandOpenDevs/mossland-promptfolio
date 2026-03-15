@@ -48,6 +48,12 @@ export default async function Page() {
     { keyLabel: 'u', anchorId: 'pulse-board', label: 'Pulse board' },
     { keyLabel: 'r', anchorId: 'market-regime', label: 'Market regime' },
   ] as const;
+  const snapshotGeneratedAt = new Date();
+  const snapshotGeneratedLabel = snapshotGeneratedAt.toLocaleTimeString(locale === 'ko' ? 'ko-KR' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
   const d = db();
 
   // Auto-create weekly season so the product always feels "alive".
@@ -526,6 +532,7 @@ export default async function Page() {
           <div className="pf-h2">Quick jumps</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span className="pf-pill">home navigation</span>
+            <span className="pf-pill">snapshot: {snapshotGeneratedLabel}</span>
             <KeyboardShortcutsGuide items={quickJumpItems.map((item) => ({ ...item }))} />
             <CopyBriefButton
               text={operatorSnapshot}
