@@ -30,7 +30,7 @@ export default function TopNav({ navItems }: TopNavProps) {
           <Link
             key={item.href}
             href={item.href}
-            aria-label={`${active ? "Go to current page: " : "Go to "}${item.label}`}
+            aria-label={`${active ? "Current page: " : "Go to "}${item.label}`}
             aria-current={active ? "page" : undefined}
             className={active ? "pf-nav-item pf-nav-item--active" : "pf-nav-item"}
           >
