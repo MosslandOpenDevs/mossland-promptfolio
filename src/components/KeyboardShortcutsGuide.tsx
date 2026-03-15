@@ -87,6 +87,8 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
   const [copyState, setCopyState] = useState<'idle' | 'done' | 'error'>('idle');
   const panelId = useId();
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const triggerButtonRef = useRef<HTMLButtonElement | null>(null);
+  const didMountRef = useRef(false);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -110,6 +112,20 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
     } catch {
       // Ignore storage write failures so the guide still works normally.
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    if (isOpen) {
+      return;
+    }
+
+    if (!triggerButtonRef.current) return;
+    triggerButtonRef.current.focus();
   }, [isOpen]);
 
   useEffect(() => {
@@ -155,6 +171,7 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
     <div style={{ display: 'grid', gap: 8 }}>
       <button
         type="button"
+        ref={triggerButtonRef}
         className="pf-pill"
         aria-expanded={isOpen}
         aria-controls={panelId}
