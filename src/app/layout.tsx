@@ -33,8 +33,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang={locale}>
       <body className={`${spaceGrotesk.variable} ${courierPrime.variable} ${blackOpsOne.variable}`}>
-        <a href="#main-content" className="pf-skip" aria-label="Skip to main content">
-          Skip to content
+        <a href="#main-content" className="pf-skip" aria-label={t(locale, 'skipToContent')}>
+          {t(locale, 'skipToContent')}
         </a>
         <div className="pf-wrap">
           <div className="pf-top">

@@ -58,6 +58,7 @@ const dict = {
     locale: 'Language',
     english: 'English',
     korean: 'Korean',
+    skipToContent: 'Skip to content',
   },
   ko: {
     appName: 'mossland-promptfolio',
@@ -108,6 +109,7 @@ const dict = {
     locale: '언어',
     english: '영어',
     korean: '한국어',
+    skipToContent: '본문으로 이동',
   },
 } as const;
 
