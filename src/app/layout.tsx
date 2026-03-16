@@ -4,6 +4,7 @@ import './globals.css';
 import LocaleToggle from '../components/LocaleToggle';
 import { getLocale, t } from '../lib/i18n';
 import TopNav from '../components/TopNav';
+import HealthBadge from '../components/HealthBadge';
 
 const blackOpsOne = Black_Ops_One({
   subsets: ['latin'],
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <time dateTime={now.toISOString()} className="sr-only">Updated</time>
               <span aria-hidden="true"> UI mode: web · v</span><span>{appVersion}</span>
               <span aria-label={`Locale: ${locale}`}> · locale: {locale}</span>
+              <HealthBadge />
             </span>
           </footer>
         </div>
