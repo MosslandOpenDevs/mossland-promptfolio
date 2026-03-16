@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type HealthState = {
   ok?: boolean;
@@ -15,48 +15,43 @@ export default function HealthBadge() {
   const [checkedAt, setCheckedAt] = useState<string>("");
   const [status, setStatus] = useState<string>("");
 
+  const loadHealth = useCallback(async () => {
+    const now = new Date();
+
+    try {
+      const response = await fetch("/api/health", { cache: "no-store" });
+      const body = (await response.json()) as HealthState;
+      const nextHealthy = Boolean(response.ok && body.ok);
+
+      setHealthy(nextHealthy);
+      setStatus(response.ok ? (body.status ?? "ok") : "unreachable");
+    } catch {
+      setHealthy(false);
+      setStatus("unreachable");
+    } finally {
+      setCheckedAt(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
-    const loadHealth = async () => {
-      const now = new Date();
-      try {
-        const response = await fetch("/api/health", { cache: "no-store" });
-        const body = (await response.json()) as HealthState;
-        if (cancelled) {
-          return;
-        }
-
-        const nextHealthy = Boolean(response.ok && body.ok);
-        setHealthy(nextHealthy);
-        setStatus(response.ok ? (body.status ?? "ok") : "unhealthy");
-      } catch {
-        if (cancelled) {
-          return;
-        }
-
-        setHealthy(false);
-        setStatus("unreachable");
-      } finally {
-        if (cancelled) {
-          return;
-        }
-
-        setCheckedAt(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-        setLoading(false);
+    const run = async () => {
+      await loadHealth();
+      if (cancelled) {
+        return;
       }
     };
 
-    void loadHealth();
-    const timer = window.setInterval(() => {
-      void loadHealth();
-    }, CHECK_INTERVAL_MS);
+    void run();
+    const timer = window.setInterval(run, CHECK_INTERVAL_MS);
 
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, []);
+  }, [loadHealth]);
 
   const text = useMemo(() => {
     if (loading) {
@@ -78,7 +73,13 @@ export default function HealthBadge() {
       : "text-rose-300";
 
   return (
-    <span aria-live="polite" aria-label={title} title={title} className={`ml-1 ${classes}`}>
+    <span
+      aria-live="polite"
+      aria-label={title}
+      title={title}
+      role="status"
+      className={`ml-1 ${classes}`}
+    >
       {text}
     </span>
   );
