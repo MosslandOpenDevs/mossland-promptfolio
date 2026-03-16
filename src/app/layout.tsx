@@ -39,6 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   ];
 
   const appVersion = process.env.npm_package_version || "0.0.1";
+  const now = new Date();
 
   return (
     <html lang={locale}>
@@ -56,9 +57,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <hr />
           <main id="main-content" tabIndex={-1}>{children}</main>
           <footer className="pf-footer" aria-label="Global footer">
-            <span>© {new Date().getFullYear()} mossland-promptfolio</span>
+            <span>© {now.getFullYear()} mossland-promptfolio</span>
             <span>
-              Live prompt arena · UI mode: web · v{appVersion} · locale: {locale}
+              Live prompt arena ·
+              <time dateTime={now.toISOString()} className="sr-only">Updated</time>
+              <span aria-hidden="true"> UI mode: web · v</span><span>{appVersion}</span>
+              <span aria-label={`Locale: ${locale}`}> · locale: {locale}</span>
             </span>
           </footer>
         </div>
