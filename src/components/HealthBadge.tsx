@@ -14,8 +14,12 @@ export default function HealthBadge() {
   const [healthy, setHealthy] = useState(false);
   const [checkedAt, setCheckedAt] = useState<string>("");
   const [status, setStatus] = useState<string>("");
+  const [buttonLabel, setButtonLabel] = useState<string>("Refresh");
 
-  const loadHealth = useCallback(async () => {
+  const loadHealth = useCallback(async (manual = false) => {
+    if (manual) {
+      setButtonLabel("Refreshing");
+    }
     const now = new Date();
 
     try {
@@ -31,6 +35,7 @@ export default function HealthBadge() {
     } finally {
       setCheckedAt(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
       setLoading(false);
+      setButtonLabel("Refresh");
     }
   }, []);
 
@@ -81,6 +86,20 @@ export default function HealthBadge() {
       className={`ml-1 ${classes}`}
     >
       {text}
+      <button
+        type="button"
+        className="pf-btn pf-btn--primary ml-2"
+        onClick={() => {
+          if (loading) {
+            return;
+          }
+          void loadHealth(true);
+        }}
+        disabled={loading}
+        aria-label="Refresh health status"
+      >
+        {buttonLabel}
+      </button>
     </span>
   );
 }
