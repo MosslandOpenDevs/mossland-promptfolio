@@ -13,8 +13,10 @@ export default function HealthBadge() {
   const [loading, setLoading] = useState(true);
   const [healthy, setHealthy] = useState(false);
   const [checkedAt, setCheckedAt] = useState<string>("");
+  const [checkedAtEpoch, setCheckedAtEpoch] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("");
   const [buttonLabel, setButtonLabel] = useState<string>("Refresh");
+  const [nowEpoch, setNowEpoch] = useState<number>(() => Date.now());
 
   const loadHealth = useCallback(async (manual = false) => {
     if (manual) {
@@ -33,7 +35,9 @@ export default function HealthBadge() {
       setHealthy(false);
       setStatus("unreachable");
     } finally {
+      const epoch = now.getTime();
       setCheckedAt(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      setCheckedAtEpoch(epoch);
       setLoading(false);
       setButtonLabel("Refresh");
     }
@@ -58,17 +62,45 @@ export default function HealthBadge() {
     };
   }, [loadHealth]);
 
+  useEffect(() => {
+    if (!checkedAtEpoch) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setNowEpoch(Date.now());
+    }, 1_000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [checkedAtEpoch]);
+
+  const ageText = useMemo(() => {
+    if (!checkedAtEpoch) {
+      return "";
+    }
+
+    const age = Math.max(0, Math.floor((nowEpoch - checkedAtEpoch) / 1000));
+    if (!Number.isFinite(age)) {
+      return "";
+    }
+
+    return age <= 60 ? `${age}s ago` : `${Math.floor(age / 60)}m ago`;
+  }, [checkedAtEpoch, nowEpoch]);
+
   const text = useMemo(() => {
     if (loading) {
       return "checking health";
     }
 
-    if (checkedAt.length > 0) {
-      return `${status} · ${checkedAt}`;
+    const base = status.length > 0 ? status : "unknown";
+    if (!checkedAt.length) {
+      return base;
     }
 
-    return status;
-  }, [loading, checkedAt, status]);
+    return `${base} · ${checkedAt} (${ageText || "just now"})`;
+  }, [ageText, checkedAt, loading, status]);
 
   const title = status.length > 0 ? `health status: ${status}` : "health status";
   const classes = loading
