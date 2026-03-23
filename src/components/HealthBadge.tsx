@@ -11,6 +11,7 @@ const CHECK_INTERVAL_MS = 30_000;
 
 export default function HealthBadge() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [healthy, setHealthy] = useState(false);
   const [checkedAt, setCheckedAt] = useState<string>("");
   const [checkedAtEpoch, setCheckedAtEpoch] = useState<number | null>(null);
@@ -20,6 +21,7 @@ export default function HealthBadge() {
 
   const loadHealth = useCallback(async (manual = false) => {
     if (manual) {
+      setRefreshing(true);
       setButtonLabel("Refreshing");
     }
     const now = new Date();
@@ -39,6 +41,7 @@ export default function HealthBadge() {
       setCheckedAt(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
       setCheckedAtEpoch(epoch);
       setLoading(false);
+      setRefreshing(false);
       setButtonLabel("Refresh");
     }
   }, []);
@@ -110,24 +113,28 @@ export default function HealthBadge() {
       : "text-rose-300";
 
   return (
-    <span
-      aria-live="polite"
-      aria-label={title}
-      title={title}
-      role="status"
-      className={`ml-1 ${classes}`}
-    >
-      {text}
+    <span className="ml-1 inline-flex items-center gap-2">
+      <span
+        aria-live="polite"
+        aria-atomic="true"
+        aria-busy={loading || refreshing}
+        aria-label={title}
+        title={title}
+        role="status"
+        className={classes}
+      >
+        {text}
+      </span>
       <button
         type="button"
-        className="pf-btn pf-btn--primary ml-2"
+        className="pf-btn pf-btn--primary"
         onClick={() => {
-          if (loading) {
+          if (loading || refreshing) {
             return;
           }
           void loadHealth(true);
         }}
-        disabled={loading}
+        disabled={loading || refreshing}
         aria-label="Refresh health status"
       >
         {buttonLabel}
