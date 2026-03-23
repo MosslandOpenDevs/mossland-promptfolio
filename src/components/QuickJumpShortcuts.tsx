@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 import { buildBulkPinnedAnchorIds, buildQuickJumpNoMatchSuggestions, buildRouteContextAnchorIds, buildVisibleQuickJumpMatchIndexes, getQuickJumpFilteredSelectionIndex, getQuickJumpNoMatchEnterAction, getQuickJumpRelevanceScore, MAX_PINNED_SECTIONS, sortQuickJumpItemMatches } from '../lib/quick-jump';
 
@@ -560,6 +560,8 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilteredIndex, setSelectedFilteredIndex] = useState(0);
   const [showAllFilteredResults, setShowAllFilteredResults] = useState(false);
+  const filterHelpId = useId();
+  const filterStatusId = useId();
   const clearActiveKeyTimeoutRef = useRef<number | null>(null);
   const clearCopyStateTimeoutRef = useRef<number | null>(null);
   const clearNavigationBundleCopyStateTimeoutRef = useRef<number | null>(null);
@@ -2255,6 +2257,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             ref={searchInputRef}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
+            aria-describedby={`${filterHelpId} ${filterStatusId}`}
             onKeyDown={(event: ReactKeyboardEvent<HTMLInputElement>) => {
               if (event.key !== 'Enter') {
                 return;
@@ -2332,7 +2335,7 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
             className="pf-pill"
             style={{ minWidth: 240, flex: '1 1 280px', textAlign: 'left', background: 'rgba(255,255,255,.92)' }}
           />
-          <span className="pf-pill" aria-live="polite">
+          <span id={filterStatusId} className="pf-pill" aria-live="polite">
             Matches {filteredItems.length}/{items.length}
           </span>
           {searchQuery && selectedFilteredItem ? (
@@ -2647,6 +2650,22 @@ export default function QuickJumpShortcuts({ items }: { items: ShortcutItem[] })
               </button>
             </>
           ) : null}
+        </div>
+        <div
+          id={filterHelpId}
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+          }}
+        >
+          Filter sections by name, anchor id, alias, or shortcut key. Press slash to focus this field, use arrow keys or page keys to change the selected result, press Enter to jump, Command or Control plus Enter to open the selected result in a new tab, Alt plus Enter to copy the selected result link, and Escape to clear the filter.
         </div>
         {normalizedSearchQuery && filteredItems.length > 0 ? (
           <div style={{ display: 'grid', gap: 6 }}>
