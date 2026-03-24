@@ -58,6 +58,11 @@ const dict = {
     locale: 'Language',
     english: 'English',
     korean: 'Korean',
+    languageSwitcherLabel: 'Language switcher',
+    currentLanguage: 'Current language',
+    switchLanguageTo: 'Switch language to',
+    localeSaving: 'Saving language preference…',
+    localeSwitchFailed: 'Language switch failed. Try again.',
     skipToContent: 'Skip to content',
   },
   ko: {
@@ -109,6 +114,11 @@ const dict = {
     locale: '언어',
     english: '영어',
     korean: '한국어',
+    languageSwitcherLabel: '언어 전환',
+    currentLanguage: '현재 언어',
+    switchLanguageTo: '언어 변경',
+    localeSaving: '언어 설정 저장 중…',
+    localeSwitchFailed: '언어 전환에 실패했어. 다시 시도해줘.',
     skipToContent: '본문으로 이동',
   },
 } as const;

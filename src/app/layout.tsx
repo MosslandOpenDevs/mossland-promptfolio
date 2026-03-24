@@ -53,7 +53,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <div className="pf-tag">{t(locale, 'tagline')}</div>
             </div>
             <TopNav navItems={navItems} />
-            <LocaleToggle locale={locale} />
+            <LocaleToggle
+              locale={locale}
+              label={t(locale, 'languageSwitcherLabel')}
+              currentLanguageLabel={t(locale, 'currentLanguage')}
+              switchLanguageLabel={t(locale, 'switchLanguageTo')}
+              savingLabel={t(locale, 'localeSaving')}
+              errorLabel={t(locale, 'localeSwitchFailed')}
+              englishLabel={t(locale, 'english')}
+              koreanLabel={t(locale, 'korean')}
+            />
           </header>
           <hr />
           <main id="main-content" tabIndex={-1}>{children}</main>

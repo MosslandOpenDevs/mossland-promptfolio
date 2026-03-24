@@ -1,12 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
-export default function LocaleToggle({ locale }: { locale: 'en' | 'ko' }) {
+type Locale = 'en' | 'ko';
+
+type LocaleToggleProps = {
+  locale: Locale;
+  label: string;
+  currentLanguageLabel: string;
+  switchLanguageLabel: string;
+  savingLabel: string;
+  errorLabel: string;
+  englishLabel: string;
+  koreanLabel: string;
+};
+
+export default function LocaleToggle({
+  locale,
+  label,
+  currentLanguageLabel,
+  switchLanguageLabel,
+  savingLabel,
+  errorLabel,
+  englishLabel,
+  koreanLabel,
+}: LocaleToggleProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
+  const statusId = useId();
 
-  async function setLocale(next: 'en' | 'ko') {
+  async function setLocale(next: Locale) {
     if (pending || next === locale) return;
     setPending(true);
     setError(false);
@@ -29,7 +52,13 @@ export default function LocaleToggle({ locale }: { locale: 'en' | 'ko' }) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+    <div
+      style={{ display: 'flex', gap: 8, alignItems: 'center' }}
+      role="group"
+      aria-label={label}
+      aria-busy={pending}
+      aria-describedby={statusId}
+    >
       <span className="pf-pill">Lang</span>
       <button
         onClick={() => setLocale('en')}
@@ -38,8 +67,8 @@ export default function LocaleToggle({ locale }: { locale: 'en' | 'ko' }) {
         className="pf-btn"
         style={small(locale === 'en')}
         aria-pressed={locale === 'en'}
-        aria-label={locale === 'en' ? 'Current language: English' : 'Switch language to English'}
-        title={locale === 'en' ? 'Current language: English' : 'Switch language to English'}
+        aria-label={locale === 'en' ? `${currentLanguageLabel}: ${englishLabel}` : `${switchLanguageLabel}: ${englishLabel}`}
+        title={locale === 'en' ? `${currentLanguageLabel}: ${englishLabel}` : `${switchLanguageLabel}: ${englishLabel}`}
       >
         EN
       </button>
@@ -50,17 +79,18 @@ export default function LocaleToggle({ locale }: { locale: 'en' | 'ko' }) {
         className="pf-btn"
         style={small(locale === 'ko')}
         aria-pressed={locale === 'ko'}
-        aria-label={locale === 'ko' ? '현재 언어: 한국어' : '한국어로 전환'}
-        title={locale === 'ko' ? '현재 언어: 한국어' : '한국어로 전환'}
+        aria-label={locale === 'ko' ? `${currentLanguageLabel}: ${koreanLabel}` : `${switchLanguageLabel}: ${koreanLabel}`}
+        title={locale === 'ko' ? `${currentLanguageLabel}: ${koreanLabel}` : `${switchLanguageLabel}: ${koreanLabel}`}
       >
         KO
       </button>
       <span
+        id={statusId}
         className={`pf-dim ${error ? 'pf-error' : ''}`}
         role="status"
         aria-live="polite"
       >
-        {pending ? 'saving…' : error ? 'locale switch failed' : ''}
+        {pending ? savingLabel : error ? errorLabel : ''}
       </span>
     </div>
   );
