@@ -8,7 +8,6 @@ import ExecuteTickButton from '../components/ExecuteTickButton';
 import CopyBriefButton from '../components/CopyBriefButton';
 import CopyAnchorLinkButton from '../components/CopyAnchorLinkButton';
 import QuickJumpShortcuts from '../components/QuickJumpShortcuts';
-import KeyboardShortcutsGuide from '../components/KeyboardShortcutsGuide';
 import { memeLine } from '../lib/meme';
 import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getFreshnessBudget, getLatestTickAgeMs, parsePositivePrice } from '../lib/market-metrics';
 import { getHomeAlerts, getHomeBrief } from '../lib/home-alerts';
@@ -535,7 +534,6 @@ export default async function Page() {
             <span className="pf-pill">feed: {feedState}</span>
             <span className="pf-pill">pulse: {pulseLabel}</span>
             <span className="pf-pill">snapshot: {snapshotGeneratedLabel}</span>
-            <KeyboardShortcutsGuide items={quickJumpItems.map((item) => ({ ...item }))} />
             <CopyBriefButton
               text={operatorSnapshot}
               idleLabel="COPY SNAPSHOT"
