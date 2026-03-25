@@ -23,7 +23,8 @@ async function copyShortcutMap(items: ShortcutItem[]) {
     '[ / ] → Move to previous or next section',
     'K / J → Vim-style previous or next section jump',
     '/ → Focus the jump rail filter',
-    '↑ / ↓ → Move through filtered matches',
+    '↑ / ↓ / PgUp / PgDn → Move through filtered matches',
+    'Home / End (while filter is focused) → Jump to the first or last filtered match',
     'Enter → Jump to the selected filtered match',
     'Cmd/Ctrl+Enter → Open the selected filtered match in a new tab',
     'Alt+Enter → Copy the selected filtered match link',
@@ -32,9 +33,17 @@ async function copyShortcutMap(items: ShortcutItem[]) {
     'O → Open the direct link for the current section in a new tab',
     'B → Copy the reusable navigation bundle',
     'R / Resume → Jump back to the last saved section',
+    'Shift+R → Reset saved nav state (pins, trail, last stop, filter)',
     'F → Pin or unpin the current section',
     '1-4 → Jump to the matching pinned section from the pinboard',
     '5-7 → Re-open one of the last few sections you touched from the jump rail',
+    'Shift+P → Copy the pinned section bundle',
+    'Shift+T → Copy the recent trail bundle',
+    'Shift+C (while filter is focused) → Copy the filtered result bundle',
+    'Shift+L (while filter is focused) → Copy the current filtered view link',
+    'Shift+O (while filter is focused) → Open the current filtered view in a new tab',
+    'Shift+F (while filter is focused) → Pin or unpin all filtered matches',
+    '. (while filter is focused) → Toggle between top matches and the full filtered list',
     '',
     ...items.flatMap((item) => [
       `Alt+${item.keyLabel} → ${item.label}`,
@@ -263,8 +272,12 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-dim" style={{ fontSize: 11 }}>Focus the jump rail filter</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>↑ / ↓</span>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>↑ / ↓ / PgUp / PgDn</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Move through filtered matches</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Home / End</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>When the filter is focused, jump to the first or last filtered match</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Enter</span>
@@ -287,6 +300,10 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
             <span className="pf-dim" style={{ fontSize: 11 }}>Jump back to the last section you were viewing on your previous visit</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Shift+R</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Reset saved nav state including pins, trail, last stop, and filter</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>F</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Pin or unpin the section you are currently viewing</span>
           </div>
@@ -297,6 +314,18 @@ export default function KeyboardShortcutsGuide({ items }: { items: ShortcutItem[
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>5-7</span>
             <span className="pf-dim" style={{ fontSize: 11 }}>Re-open one of the last few sections you touched from the quick-jump rail</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Shift+P / Shift+T</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>Copy the pinned section bundle or the recent trail bundle</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>Shift+C / L / O / F</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>While the filter is focused, copy matched results, copy/open the filtered view, or pin all matches</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="pf-pill" style={{ minWidth: 74, justifyContent: 'center' }}>.</span>
+            <span className="pf-dim" style={{ fontSize: 11 }}>While the filter is focused, toggle between the top matches and the full filtered list</span>
           </div>
           {items.map((item) => (
             <button
