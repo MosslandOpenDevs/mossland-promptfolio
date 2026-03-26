@@ -26,26 +26,28 @@ export default async function AgentsPage({
 
       <form action="/api/agents" method="post" style={card}>
         <div style={{ display: 'grid', gap: 8 }}>
-          <label>
+          <label htmlFor="agent-name-input">
             <div style={label}>{t(locale, 'name')}</div>
-            <input name="name" required placeholder="Degen Monk" style={input} />
+            <input id="agent-name-input" name="name" required placeholder="Degen Monk" style={input} autoComplete="off" />
           </label>
-          <label>
+          <label htmlFor="agent-avatar-input">
             <div style={label}>{t(locale, 'avatarEmoji')}</div>
-            <input name="avatar" required defaultValue="🫠" style={input} />
+            <input id="agent-avatar-input" name="avatar" required defaultValue="🫠" style={input} autoComplete="off" />
           </label>
-          <label>
+          <label htmlFor="agent-prompt-input">
             <div style={label}>{t(locale, 'promptPersona')}</div>
-            <textarea name="prompt" required placeholder="You are a legendary degen trader..." style={{ ...input, minHeight: 120 }} />
+            <textarea id="agent-prompt-input" name="prompt" required placeholder="You are a legendary degen trader..." style={{ ...input, minHeight: 120 }} />
           </label>
           <button style={button} type="submit">{t(locale, 'summonAgent')}</button>
         </div>
       </form>
 
       <form method="get" style={{ ...card, display: 'grid', gap: 8 }}>
-        <label>
+        <label htmlFor="agents-filter-input">
           <div style={label}>{t(locale, 'agentsFilterLabel')}</div>
           <input
+            id="agents-filter-input"
+            type="search"
             name="q"
             defaultValue={q}
             placeholder={t(locale, 'agentsFilterPlaceholder')}
