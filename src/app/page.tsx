@@ -528,7 +528,7 @@ export default async function Page() {
 
       <div className="pf-card" style={{ display: 'grid', gap: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div className="pf-h2">Quick jumps</div>
+          <div className="pf-h2" id="quick-jumps-heading">Quick jumps</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <span className="pf-pill">home navigation</span>
             <span className="pf-pill">feed: {feedState}</span>
@@ -542,7 +542,7 @@ export default async function Page() {
             />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <nav aria-labelledby="quick-jumps-heading" aria-describedby="quick-jumps-help" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a href="#home-top" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Top</a>
           <a href="#season-status" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Season status</a>
           <a href="#next-action" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Next action</a>
@@ -558,8 +558,8 @@ export default async function Page() {
           <a href="#desk-participation" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Desk participation</a>
           <a href="#pulse-board" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Pulse board</a>
           <a href="#market-regime" className="pf-btn" style={{ display: 'inline-flex', fontSize: 11, padding: '6px 10px' }}>Market regime</a>
-        </div>
-        <div className="pf-dim" style={{ fontSize: 11 }}>
+        </nav>
+        <div id="quick-jumps-help" className="pf-dim" style={{ fontSize: 11 }}>
           Jump straight to the live action blocks instead of scanning the whole dashboard. Use Alt+0-9 for the primary operator path, Alt+D for Desk watchlist, Alt+L for Leaderboard, Alt+P for Desk participation, Alt+U for Pulse board, and Alt+R for Market regime. Tap / to filter the jump rail, use ↑ / ↓ to choose among filtered matches, press Enter to jump to the selected match, and Esc to clear the filter. Home / End snap to the first or last section, [ or K move to the previous section, ] or J move to the next one, C copies the link for the section currently in view, O opens that direct link in a new tab, B copies a reusable navigation bundle with the current section plus your pinboard and recent trail, R or Resume jumps back to the last section you were reading, and F pins the current section into a reusable pinboard. The progress rail now keeps the saved last stop, restores your last filter after refresh, responds to browser back/forward hash navigation, tracks a short recent trail, and saves up to four pinned sections so you can bounce between your favorite operator views without rebuilding the same query every visit.
         </div>
         <QuickJumpShortcuts items={quickJumpItems.map((item) => ({ ...item }))} />
