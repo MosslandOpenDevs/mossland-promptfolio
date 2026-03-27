@@ -506,14 +506,17 @@ export default async function Page() {
           <h1 className="pf-h1"><span className="underline-doodle">{t(locale, 'arenaTitle')}</span></h1>
           <p className="pf-sub">{t(locale, 'arenaSubtitle')}</p>
         </div>
-        <div className="pf-tape" style={{ padding: '4px 10px', transform: 'rotate(1deg)' }}>
+        <div className="pf-tape" aria-hidden="true" style={{ padding: '4px 10px', transform: 'rotate(1deg)' }}>
           <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: '.18em', textTransform: 'uppercase' }}>
             Vol. 1 / Issue 42
           </span>
         </div>
       </div>
 
-      <div className="pf-marquee">
+      <p className="pf-sr-only">
+        Live market snapshot. MOC price {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : 'unavailable'}, season {season?.name ?? 'unavailable'}, feed {feedState}, pulse {pulseLabel}.
+      </p>
+      <div className="pf-marquee" aria-hidden="true">
         <div className="pf-marquee__inner">
           <span>MOC: {mocUsd ? `$${Number(mocUsd).toFixed(6)}` : '—'} </span>
           <span>SEASON: {season?.name ?? '—'}</span>
