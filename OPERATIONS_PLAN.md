@@ -21,8 +21,8 @@
 
 ### 3) mossland-promptfolio
 - UI/라우팅 회귀 테스트
-  - 주요 화면 렌더/로딩 상태	diag
-  - 배포 포인트 정합성 점검
+  - 주요 화면 렌더/로딩 상태 진단 (`npm test` 84케이스 + `npm run build` 라우트 검증)
+  - 배포 포인트 정합성 점검 (`npm run ops:check` — `/`, `/api/health`, `/season` 프로브 + 저장소 신선도 체크)
 
 ### 4) null
 - 백엔드 스케줄링/translator 파이프라인 동작성
@@ -41,5 +41,6 @@
 - 변경 전/후 헬스체크 로그를 남김
 
 ## 스프린트 진행 현황 (자동운영)
-- 1) Add ops check script and baseline endpoint monitoring for UI/API pages.
-- 2) Next cycle: add synthetic runbook for season lifecycle + backend data freshness check.
+- 1) Add ops check script and baseline endpoint monitoring for UI/API pages. ✅
+- 2) Season lifecycle 자동화 완료 — 주간 시즌 자동 프로비저닝(`ensureWeeklySeason`) + `/api/health` 확장(uptime/version) + 푸터 헬스 배지(30초 폴링). ✅
+- 3) Next cycle: synthetic runbook for tick execution freshness (15분 staleness budget 기준) + 배포 후 스모크 체크 자동화.
