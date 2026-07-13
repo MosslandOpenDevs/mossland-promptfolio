@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { enforceWrite } from '../../../lib/guard';
 
 const Body = z.object({
   locale: z.enum(['en', 'ko']),
 });
 
 export async function POST(req: Request) {
+  const blocked = enforceWrite(req, 'locale', { limit: 30 });
+  if (blocked) return blocked;
+
   const json = await req.json().catch(() => ({}));
   const parsed = Body.safeParse(json);
   if (!parsed.success) {

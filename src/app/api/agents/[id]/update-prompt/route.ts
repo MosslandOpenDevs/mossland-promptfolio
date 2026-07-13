@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '../../../../../lib/db';
 import { id, nowIso } from '../../../../../lib/ids';
+import { enforceWrite } from '../../../../../lib/guard';
 
 const Body = z.object({
   prompt: z.string().min(1).max(2000),
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const blocked = enforceWrite(req, 'update-prompt', { limit: 10 });
+  if (blocked) return blocked;
+
   const agentId = (await params).id;
   const form = await req.formData();
   const parsed = Body.safeParse({ prompt: form.get('prompt') });

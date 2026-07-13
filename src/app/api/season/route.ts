@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '../../../lib/db';
 import { id, nowIso } from '../../../lib/ids';
+import { enforceWrite } from '../../../lib/guard';
 
 const Body = z.object({
   name: z.string().min(1).max(80),
@@ -9,6 +10,9 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
+  const blocked = enforceWrite(req, 'season', { limit: 6 });
+  if (blocked) return blocked;
+
   const form = await req.formData();
   const parsed = Body.safeParse({
     name: form.get('name'),
