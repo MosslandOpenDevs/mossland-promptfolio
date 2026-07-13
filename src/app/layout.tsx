@@ -29,8 +29,8 @@ export const metadata = {
   description: 'Prompt-driven MOC paper trading league',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
-  const locale = getLocale();
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await getLocale();
   const navItems = [
     { href: '/', label: t(locale, 'home') },
     { href: '/agents', label: t(locale, 'agents') },

@@ -7,7 +7,7 @@ import { formatDurationShort, getAverageTickIntervalMs, getDirectionStreak, getL
 export const dynamic = 'force-dynamic';
 
 export default async function SeasonPage() {
-  const locale = getLocale();
+  const locale = await getLocale();
   const d = db();
   const season = ensureWeeklySeason();
   const ticks = season

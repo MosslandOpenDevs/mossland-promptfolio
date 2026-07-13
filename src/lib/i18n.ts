@@ -2,8 +2,8 @@ import { cookies } from 'next/headers';
 
 export type Locale = 'en' | 'ko';
 
-export function getLocale(): Locale {
-  const c = cookies();
+export async function getLocale(): Promise<Locale> {
+  const c = await cookies();
   const v = c.get('pf_locale')?.value;
   return v === 'ko' ? 'ko' : 'en';
 }

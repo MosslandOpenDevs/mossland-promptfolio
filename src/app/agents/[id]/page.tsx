@@ -4,15 +4,16 @@ import { getLocale, t } from '../../../lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AgentDetailPage({ params }: { params: { id: string } }) {
-  const locale = getLocale();
+export default async function AgentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const locale = await getLocale();
   const d = db();
-  const agent = d.prepare(`SELECT * FROM agents WHERE id=?`).get(params.id) as any;
+  const agent = d.prepare(`SELECT * FROM agents WHERE id=?`).get(id) as any;
   if (!agent) return notFound();
 
   const history = d
     .prepare(`SELECT * FROM prompt_history WHERE agent_id=? ORDER BY changed_at DESC`)
-    .all(params.id) as any[];
+    .all(id) as any[];
 
   const lastChange = history[0]?.changed_at;
   const canEditToday = !lastChange || new Date(lastChange).toDateString() !== new Date().toDateString();
@@ -32,7 +33,7 @@ export default async function AgentDetailPage({ params }: { params: { id: string
       </div>
 
       {canEditToday ? (
-        <form action={`/api/agents/${params.id}/update-prompt`} method="post" style={card}>
+        <form action={`/api/agents/${id}/update-prompt`} method="post" style={card}>
           <div style={{ display: 'grid', gap: 8 }}>
             <label>
               <div style={label}>{t(locale, 'updatePromptLimit')}</div>

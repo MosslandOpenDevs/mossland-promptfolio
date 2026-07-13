@@ -10,16 +10,18 @@ export default async function AgentReplayPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const locale = getLocale();
+  const { id } = await params;
+  const sp = await searchParams;
+  const locale = await getLocale();
   const d = db();
 
-  const agent = d.prepare(`SELECT * FROM agents WHERE id=?`).get(params.id) as any;
+  const agent = d.prepare(`SELECT * FROM agents WHERE id=?`).get(id) as any;
   if (!agent) return notFound();
 
-  const fromParam = Array.isArray(searchParams?.from) ? searchParams?.from[0] : searchParams?.from;
+  const fromParam = Array.isArray(sp?.from) ? sp?.from[0] : sp?.from;
   const safeReplayHref = fromParam?.startsWith('/replay') ? fromParam : '/replay';
 
   const season = ensureWeeklySeason();

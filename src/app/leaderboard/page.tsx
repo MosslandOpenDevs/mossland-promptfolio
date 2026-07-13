@@ -9,7 +9,7 @@ import { ensureWeeklySeason } from '../../lib/weekly';
 export const dynamic = 'force-dynamic';
 
 export default async function LeaderboardPage() {
-  const locale = getLocale();
+  const locale = await getLocale();
   const d = db();
   const season = ensureWeeklySeason();
 

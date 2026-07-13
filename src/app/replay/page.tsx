@@ -9,9 +9,10 @@ export const dynamic = 'force-dynamic';
 export default async function ReplayIndexPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  getLocale();
+  await getLocale();
+  const sp = await searchParams;
   const d = db();
 
   const season = ensureWeeklySeason();
@@ -20,20 +21,20 @@ export default async function ReplayIndexPage({
     : null;
   const mocUsd = Number(lastTick?.moc_usd ?? 0);
 
-  const sortParam = Array.isArray(searchParams?.sort) ? searchParams?.sort[0] : searchParams?.sort;
+  const sortParam = Array.isArray(sp?.sort) ? sp?.sort[0] : sp?.sort;
   const sort = sortParam === 'name' || sortParam === 'pnl' || sortParam === 'roi' ? sortParam : 'equity';
-  const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
+  const qParam = Array.isArray(sp?.q) ? sp?.q[0] : sp?.q;
   const query = (qParam ?? '').trim();
   const queryLower = query.toLowerCase();
-  const minEqParam = Array.isArray(searchParams?.minEq) ? searchParams?.minEq[0] : searchParams?.minEq;
+  const minEqParam = Array.isArray(sp?.minEq) ? sp?.minEq[0] : sp?.minEq;
   const parsedMinEq = Number(minEqParam ?? '');
   const minEq = Number.isFinite(parsedMinEq) && parsedMinEq > 0 ? parsedMinEq : 0;
-  const maxEqParam = Array.isArray(searchParams?.maxEq) ? searchParams?.maxEq[0] : searchParams?.maxEq;
+  const maxEqParam = Array.isArray(sp?.maxEq) ? sp?.maxEq[0] : sp?.maxEq;
   const parsedMaxEq = Number(maxEqParam ?? '');
   const maxEq = Number.isFinite(parsedMaxEq) && parsedMaxEq > 0 ? parsedMaxEq : 0;
-  const profitableParam = Array.isArray(searchParams?.profitable) ? searchParams?.profitable[0] : searchParams?.profitable;
+  const profitableParam = Array.isArray(sp?.profitable) ? sp?.profitable[0] : sp?.profitable;
   const profitableOnly = profitableParam === '1' || profitableParam === 'true';
-  const lossOnlyParam = Array.isArray(searchParams?.lossOnly) ? searchParams?.lossOnly[0] : searchParams?.lossOnly;
+  const lossOnlyParam = Array.isArray(sp?.lossOnly) ? sp?.lossOnly[0] : sp?.lossOnly;
   const requestedLossOnly = lossOnlyParam === '1' || lossOnlyParam === 'true';
   const lossOnly = !profitableOnly && requestedLossOnly;
   const isProfitFilterConflict = profitableOnly && requestedLossOnly;

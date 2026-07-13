@@ -29,7 +29,7 @@ function formatClockLabel(ts: string | null | undefined, locale: 'en' | 'ko') {
 }
 
 export default async function Page() {
-  const locale = getLocale();
+  const locale = await getLocale();
   const quickJumpItems = [
     { keyLabel: '0', anchorId: 'home-top', label: 'Top' },
     { keyLabel: '1', anchorId: 'season-status', label: 'Season status' },

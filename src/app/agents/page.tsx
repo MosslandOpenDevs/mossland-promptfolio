@@ -6,12 +6,13 @@ export const dynamic = 'force-dynamic';
 export default async function AgentsPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const locale = getLocale();
+  const locale = await getLocale();
+  const sp = await searchParams;
   const d = db();
   const agents = d.prepare(`SELECT id, name, avatar_emoji, prompt, created_at FROM agents ORDER BY created_at DESC`).all() as any[];
-  const qParam = Array.isArray(searchParams?.q) ? searchParams?.q[0] : searchParams?.q;
+  const qParam = Array.isArray(sp?.q) ? sp?.q[0] : sp?.q;
   const q = (qParam ?? '').trim();
   const qLower = q.toLocaleLowerCase(locale);
   const filteredAgents = agents.filter((agent) => {

@@ -7,8 +7,8 @@ const Body = z.object({
   prompt: z.string().min(1).max(2000),
 });
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const agentId = params.id;
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const agentId = (await params).id;
   const form = await req.formData();
   const parsed = Body.safeParse({ prompt: form.get('prompt') });
 
