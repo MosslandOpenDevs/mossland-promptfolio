@@ -4,8 +4,9 @@
 
 ![Status](https://img.shields.io/badge/Status-Active_Development-0ea5e9)
 ![Domain](https://img.shields.io/badge/Domain-Simulation_Trading-black)
-![Stack](https://img.shields.io/badge/Next.js_14-React_18-black)
-![Tests](https://img.shields.io/badge/Tests-87_passing-22c55e)
+![Stack](https://img.shields.io/badge/Next.js_16-React_18-black)
+![Tests](https://img.shields.io/badge/Tests-92_passing-22c55e)
+![Audit](https://img.shields.io/badge/prod_audit-0_vulns-22c55e)
 ![i18n](https://img.shields.io/badge/UI-EN_·_KO-black)
 
 ## ◼ Background
@@ -32,6 +33,7 @@ season can be replayed tick by tick.
 - **Bilingual UI (EN/KO)** — cookie-persisted locale toggle, server-rendered; strategy keywords work in both languages.
 - **Prompt governance** — prompt edits are limited to once per calendar day, with full version history.
 - **Live health surface** — `GET /api/health` runs a real DB readiness probe (HTTP 503 + `db:"down"` if the schema is missing), plus a footer badge that polls it every 30s with age counter and manual refresh.
+- **Hardened write path** — every mutating endpoint is atomic (SQLite transactions), same-origin-guarded (cross-origin POSTs get `403`), and per-IP rate-limited (`429` + `Retry-After`). Runs on Next.js 16 with a clean production `npm audit`.
 
 ## ◼ Pages
 
@@ -74,7 +76,7 @@ flowchart LR
 | `/api/tick` | POST | Run one simulation tick; JSON with `x-pf-ajax: 1` header, otherwise redirects to `/leaderboard` |
 | `/api/locale` | POST | Persist `en` \| `ko` in a 1-year `pf_locale` cookie |
 
-Form endpoints use POST-redirect-GET (`303 See Other`); validation errors return `400` with flattened zod issues.
+Form endpoints use POST-redirect-GET (`303 See Other`); validation errors return `400` with flattened zod issues. **Every POST is guarded**: cross-origin requests are rejected with `403`, and each is per-IP rate-limited (`429` + `Retry-After`) — budgets per minute: agents 10, season 6, tick 30, update-prompt 10, locale 30.
 
 ## ◼ Quick Start
 
@@ -95,6 +97,8 @@ Open `http://localhost:6200` (dev and production both bind port 6200).
 | `COINGECKO_BASE_URL` | `https://api.coingecko.com/api/v3` | Price feed base URL |
 | `COINGECKO_COIN_ID` | `mossland` | CoinGecko coin id for the feed |
 | `DEFAULT_STARTING_CASH_USD` | `1000` | Starting paper cash for auto-created weekly seasons |
+| `WRITE_RATE_LIMIT` | `30` | Default per-IP write budget per window (per route can be stricter) |
+| `WRITE_RATE_WINDOW_MS` | `60000` | Rate-limit window length in ms |
 | `OPERATIONS_BASE_URL` | `https://pf.moss.land` | Target of `npm run ops:check` |
 | `PROMPTFOLIO_STALE_HOURS` | `168` | Repo-staleness threshold for ops checks (warn-only unless `PROMPTFOLIO_STRICT_STALE_FAIL=1`) |
 
@@ -106,9 +110,9 @@ Open `http://localhost:6200` (dev and production both bind port 6200).
 |---|---|
 | `npm run dev` | Dev server on port 6200 |
 | `npm run build` / `npm start` | Production build / serve |
-| `npm test` | 87 unit tests via Node's built-in `node:test` runner (no Jest/Vitest) |
+| `npm test` | 92 unit tests via Node's built-in `node:test` runner (no Jest/Vitest) |
 | `npm run typecheck` | `tsc --noEmit` — strict type check across app + tests |
-| `npm run lint` | `next lint` (core-web-vitals) |
+| `npm run lint` | `eslint .` (ESLint 9 flat config, `eslint-config-next` core-web-vitals) |
 | `npm run db:init` | Create/upgrade the SQLite schema — safe to re-run |
 | `npm run ops:check` | Probe the deployed site (`/`, `/api/health`, `/season`) with retries + repo-staleness check, emitting a JSON summary |
 
@@ -122,16 +126,17 @@ Six SQLite tables (better-sqlite3, WAL): `agents`, `seasons`, `portfolios` (PK `
 
 ## ◼ Tech Stack
 
-- Next.js 14 (App Router) + React 18, TypeScript strict
+- Next.js 16 (App Router, Turbopack) + React 18, TypeScript strict
 - better-sqlite3 local persistence, zod validation
 - CoinGecko price feed (simulation context)
-- Node built-in test runner; no external test framework
+- Node built-in test runner; ESLint 9 flat config; no external test framework
 
 ## ◼ Docs
 
 - [PRD](docs/PRD.md) — product goals, shipped scope, next features
 - [Architecture](docs/ARCHITECTURE.md) — runtime shape, data model, request flow
-- [Roadmap](docs/ROADMAP.md) — version-by-version progress (한국어)
+- [Roadmap](docs/ROADMAP.md) — version-by-version progress + deferred future plan (한국어)
+- [Security](docs/SECURITY.md) — current posture, write-path protections, and known limitations
 
 ## ◼ Disclaimer
 

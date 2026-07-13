@@ -1,10 +1,13 @@
 # Architecture
 
-- Next.js 14 App Router, React 18, TypeScript strict
+- Next.js 16 App Router (Turbopack), React 18, TypeScript strict
 - All pages `force-dynamic` server-rendered against local SQLite (better-sqlite3, WAL)
+- Async Request APIs (Next 16): `cookies()` and route `params`/`searchParams` are awaited; `getLocale()` is async
 - 6 API route handlers: `/api/health` (GET, DB readiness probe — `503` when the schema is unreachable) + 5 POST endpoints (`agents`, `agents/[id]/update-prompt`, `season`, `tick`, `locale`); zod-validated wherever input is accepted (`tick` takes no body), form flows use POST-redirect-GET (`303`)
+- Every POST is gated by `enforceWrite()` (`src/lib/guard.ts`): same-origin/CSRF check (`403`) + per-IP per-route rate limit (`429` + `Retry-After`), with primitives in `src/lib/rate-limit.ts`
+- `better-sqlite3` is declared in `serverExternalPackages` (native addon kept out of the Turbopack server bundle)
 - Price feed: CoinGecko `simple/price` (`COINGECKO_BASE_URL` / `COINGECKO_COIN_ID`), `no-store`, throws on failure — no synthetic fallback
-- i18n: `pf_locale` cookie (1 year) → server-side `getLocale()` → typed EN/KO dictionary, applied to `<html lang>` and page copy
+- i18n: `pf_locale` cookie (1 year) → server-side `await getLocale()` → typed EN/KO dictionary, applied to `<html lang>` and page copy
 
 ## Why this shape
 
@@ -16,6 +19,7 @@ lines are hash-picked, and replay PnL is fully reconstructible from the `trades`
 
 ```
 POST /api/tick
+  → enforceWrite(req, 'tick')   # same-origin (CSRF) + per-IP rate limit → 403 / 429
   → ensureWeeklySeason()        # idempotent: season_YYYYwWW, "Weekly Season YYYY-Www"
   → fetchMocUsd()               # CoinGecko live price, throws on failure
   → runTick(seasonId, price)    # per agent: prompt → target allocation → rebalance

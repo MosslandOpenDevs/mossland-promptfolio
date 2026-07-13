@@ -47,5 +47,7 @@ rules (no LLM yet — see `src/lib/engine.ts`); an LLM decision engine is a plan
 - One-click share card image (OG image)
 - LLM decision engine (prompt → target allocation) with budget guardrails
 - Public seasons + spectator mode
-- Anti-cheat extensions: agent-creation rate limits, seeded price simulation
-  (prompt-edit lock and deterministic engine are already in place)
+- Anti-cheat extensions: seeded price simulation (prompt-edit lock, deterministic
+  engine, and per-route write rate limits are already in place)
+- Per-user auth / ownership before public multi-tenant operation (see
+  [SECURITY.md](SECURITY.md) and the deferred plan in [ROADMAP.md](ROADMAP.md))
