@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, seasonId: season.id, mocUsd });
     }
 
-    return NextResponse.redirect(new URL('/leaderboard', req.url));
+    return NextResponse.redirect(new URL('/leaderboard', req.url), 303);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Tick failed';
     if (isAjax) {

@@ -24,20 +24,27 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     .prepare(`SELECT changed_at FROM prompt_history WHERE agent_id=? ORDER BY changed_at DESC LIMIT 1`)
     .get(agentId) as any;
 
-  const canEdit = !lastChange || new Date(lastChange.changed_at).toDateString() !== new Date().toDateString();
-  if (!canEdit) {
+  // Once-per-day edit limit. The creation-time history row (changed_at === created_at)
+  // does not count as the day's edit, so a fresh persona can still be corrected today.
+  const editedToday =
+    !!lastChange &&
+    lastChange.changed_at !== agent.created_at &&
+    new Date(lastChange.changed_at).toDateString() === new Date().toDateString();
+  if (editedToday) {
     return NextResponse.json({ success: false, error: 'Already updated today' }, { status: 400 });
   }
 
   const ts = nowIso();
-  d.prepare(`INSERT INTO prompt_history (id, agent_id, prompt, changed_at) VALUES (?, ?, ?, ?)`).run(
-    id('ph'),
-    agentId,
-    parsed.data.prompt,
-    ts
-  );
+  const applyUpdate = d.transaction(() => {
+    d.prepare(`INSERT INTO prompt_history (id, agent_id, prompt, changed_at) VALUES (?, ?, ?, ?)`).run(
+      id('ph'),
+      agentId,
+      parsed.data.prompt,
+      ts
+    );
+    d.prepare(`UPDATE agents SET prompt=? WHERE id=?`).run(parsed.data.prompt, agentId);
+  });
+  applyUpdate();
 
-  d.prepare(`UPDATE agents SET prompt=? WHERE id=?`).run(parsed.data.prompt, agentId);
-
-  return NextResponse.redirect(new URL(`/agents/${agentId}`, req.url));
+  return NextResponse.redirect(new URL(`/agents/${agentId}`, req.url), 303);
 }

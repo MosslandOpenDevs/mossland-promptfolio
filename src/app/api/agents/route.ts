@@ -23,13 +23,25 @@ export async function POST(req: Request) {
 
   const d = db();
   const ts = nowIso();
-  d.prepare(`INSERT INTO agents (id, name, avatar_emoji, prompt, created_at) VALUES (?, ?, ?, ?, ?)`).run(
-    id('agent'),
-    parsed.data.name,
-    parsed.data.avatar,
-    parsed.data.prompt,
-    ts
-  );
+  const agentId = id('agent');
 
-  return NextResponse.redirect(new URL('/agents', req.url));
+  // Record the persona's opening prompt as version 1 so history/replay is complete.
+  const createAgent = d.transaction(() => {
+    d.prepare(`INSERT INTO agents (id, name, avatar_emoji, prompt, created_at) VALUES (?, ?, ?, ?, ?)`).run(
+      agentId,
+      parsed.data.name,
+      parsed.data.avatar,
+      parsed.data.prompt,
+      ts
+    );
+    d.prepare(`INSERT INTO prompt_history (id, agent_id, prompt, changed_at) VALUES (?, ?, ?, ?)`).run(
+      id('ph'),
+      agentId,
+      parsed.data.prompt,
+      ts
+    );
+  });
+  createAgent();
+
+  return NextResponse.redirect(new URL('/agents', req.url), 303);
 }

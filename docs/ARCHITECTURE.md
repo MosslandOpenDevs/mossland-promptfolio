@@ -2,7 +2,7 @@
 
 - Next.js 14 App Router, React 18, TypeScript strict
 - All pages `force-dynamic` server-rendered against local SQLite (better-sqlite3, WAL)
-- 6 API route handlers: `/api/health` (GET) + 5 POST endpoints (`agents`, `agents/[id]/update-prompt`, `season`, `tick`, `locale`); zod-validated wherever input is accepted (`tick` takes no body), form flows redirect back to their pages
+- 6 API route handlers: `/api/health` (GET, DB readiness probe — `503` when the schema is unreachable) + 5 POST endpoints (`agents`, `agents/[id]/update-prompt`, `season`, `tick`, `locale`); zod-validated wherever input is accepted (`tick` takes no body), form flows use POST-redirect-GET (`303`)
 - Price feed: CoinGecko `simple/price` (`COINGECKO_BASE_URL` / `COINGECKO_COIN_ID`), `no-store`, throws on failure — no synthetic fallback
 - i18n: `pf_locale` cookie (1 year) → server-side `getLocale()` → typed EN/KO dictionary, applied to `<html lang>` and page copy
 
@@ -43,7 +43,13 @@ SQLite tables (schema lives in `scripts/db-init.ts`, created via `npm run db:ini
 | `prompt_history` | backs the once-per-day prompt edit lock + version trail; indexed (agent_id, changed_at DESC) |
 
 `src/lib/db.ts` only opens the connection (singleton, WAL) — it does **not** create tables,
-so `npm run db:init` is required before first run.
+so `npm run db:init` is required before first run. `GET /api/health` surfaces exactly this
+failure: a missing schema makes its readiness query throw, returning `503` with `db:"down"`.
+
+A tick is atomic: `runTick` wraps the tick row, per-agent trades, and portfolio upserts in a
+single `better-sqlite3` transaction, so a mid-loop failure rolls back rather than leaving a
+partial tick behind. Agent creation and prompt edits are likewise transactional (the persona's
+opening prompt is recorded as version 1 in `prompt_history`).
 
 ## Derived intelligence (no extra storage)
 

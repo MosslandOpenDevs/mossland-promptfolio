@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/Status-Active_Development-0ea5e9)
 ![Domain](https://img.shields.io/badge/Domain-Simulation_Trading-black)
 ![Stack](https://img.shields.io/badge/Next.js_14-React_18-black)
-![Tests](https://img.shields.io/badge/Tests-84_passing-22c55e)
+![Tests](https://img.shields.io/badge/Tests-87_passing-22c55e)
 ![i18n](https://img.shields.io/badge/UI-EN_·_KO-black)
 
 ## ◼ Background
@@ -31,7 +31,7 @@ season can be replayed tick by tick.
 - **Copyable briefs** — one-click plain-text blocks (`PROMPTFOLIO BRIEF`, `SHIFT HANDOFF`, `OPERATOR RADAR`, …) built for pasting into chat tools.
 - **Bilingual UI (EN/KO)** — cookie-persisted locale toggle, server-rendered; strategy keywords work in both languages.
 - **Prompt governance** — prompt edits are limited to once per calendar day, with full version history.
-- **Live health surface** — `GET /api/health` plus a footer badge that polls it every 30s with age counter and manual refresh.
+- **Live health surface** — `GET /api/health` runs a real DB readiness probe (HTTP 503 + `db:"down"` if the schema is missing), plus a footer badge that polls it every 30s with age counter and manual refresh.
 
 ## ◼ Pages
 
@@ -67,14 +67,14 @@ flowchart LR
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/api/health` | GET | Liveness payload (`ok`, `version`, `uptimeSec`, …), `Cache-Control: no-store` |
+| `/api/health` | GET | Readiness + liveness (`ok`, `db`, `version`, `uptimeSec`, …); `200` when the DB is reachable, `503` when it is not; `Cache-Control: no-store` |
 | `/api/agents` | POST | Create agent (name ≤ 40, avatar ≤ 8, prompt ≤ 2,000 chars, zod-validated) |
 | `/api/agents/[id]/update-prompt` | POST | Update prompt — rejected if already edited today |
 | `/api/season` | POST | Create season (starting cash $1–$1,000,000) |
 | `/api/tick` | POST | Run one simulation tick; JSON with `x-pf-ajax: 1` header, otherwise redirects to `/leaderboard` |
 | `/api/locale` | POST | Persist `en` \| `ko` in a 1-year `pf_locale` cookie |
 
-Form endpoints redirect back to their pages after submission; validation errors return `400` with flattened zod issues.
+Form endpoints use POST-redirect-GET (`303 See Other`); validation errors return `400` with flattened zod issues.
 
 ## ◼ Quick Start
 
@@ -106,12 +106,15 @@ Open `http://localhost:6200` (dev and production both bind port 6200).
 |---|---|
 | `npm run dev` | Dev server on port 6200 |
 | `npm run build` / `npm start` | Production build / serve |
-| `npm test` | 84 unit tests via Node's built-in `node:test` runner (no Jest/Vitest) |
+| `npm test` | 87 unit tests via Node's built-in `node:test` runner (no Jest/Vitest) |
+| `npm run typecheck` | `tsc --noEmit` — strict type check across app + tests |
 | `npm run lint` | `next lint` (core-web-vitals) |
 | `npm run db:init` | Create/upgrade the SQLite schema — safe to re-run |
 | `npm run ops:check` | Probe the deployed site (`/`, `/api/health`, `/season`) with retries + repo-staleness check, emitting a JSON summary |
 
 `scripts/start-with-db.sh` is the deployment entrypoint (PM2): filesystem diagnostics → `db:init` → `next start`.
+
+CI (`.github/workflows/ci.yml`) runs typecheck → lint → test → build on every push and PR to `main`.
 
 ## ◼ Data Model
 

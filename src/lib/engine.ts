@@ -1,5 +1,5 @@
-import { db } from './db';
-import { id, nowIso } from './ids';
+import { db } from './db.ts';
+import { id, nowIso } from './ids.ts';
 
 export type TradeSide = 'BUY' | 'SELL' | 'HOLD';
 
@@ -19,12 +19,13 @@ export function runTick(seasonId: string, mocUsd: number) {
   const tickId = id('tick');
   const ts = nowIso();
 
-  d.prepare(
+  const insertTick = d.prepare(
     `INSERT INTO ticks (id, season_id, ts, moc_usd, created_at)
      VALUES (?, ?, ?, ?, ?)`
-  ).run(tickId, seasonId, ts, mocUsd, ts);
+  );
 
-  const agents = d.prepare(`SELECT id, name, prompt FROM agents`).all() as Array<{id:string; name:string; prompt:string}>;
+  const getSeason = d.prepare(`SELECT starting_cash_usd FROM seasons WHERE id=?`);
+  const getAgents = d.prepare(`SELECT id, name, prompt FROM agents`);
 
   const upsertPortfolio = d.prepare(
     `INSERT INTO portfolios (season_id, agent_id, cash_usd, moc_units, updated_at)
@@ -39,60 +40,73 @@ export function runTick(seasonId: string, mocUsd: number) {
     `SELECT season_id, agent_id, cash_usd, moc_units FROM portfolios WHERE season_id=? AND agent_id=?`
   );
 
-  const getSeason = d.prepare(`SELECT starting_cash_usd FROM seasons WHERE id=?`).get(seasonId) as any;
-  if (!getSeason) throw new Error('season not found');
+  const insertTrade = d.prepare(
+    `INSERT INTO trades (id, season_id, agent_id, tick_id, side, moc_units, price_usd, reason, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
 
-  for (const a of agents) {
-    const existing = getPortfolio.get(seasonId, a.id) as any;
-    let cash = existing?.cash_usd ?? getSeason.starting_cash_usd;
-    let moc = existing?.moc_units ?? 0;
+  // Whole tick is atomic: a mid-loop failure must not leave a tick row,
+  // partial trades, or half-updated portfolios behind.
+  const applyTick = d.transaction(() => {
+    const season = getSeason.get(seasonId) as any;
+    if (!season) throw new Error('season not found');
 
-    const equity = cash + moc * mocUsd;
-    const targetRatio = decideTargetMocRatio(a.prompt);
-    const targetMocUsd = equity * targetRatio;
-    const targetMocUnits = targetMocUsd / mocUsd;
-    const deltaUnits = targetMocUnits - moc;
+    insertTick.run(tickId, seasonId, ts, mocUsd, ts);
 
-    let side: TradeSide = 'HOLD';
-    let tradeUnits = 0;
-    let reason = 'holding';
+    const agents = getAgents.all() as Array<{ id: string; name: string; prompt: string }>;
 
-    // dead-simple: rebalance if > 2% equity drift
-    const driftUsd = Math.abs(deltaUnits * mocUsd);
-    if (equity > 0 && driftUsd / equity > 0.02) {
-      tradeUnits = deltaUnits;
-      if (tradeUnits > 0) {
-        side = 'BUY';
-        const cost = tradeUnits * mocUsd;
-        const spend = Math.min(cost, cash); // no leverage
-        const units = spend / mocUsd;
-        cash -= spend;
-        moc += units;
-        tradeUnits = units;
-        reason = `rebalance to ${(targetRatio*100).toFixed(0)}% MOC (meme strategy from prompt)`;
-      } else {
-        side = 'SELL';
-        const units = Math.min(-tradeUnits, moc);
-        cash += units * mocUsd;
-        moc -= units;
-        tradeUnits = units;
-        reason = `rebalance to ${(targetRatio*100).toFixed(0)}% MOC (meme strategy from prompt)`;
+    for (const a of agents) {
+      const existing = getPortfolio.get(seasonId, a.id) as any;
+      let cash = existing?.cash_usd ?? season.starting_cash_usd;
+      let moc = existing?.moc_units ?? 0;
+
+      const equity = cash + moc * mocUsd;
+      const targetRatio = decideTargetMocRatio(a.prompt);
+      const targetMocUsd = equity * targetRatio;
+      const targetMocUnits = targetMocUsd / mocUsd;
+      const deltaUnits = targetMocUnits - moc;
+
+      let side: TradeSide = 'HOLD';
+      let tradeUnits = 0;
+      let reason = 'holding';
+
+      // dead-simple: rebalance if > 2% equity drift
+      const driftUsd = Math.abs(deltaUnits * mocUsd);
+      if (equity > 0 && driftUsd / equity > 0.02) {
+        tradeUnits = deltaUnits;
+        if (tradeUnits > 0) {
+          side = 'BUY';
+          const cost = tradeUnits * mocUsd;
+          const spend = Math.min(cost, cash); // no leverage
+          const units = spend / mocUsd;
+          cash -= spend;
+          moc += units;
+          tradeUnits = units;
+          reason = `rebalance to ${(targetRatio*100).toFixed(0)}% MOC (meme strategy from prompt)`;
+        } else {
+          side = 'SELL';
+          const units = Math.min(-tradeUnits, moc);
+          cash += units * mocUsd;
+          moc -= units;
+          tradeUnits = units;
+          reason = `rebalance to ${(targetRatio*100).toFixed(0)}% MOC (meme strategy from prompt)`;
+        }
+
+        insertTrade.run(id('trade'), seasonId, a.id, tickId, side, tradeUnits, mocUsd, reason, ts);
       }
 
-      d.prepare(
-        `INSERT INTO trades (id, season_id, agent_id, tick_id, side, moc_units, price_usd, reason, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).run(id('trade'), seasonId, a.id, tickId, side, tradeUnits, mocUsd, reason, ts);
+      upsertPortfolio.run({
+        season_id: seasonId,
+        agent_id: a.id,
+        cash_usd: cash,
+        moc_units: moc,
+        updated_at: ts,
+      });
     }
 
-    upsertPortfolio.run({
-      season_id: seasonId,
-      agent_id: a.id,
-      cash_usd: cash,
-      moc_units: moc,
-      updated_at: ts,
-    });
-  }
+    return agents.length;
+  });
 
-  return { tickId, ts, mocUsd, agents: agents.length };
+  const agentCount = applyTick();
+  return { tickId, ts, mocUsd, agents: agentCount };
 }

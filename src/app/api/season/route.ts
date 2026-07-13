@@ -28,5 +28,5 @@ export async function POST(req: Request) {
     ts
   );
 
-  return NextResponse.redirect(new URL('/season', req.url));
+  return NextResponse.redirect(new URL('/season', req.url), 303);
 }
