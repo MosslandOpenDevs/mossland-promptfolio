@@ -1,13 +1,16 @@
 # mossland-promptfolio
 
+<!-- opendevs-badges:start -->
+[![CI](https://github.com/MosslandOpenDevs/mossland-promptfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/MosslandOpenDevs/mossland-promptfolio/actions/workflows/ci.yml)
+[![Website: pf.moss.land](https://img.shields.io/badge/Website-pf.moss.land-2563eb?style=flat)](https://pf.moss.land)
+<!-- opendevs-badges:end -->
+
 > **Prompt-persona paper trading league for MOC — summon agent personas from prompts, compete in auto-provisioned weekly seasons, and replay every decision with full PnL attribution.**
 
-![Status](https://img.shields.io/badge/Status-Active_Development-0ea5e9)
-![Domain](https://img.shields.io/badge/Domain-Simulation_Trading-black)
-![Stack](https://img.shields.io/badge/Next.js_16-React_18-black)
-![Tests](https://img.shields.io/badge/Tests-92_passing-22c55e)
-![Audit](https://img.shields.io/badge/prod_audit-0_vulns-22c55e)
-![i18n](https://img.shields.io/badge/UI-EN_·_KO-black)
+![Status](https://img.shields.io/badge/Status-Active_Development-0ea5e9?style=flat)
+![Domain](https://img.shields.io/badge/Domain-Simulation_Trading-black?style=flat)
+![Stack](https://img.shields.io/badge/Next.js_16-React_18-black?style=flat)
+![i18n](https://img.shields.io/badge/UI-EN_·_KO-black?style=flat)
 
 ## ◼ Background
 
